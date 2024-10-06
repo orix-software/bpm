@@ -13,6 +13,8 @@ import zipfile
 from io import BytesIO
 
 
+folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
+
 #tableau = {'fruit1': 'pomme', 'fruit2': 'banane', 'fruit3': 'orange'}
 
 plugins_description = {
@@ -305,7 +307,7 @@ def plugins(args):
         for cle, valeur in plugins_description.items():
             print(f"\033[1;36m{cle}\033[0m: {valeur}", end="")
             if cle == "md2hlp":
-                folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
+
                 file_path = os.path.join(folder_path_md2hlp , "md2hlp-master/")
                 if not os.path.exists(file_path):
                     print(" \033[1;31m[Uninstalled]\033[0m")
@@ -318,8 +320,8 @@ def plugins(args):
                     print(" \033[1;31m[Uninstalled]\033[0m")
                 else:
                     print(" \033[1;32m[Installed]\033[0m")
-            if cle == "Assembly binary template":
-                folder_path_asm_bin = os.path.expanduser("~/.bpm/asm_bin_tpl/")
+            if cle == "asm_bin_tpl":
+                folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_bin_tpl/")
                 file_path = os.path.join(folder_path_asm_bin , "")
                 if not os.path.exists(file_path):
                     print(" \033[1;31m[Uninstalled]\033[0m")
@@ -447,7 +449,7 @@ def install_md2hlp():
     print("Installing md2hlp")
 
     # Créer le dossier s'il n'existe pas
-    if not os.path.exists(folder_path_md2hlp ):
+    if not os.path.exists(folder_path_md2hlp):
         os.makedirs(folder_path_md2hlp )
 
         # Télécharger l'archive depuis GitHub
@@ -466,19 +468,16 @@ def install_md2hlp():
     else:
         print("Erreur lors du téléchargement. Code de statut:", response.status_code)
 
-
 def build_doc(toml_file):
     # Test md2hlp
     # Chatgpt :
 
     folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
-    file_path = os.path.join(folder_path_md2hlp , "md2hlp")
+    file_path = os.path.join(folder_path_md2hlp , "")
 
     # Vérifier si le fichier existe
     if not os.path.exists(file_path):
         install_md2hlp()
-
-
 
 def main():
     # Vérifier si l'argument 'list' est passé en ligne de commande
