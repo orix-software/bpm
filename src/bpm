@@ -360,6 +360,9 @@ def usage():
 
 def plugins(args):
     if len(sys.argv) >= 3:
+        if sys.argv[2] == "help":
+            print("install : md2hlp/orixsdk/asm_bin_tpl")
+
         if sys.argv[2] == "install":
             if len(sys.argv) == 4:
                 if sys.argv[3] == "orixsdk":
@@ -374,10 +377,10 @@ def plugins(args):
             print("Unknown parameter")
 
     if len(sys.argv) == 2:
+        print("Use 'bpm plugins help' for plugins help")
         for cle, valeur in plugins_description.items():
             print(f"\033[1;36m{cle}\033[0m: {valeur}", end="")
             if cle == "md2hlp":
-
                 file_path = os.path.join(folder_path_md2hlp , "md2hlp-master/")
                 if not os.path.exists(file_path):
                     print(" \033[1;31m[Uninstalled]\033[0m")
