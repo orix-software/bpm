@@ -182,8 +182,8 @@ def init_toml(file_path):
     if not os.path.exists(".gitignore"):
         print("Init .gitignore")
         content = "bpmtmp/\nbuild\n"
-        with open(file_path, 'w') as file:
-            file.write("bpm.tml")
+        with open(".gitignore", 'w') as file:
+            file.write( content)
 
     if not os.path.exists("bpm.tml"):
         print("Init bpm.tml")
@@ -197,6 +197,12 @@ def init_toml(file_path):
     if not os.path.exists("src"):
         print("Init src folder")
         os.makedirs("src", mode=0o755, exist_ok=True)
+
+    if not os.path.exists("src/" + last_directory + ".c"):
+        print("Init " + "src/" + last_directory + ".c")
+        content = "_main:\n"
+        with open("src/" + last_directory + ".c", 'w') as file:
+            file.write(content)
 
     if not os.path.exists("VERSION"):
         print("Init VERSION file")
