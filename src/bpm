@@ -11,11 +11,14 @@ from datetime import datetime
 import subprocess
 import zipfile
 from io import BytesIO
+import shutil
 
 
+main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
+symbs = [u'\u255a', u'\u2554', u'\u2569', u'\u2566', u'\u2560', u'\u2550', u'\u256c', u'\u2557', u'\u2551', u'\u255a', u'\u255d']
 
-#tableau = {'fruit1': 'pomme', 'fruit2': 'banane', 'fruit3': 'orange'}
+#
 
 plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
@@ -107,13 +110,14 @@ def install_dependency_from_toml(toml_file):
 
         if "dependencies" in data:
             dependencies = data["dependencies"]
-            print("Liste des dépendances :")
-            for key, value in dependencies.items():
-                value_download = download_file("http://repo.orix.oric.org/dists/" + value + "/tgz/6502/" + key + ".tgz", "orixlibs/" + key + ".tgz", key)
-                if value_download == 0:
-                    print(f"{key} = {value} installed")
-                else:
-                    print(f"{key} = {value} not found")
+            if len(dependencies) != 0:
+                print("Dependencies:")
+                for key, value in dependencies.items():
+                    value_download = download_file("http://repo.orix.oric.org/dists/" + value + "/tgz/6502/" + key + ".tgz", "orixlibs/" + key + ".tgz", key)
+                    if value_download == 0:
+                        print(f"{key} = {value} installed")
+                    else:
+                        print(f"{key} = {value} not found")
 
     except FileNotFoundError:
         print(f"Le fichier '{toml_file}' n'a pas été trouvé.")
@@ -127,13 +131,16 @@ def read_dependencies_from_toml(file_path):
         # Vérifier si la section "dependency" existe
         if "dependencies" in data:
             dependencies = data["dependencies"]
-            print("Liste des dépendances :")
+            if len(dependencies) != 0:
+                print("Dependencies list :")
+            else:
+                print("No dependencies")
             for key, value in dependencies.items():
                 print(f"{key} = {value}")
         else:
-            print("La section 'dependencies' n'existe pas dans le fichier TOML.")
+            print("'dependencies'section does not exists in bpm.tml")
     except FileNotFoundError:
-        print(f"Le fichier '{file_path}' n'a pas été trouvé.")
+        print(f"file not found : '{file_path}'")
     except toml.TomlDecodeError:
         print(f"Erreur lors de la lecture du fichier TOML '{file_path}'.")
 
@@ -177,7 +184,7 @@ def init_toml(file_path):
     # print(f"Trimestre actuel : {current_trimester}")
     """Crée un fichier TOML avec des valeurs par défaut."""
     content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + str(current_year) + "." + str(current_trimester) + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
-    content = content + "readme=\nrepository=\ndocumentation=\ndescription=\nhomepage=\nbuildfolder=build\npackagetype=tgz\n"
+    content = content + "readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\n"
     content = content + "\n[dependencies]\n"
     with open(file_path, 'w') as file:
         file.write(content)
@@ -196,7 +203,7 @@ def verify_installed():
         os.makedirs(directory_path, mode=0o755, exist_ok=True)
     if not os.path.isfile(directory_path + "/bpm"):
         # Créer le répertoire
-        str_init = "oricutron_path=oricutron\n"
+        str_init = "[main]\noricutron_path = \"oricutron\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
 
@@ -218,10 +225,17 @@ def search_lib(search_word: str):
             # Créer le répertoire
             os.makedirs(directory_path, mode=0o755, exist_ok=True)
 
+        content = ""
+        for line in response.iter_lines():
+            if line:  # Pour éviter les lignes vides
+                content = content + line.decode('utf-8') + '\n'
+
         with open(directory_path + "/listtgz.txt", 'wb') as f:
             f.write(response.content)
         if search_word == "":
-            print(response.content)
+            content = content.replace(';lib', '')  # Retirer ";lib"
+            content = content.replace(';', ' ')    # Remplacer ; par des espaces
+            print(content)
         else:
             with open(directory_path + "/listtgz.txt", 'r') as file:
                 for line_number, line in enumerate(file, start=1):
@@ -243,9 +257,14 @@ def build(args):
     repertoire = 'src/'
     fichiers_s = lister_fichiers_s(repertoire)
 
-    if not os.path.exists("bmptmp/"):
+    bpm_tmp_folder = "bpmtmp/"
+
+    if not os.path.exists(bpm_tmp_folder):
         # Créer le répertoire
-        os.makedirs("bmptmp/", mode=0o755, exist_ok=True)
+        os.makedirs(bpm_tmp_folder, mode=0o755, exist_ok=True)
+
+    if not os.path.exists("build"):
+        os.makedirs("build", mode=0o755, exist_ok=True)
 
     with open(toml_file, 'r') as file:
         data = toml.load(file)
@@ -261,13 +280,46 @@ def build(args):
                 name = value
                 break
 
-    for fichier in fichiers_s:
-        nom_sans_extension = os.path.splitext(fichier)[0]
-        print("Building " + "src/" + fichier,)
-        resultat = subprocess.run(['ca65', '-ttelestrat', "src/" + fichier, "-o", "bmptmp/" + nom_sans_extension + ".o", "--include-dir", "src/include"], check=True, capture_output=True, text=True)
-        if codetype == "lib":
-            print("Adding bmptmp/" + nom_sans_extension + ".o to " + name + ".lib")
-            resultat = subprocess.run(['ar65', 'r', name + ".lib", "bmptmp/" + nom_sans_extension + ".o"], check=True, capture_output=True, text=True)
+    if codetype == "bin":
+        if not os.path.exists("build/bin/"):
+            os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+
+        home_directory = os.path.expanduser('~')
+        new_directory = f"{user_folder}/orixsdk/orix-sdk-master/bin/relocbin.py3"
+
+        reloc_bin_path = home_directory + "/" + new_directory
+
+        if not os.path.exists(reloc_bin_path):
+            print("Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
+
+        nom_sans_extension = name
+        file_to_compile_c = repertoire + name + ".c"
+        if os.path.exists(file_to_compile_c):
+            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=True, text=True)
+            shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
+            return 0
+
+        file_to_compile_s = repertoire + name + ".s"
+        if os.path.exists(file_to_compile_s):
+            resultat = subprocess.run(['ca65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=True, text=True)
+            shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
+            return 0
+
+        print(f"Main file not found : {file_to_compile_c} or {file_to_compile_s}")
+
+
+    if codetype == "lib":
+        for fichier in fichiers_s:
+            nom_sans_extension = os.path.splitext(fichier)[0]
+            print("Building " + repertoire + fichier)
+            resultat = subprocess.run(['ca65', '-ttelestrat', repertoire + fichier, "-o", bpm_tmp_folder+ nom_sans_extension + ".o", "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            if codetype == "lib":
+                print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
+                resultat = subprocess.run(['ar65', 'r', name + ".lib", bpm_tmp_folder + nom_sans_extension + ".o"], check=True, capture_output=True, text=True)
             #@$(AR) r ch395.lib $@
     #ca65 -ttelestrat $(@:.o=.s) -o $@ --include-dir src/include
 
@@ -328,8 +380,54 @@ def plugins(args):
                 else:
                     print(" \033[1;32m[Installed]\033[0m")
 
+
+def modify_local_toml_key(toml_file, new_name, section, property):
+    # Lire le fichier TOML
+    with open(toml_file, 'r') as fichier:
+        contenu = toml.load(fichier)
+
+    # Vérifier si la section section existe et changer la valeur de 'name'
+    #if section in contenu and property in contenu[section]:
+    contenu[section][property] = new_name
+    #else:
+    #    print(f"'package' section or '{property}' key not found")
+    #    return
+
+    # Réécrire le fichier avec la nouvelle valeur
+    with open(toml_file, 'w') as fichier:
+        toml.dump(contenu, fichier)
+
+    print(f"'{property}' updated with '{new_name}'.")
+
+def print_frame(str_to_display, sep):
+    print(symbs[1], end = '')
+    str_length = len(str_to_display)
+    for i in range( str_length + 2):
+        print(symbs[5], end = '')
+    print(symbs[7])
+    print(symbs[8] + ' ', end = '')
+    print(str_to_display + ' ' + symbs[8])
+    print(symbs[9], end = '')
+    for i in range( str_length + 2):
+        print(symbs[5], end = '')
+    print(symbs[10])
+
 def manage_config(args):
-    if len(sys.argv) == 2:
+    if len(sys.argv) > 2:
+        # bpm config set
+        if sys.argv[2] == "set":
+            if len(sys.argv) == 5:
+                if sys.argv[3] == "name":
+                    modify_local_toml_key('bpm.tml', sys.argv[4], 'package', "name")
+                if sys.argv[3] == "codetype":
+                    if sys.argv[4] == "lib" or sys.argv[4] == "bin":
+                        modify_local_toml_key('bpm.tml', sys.argv[4], 'package', "codetype")
+            else:
+                print_frame("Help : bpm config set", "")
+                print('bpm config set name <NAME>')
+
+
+    elif len(sys.argv) == 2:
         home_directory = os.path.expanduser('~')
 
         # Nom du répertoire à créer
@@ -337,9 +435,8 @@ def manage_config(args):
 
         # Chemin complet du nouveau répertoire
         directory_path = home_directory + "/" + new_directory
-        print("#########################")
-        print("#      Main config      #")
-        print("#########################")
+        print_frame("Main config", "")
+
         try:
             with open(directory_path, 'r') as fichier:
                 contenu = fichier.read()
@@ -348,6 +445,18 @@ def manage_config(args):
             print(f"Le fichier '{chemin_fichier}' n'a pas été trouvé.")
         except Exception as e:
             print(f"Une erreur est survenue : {e}")
+
+    print_frame("Project config", "")
+    with open(toml_file, 'r') as file:
+        data = toml.load(file)
+
+    if "package" in data:
+        package = data["package"]
+        for key, value in package.items():
+            print(f"{key}={value}")
+
+
+
 
 def publish():
     publish_key = os.getenv('BPM_PUBLISH_KEY')
@@ -426,7 +535,7 @@ def install_orixsdk():
 
         # Vérifier si le téléchargement est réussi
         if response.status_code == 200:
-            print("Téléchargement réussi, décompression en cours...")
+            print("Download ok, decrunching...")
 
             # Décompresser l'archive
             with zipfile.ZipFile(BytesIO(response.content)) as z:
@@ -437,9 +546,8 @@ def install_orixsdk():
             if os.path.exists(extracted_folder):
                 os.rename(extracted_folder, folder_path)
 
-            print("Décompression terminée dans", folder_path)
         else:
-            print("Erreur lors du téléchargement. Code de statut:", response.status_code)
+            print("Download error. Code de statut:", response.status_code)
     else:
         print("Le dossier orixsdk existe déjà dans", folder_path)
 
@@ -479,6 +587,31 @@ def build_doc(toml_file):
     if not os.path.exists(file_path):
         install_md2hlp()
 
+def run_bin(args):
+    try:
+        # Lire le fichier TOML
+        with open(main_config_path, 'r') as file:
+            data = toml.load(file)
+
+        if "main" in data:
+            dependencies = data["main"]
+            for key, value in dependencies.items():
+                if key == "oricutron_path":
+                    current_pwd = os.getcwd()
+                    try:
+                        filename = os.path.basename(value)
+                        path_oricutron = os.path.dirname(value)
+                        os.chdir(path_oricutron)
+                        subprocess.run([value], check=True)
+                    except Exception as e:
+                        print(f"Erreur : {e}")
+                    finally:
+                        # Revenir au répertoire initial
+                        os.chdir(current_pwd)
+
+    except FileNotFoundError:
+        print(f"'{toml_file}' not found")
+
 def main():
     # Vérifier si l'argument 'list' est passé en ligne de commande
     verify_installed()
@@ -487,13 +620,17 @@ def main():
         usage()
         sys.exit(1)
 
-    if sys.argv[1] != 'build' and sys.argv[1] != 'config' and sys.argv[1] != 'd' and sys.argv[1] != 'doc' and sys.argv[1] != 'init' and sys.argv[1] != 'plugins' and sys.argv[1] != 'list' and sys.argv[1] != 'add' and sys.argv[1] != 'remove' and sys.argv[1] != 'new' and sys.argv[1] != 'install' and sys.argv[1] != '-V' and sys.argv[1] != 'search' and sys.argv[1] != 'publish':
+    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', 'publish', 'run']
+    if sys.argv[1] not in valid_commands:
+
         usage()
         sys.exit(1)
 
     action = sys.argv[1]
 
-    if action == '-V':
+    if action == 'run':
+        run_bin(sys.argv)
+    elif action == '-V':
         print("2024.4")
     elif action == 'doc' or action == 'd':
         build_doc(toml_file)
