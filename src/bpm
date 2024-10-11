@@ -46,7 +46,7 @@ def decompress_and_extract(filename, dependency_name):
         os.remove(filename[:-4] + ".tar")
 
     except Exception as e:
-        print(f"Erreur lors de la décompression ou de l'extraction : {e}")
+        print(f"Decrunching error : {e}")
 
 def add_dependency_to_toml(file_path, dependency_str):
     """Ajoute une nouvelle dépendance dans la section 'dependency' du fichier TOML"""
@@ -65,7 +65,7 @@ def add_dependency_to_toml(file_path, dependency_str):
             dependency_name = dependency_name.strip()
             dependency_version = dependency_version.strip().strip('"').strip("'")
         except ValueError:
-            print("Erreur de format : La chaîne doit être sous la forme 'nom@\"version\"'.")
+            print("Format error : parameter must be : 'nom@\"version\"'.")
             return
 
         # Ajouter ou mettre à jour la dépendance dans le fichier TOML
@@ -83,9 +83,9 @@ def add_dependency_to_toml(file_path, dependency_str):
             print(f"{dependency_name} = {dependency_version} not found")
 
     except FileNotFoundError:
-        print(f"Le fichier '{file_path}' n'a pas été trouvé.")
+        print(f"'{file_path}' nnot found")
     except toml.TomlDecodeError:
-        print(f"Erreur lors de la lecture du fichier TOML '{file_path}'.")
+        print(f"Impossible to read '{file_path}'.")
 
 def download_file(url, local_filename, dependency_name):
     """Télécharge un fichier depuis une URL"""
@@ -120,7 +120,7 @@ def install_dependency_from_toml(toml_file):
                         print(f"{key} = {value} not found")
 
     except FileNotFoundError:
-        print(f"Le fichier '{toml_file}' n'a pas été trouvé.")
+        print(f"'{toml_file}' not found")
 
 def read_dependencies_from_toml(file_path):
     try:
@@ -138,11 +138,11 @@ def read_dependencies_from_toml(file_path):
             for key, value in dependencies.items():
                 print(f"{key} = {value}")
         else:
-            print("'dependencies'section does not exists in bpm.tml")
+            print("'dependencies' section does not exists in bpm.tml")
     except FileNotFoundError:
         print(f"file not found : '{file_path}'")
     except toml.TomlDecodeError:
-        print(f"Erreur lors de la lecture du fichier TOML '{file_path}'.")
+        print(f"Read error :  '{file_path}'.")
 
 def remove_dependency_from_toml(file_path, dependency_name):
     """Supprime une dépendance de la section 'dependency' du fichier TOML"""
@@ -156,16 +156,16 @@ def remove_dependency_from_toml(file_path, dependency_name):
             print(f"{dependency_name} uninstalled")
             shutil.rmtree("orixlibs/" + dependency_name)
         else:
-            print(f"La dépendance '{dependency_name}' n'existe pas dans le fichier TOML.")
+            print(f"'{dependency_name}' dependency does not exist in bpm.tml")
 
         # Écrire les modifications dans le fichier TOML
         with open(file_path, 'w') as file:
             toml.dump(data, file)
 
     except FileNotFoundError:
-        print(f"Le fichier '{file_path}' n'a pas été trouvé.")
+        print(f"'{file_path}' not found")
     except toml.TomlDecodeError:
-        print(f"Erreur lors de la lecture du fichier TOML '{file_path}'.")
+        print(f"Impossible to read '{file_path}'.")
 
 def init_toml(file_path):
     current_directory = os.getcwd()
@@ -404,17 +404,17 @@ def plugins(args):
                     print(" \033[1;32m[Installed]\033[0m")
 
 
+
+
+
 def modify_local_toml_key(toml_file, new_name, section, property):
     # Lire le fichier TOML
     with open(toml_file, 'r') as fichier:
         contenu = toml.load(fichier)
 
     # Vérifier si la section section existe et changer la valeur de 'name'
-    #if section in contenu and property in contenu[section]:
     contenu[section][property] = new_name
-    #else:
-    #    print(f"'package' section or '{property}' key not found")
-    #    return
+
 
     # Réécrire le fichier avec la nouvelle valeur
     with open(toml_file, 'w') as fichier:
@@ -436,19 +436,44 @@ def print_frame(str_to_display, sep):
     print(symbs[10])
 
 def manage_config(args):
+    print("Use 'bpm config help' for help")
     if len(sys.argv) > 2:
+        if sys.argv[2] == "help":
+            print("bpm config set main oricutron_path /path")
+            print("bpm config set project name /path")
+            print("bpm config set project codetype [lib|bin]")
+            return 
         # bpm config set
-        if sys.argv[2] == "set":
-            if len(sys.argv) == 5:
-                if sys.argv[3] == "name":
-                    modify_local_toml_key('bpm.tml', sys.argv[4], 'package', "name")
-                if sys.argv[3] == "codetype":
-                    if sys.argv[4] == "lib" or sys.argv[4] == "bin":
-                        modify_local_toml_key('bpm.tml', sys.argv[4], 'package', "codetype")
-            else:
-                print_frame("Help : bpm config set", "")
-                print('bpm config set name <NAME>')
+        if sys.argv[2] == "main":
+            if sys.argv[3] == "set":
+                if len(sys.argv) == 6:
+                    if sys.argv[4] == "oricutron_path":
+                        home_directory = os.path.expanduser('~')
+                        # Nom du répertoire à créer
+                        new_directory = f"{user_folder}/bpm"
+                        # Chemin complet du nouveau répertoire
+                        directory_path = home_directory + "/" + new_directory
+                        modify_local_toml_key(directory_path, sys.argv[5], 'main', "oricutron_path")
+                        return
+                    else:
+                        print("Unknown key")
+                else:
+                    print("Incorrect number of parameter")
 
+        if sys.argv[2] == "project":
+            if sys.argv[3] == "set":
+                if len(sys.argv) == 6:
+                    if sys.argv[4] == "name":
+                        modify_local_toml_key('bpm.tml', sys.argv[5], 'package', "name")
+                        return
+                    elif sys.argv[4] == "codetype":
+                        if sys.argv[4] == "lib" or sys.argv[4] == "bin":
+                            modify_local_toml_key('bpm.tml', sys.argv[5], 'package', "codetype")
+                            return
+                    else:
+                        print("Unknown key")
+                else:
+                    print("Incorrect number of parameter")
 
     elif len(sys.argv) == 2:
         home_directory = os.path.expanduser('~')
@@ -609,13 +634,19 @@ def run_bin(args):
             for key, value in dependencies.items():
                 if key == "oricutron_path":
                     current_pwd = os.getcwd()
+                    if value == "":
+                        print("oricutron_path is empty, set it with 'bpm config set oricutron_path *Yourpath*'")
+                        return
+                    if not os.path.isfile(value):
+                        print(f"Error : in 'oricutron_path' parameter, {value} is not a file. Set Oricutron path with 'bpm config set oricutron_path *Yourpath*'")
+                        return
                     try:
                         filename = os.path.basename(value)
                         path_oricutron = os.path.dirname(value)
                         os.chdir(path_oricutron)
                         subprocess.run([value], check=True)
                     except Exception as e:
-                        print(f"Erreur : {e}")
+                        print(f"Error : {e}")
                     finally:
                         # Revenir au répertoire initial
                         os.chdir(current_pwd)
