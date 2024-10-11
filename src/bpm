@@ -369,6 +369,8 @@ def plugins(args):
                     install_orixsdk()
                 elif sys.argv[3] == "asm_bin_tpl":
                     install_asm_bin_tpl()
+                elif sys.argv[3] == "md2hlp":
+                    install_md2hlp()
                 else:
                     print("Unknown plugin")
             else:
@@ -505,7 +507,6 @@ def install_asm_bin_tpl():
 
     # Vérifier si le dossier existe
     if not os.path.exists(folder_path):
-        print("Le dossier asm_bin_tpl n'existe pas, téléchargement de l'archive...")
 
         # Créer le dossier parent ~/.bpm/tpl/ s'il n'existe pas
         parent_folder = os.path.dirname(folder_path)
@@ -518,18 +519,13 @@ def install_asm_bin_tpl():
 
         # Vérifier si le téléchargement est réussi
         if response.status_code == 200:
-            print("Téléchargement réussi, décompression en cours...")
-
             # Décompresser l'archive
             with zipfile.ZipFile(BytesIO(response.content)) as z:
                 z.extractall(parent_folder)  # Décompresser dans ~/.bpm/tpl/
+            print("Installed")
 
-            # Renommer le dossier décompressé
-            extracted_folder = os.path.join(parent_folder, 'new-project-main')
-            if os.path.exists(extracted_folder):
-                os.rename(extracted_folder, folder_path)
 
-            print("Décompression terminée dans", folder_path)
+
         else:
             print("Erreur lors du téléchargement. Code de statut:", response.status_code)
     else:
@@ -543,7 +539,7 @@ def install_orixsdk():
 
     # Vérifier si le dossier existe
     if not os.path.exists(folder_path):
-        print("Le dossier orixsdk n'existe pas, téléchargement de l'archive...")
+        print("Orixsdk folder does not exist. Downloading ...")
 
         # Créer le dossier parent ~/.bpm/ s'il n'existe pas
         parent_folder = os.path.dirname(folder_path)
@@ -556,21 +552,16 @@ def install_orixsdk():
 
         # Vérifier si le téléchargement est réussi
         if response.status_code == 200:
-            print("Download ok, decrunching...")
 
             # Décompresser l'archive
             with zipfile.ZipFile(BytesIO(response.content)) as z:
                 z.extractall(parent_folder)  # Décompresser dans ~/.bpm/
-
-            # Renommer le dossier décompressé
-            extracted_folder = os.path.join(parent_folder, 'orix-sdk-master')
-            if os.path.exists(extracted_folder):
-                os.rename(extracted_folder, folder_path)
+            print("Installed")
 
         else:
             print("Download error. Code de statut:", response.status_code)
     else:
-        print("Le dossier orixsdk existe déjà dans", folder_path)
+        print("Already installed")
 
 def install_md2hlp():
     # Chatgpt:
@@ -587,15 +578,14 @@ def install_md2hlp():
 
     # Vérifier si le téléchargement est réussi
     if response.status_code == 200:
-        print("Téléchargement réussi, décompression en cours...")
 
         # Décompresser l'archive
         with zipfile.ZipFile(BytesIO(response.content)) as z:
             z.extractall(folder_path_md2hlp )
 
-        print("Décompression terminée dans", folder_path_md2hlp)
+        print("Installed")
     else:
-        print("Erreur lors du téléchargement. Code de statut:", response.status_code)
+        print("Download error. Error code :", response.status_code)
 
 def build_doc(toml_file):
     # Test md2hlp
