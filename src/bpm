@@ -200,7 +200,7 @@ def init_toml(file_path):
 
     if not os.path.exists("src/" + last_directory + ".c"):
         print("Init " + "src/" + last_directory + ".c")
-        content = "_main:\n"
+        content = "#include <stdio.h>\n main() {printf(\"Hello word\"); }\n"
         with open("src/" + last_directory + ".c", 'w') as file:
             file.write(content)
 
