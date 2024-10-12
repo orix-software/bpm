@@ -50,6 +50,8 @@ def decompress_and_extract(filename, dependency_name):
 
 def add_dependency_to_toml(file_path, dependency_str):
     """Ajoute une nouvelle dépendance dans la section 'dependency' du fichier TOML"""
+    if dependency_str == "--help":
+        print("bpm add package@version")
     try:
         # Lire le fichier TOML
         with open(file_path, 'r') as file:
@@ -311,21 +313,27 @@ def build(args):
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
         if os.path.exists(file_to_compile_c):
-            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
-            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
-            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-            shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
-            print("Built : " + "build/bin/" + nom_sans_extension)
+            try:
+                resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+                resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+                resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
+                shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
+                print("Built : " + "build/bin/" + nom_sans_extension)
+            except subprocess.CalledProcessError as e:
+                print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
             return 0
 
         file_to_compile_s = repertoire + name + ".s"
         if os.path.exists(file_to_compile_s):
-            resultat = subprocess.run(['ca65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
-            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
-            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-            shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
-            print("Built : " + "build/bin/" + nom_sans_extension)
-            return 0
+            try:
+                resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+                resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+                resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
+                shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
+                print("Built : " + "build/bin/" + nom_sans_extension)
+                return 0
+            except subprocess.CalledProcessError as e:
+                print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
 
         print(f"Main file not found : {file_to_compile_c} or {file_to_compile_s}")
 
@@ -442,7 +450,7 @@ def manage_config(args):
             print("bpm config set main oricutron_path /path")
             print("bpm config set project name /path")
             print("bpm config set project codetype [lib|bin]")
-            return 
+            return 0
         # bpm config set
         if sys.argv[2] == "main":
             if sys.argv[3] == "set":
@@ -502,8 +510,6 @@ def manage_config(args):
         package = data["package"]
         for key, value in package.items():
             print(f"{key}={value}")
-
-
 
 
 def publish():
@@ -624,6 +630,8 @@ def build_doc(toml_file):
         install_md2hlp()
 
 def run_bin(args):
+    # Generate submit file
+
     try:
         # Lire le fichier TOML
         with open(main_config_path, 'r') as file:
@@ -641,9 +649,39 @@ def run_bin(args):
                         print(f"Error : in 'oricutron_path' parameter, {value} is not a file. Set Oricutron path with 'bpm config set oricutron_path *Yourpath*'")
                         return
                     try:
+
+                        with open("bpm.tml", 'r') as file:
+                            data = toml.load(file)
+
+                        if "package" in data:
+                            package = data["package"]
+                            print(data)
+                            for key, value_field in package.items():
+                               if key == "name":
+                                   name_bin = value_field
+                                   print("###")
+                                   print(name_bin)
+                                   break
+
+                        else:
+                            print("Error bpm.tml does not contains 'package' property")
+                            return 1
+
                         filename = os.path.basename(value)
                         path_oricutron = os.path.dirname(value)
+                        print(" ### Oricutron ### ")
+                        print(path_oricutron)
+                        print(path_oricutron + "/sdcard/bin/")
+                        shutil.copy("build/bin/" + name_bin, path_oricutron + "/sdcard/BIN/" + name_bin.upper())
+
+
+                        # Generate submit file
+                        content = f"#!/bin/submit\n{name_bin}\n"
+
+                        with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
+                            file.write(content)
                         os.chdir(path_oricutron)
+
                         subprocess.run([value], check=True)
                     except Exception as e:
                         print(f"Error : {e}")
@@ -671,6 +709,7 @@ def main():
     action = sys.argv[1]
 
     if action == 'run':
+        build(sys.argv)
         run_bin(sys.argv)
     elif action == '-V':
         print("2024.4")
@@ -678,9 +717,13 @@ def main():
         build_doc(toml_file)
     elif action == 'list':
         read_dependencies_from_toml(toml_file)
-    elif action == 'add' and len(sys.argv) == 3:
-        dependency_str = sys.argv[2]
-        add_dependency_to_toml(toml_file, dependency_str)
+    elif action == 'add':
+        if  len(sys.argv) == 3:
+            dependency_str = sys.argv[2]
+            add_dependency_to_toml(toml_file, dependency_str)
+        else:
+            print("Missing parameter")
+            print("Type 'bpm add --help'")
     elif action == 'remove':
         if len(sys.argv) == 3:
             dependency_name = sys.argv[2]

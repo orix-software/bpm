@@ -1,0 +1,177 @@
+site_name: bpm v2024.4 DOCUMENTATION
+
+# markdown_extensions:
+#     - pymdownx.highlight
+#     - pymdownx.inlinehilite
+#     - pymdownx.tabbed:
+#         alternate_style: true
+#     - pymdownx.snippets
+#     - pymdownx.critic
+#     - pymdownx.caret
+#     - pymdownx.keys
+#     - pymdownx.mark
+#     - pymdownx.tilde
+#     - attr_list
+#     - md_in_html
+#     - admonition
+#     - pymdownx.details
+#     - pymdownx.superfences:
+#         custom_fences:
+#           - name: mermaid
+#             class: mermaid
+#             format: !!python/name:pymdownx.superfences.fence_code_format
+#     - tables
+#     - pymdownx.emoji:
+#         emoji_index: !!python/name:materialx.emoji.twemoji
+#         emoji_generator: !!python/name:materialx.emoji.to_svg
+
+# plugins:
+#  - git-revision-date
+#  - search
+#  - markmap
+#  - mkdocs-video
+
+dev_addr: '172.30.72.43:8001'
+
+theme:
+    name: material
+#     logo: favicon.png
+#     custom_dir: overrides
+#     highlightjs: true
+#     palette:
+#         primary: black
+#         scheme: default
+#     features:
+#         - navigation.tabs
+#         - navigation.top
+#         - content.tabs.link
+
+nav:
+    - Introduction: introduction.md
+    #getting_started.md
+    - 1. Getting Started:
+        - 1.1. Installation: installation.md
+        - 1.2. First Steps with bpm: first_step.md
+    - 2. Bpm Guide:
+        - 2.1. BPM Overview: why.md
+        - 2.2. Creating a New Package: init.md
+            # - 1.3. Working on an Existing Package: package.md
+            # - 1.4. Dependencies: package.md
+        - 2.5. Package Layout: package.md
+            # - 1.6. Cargo.toml vs Cargo.lock: package.md
+            # - 1.7. Tests: package.md
+            # - 1.8. Continuous Integration: package.md
+            # - 1.9. Cargo Home: package.md
+            # - 1.10. Build Cache: package.md
+            #overview_command.md
+    - 3. Bpm reference:
+        - blabla: blabla.md
+    # #overview_command.md
+    - 4. Bpm Commands:
+        - 4.1 General Commands:
+            - 4.1.1. bpm: commands/bpm.md
+            - 4.1.2. bpm help: commands/bpm_help.md
+            - 4.1.3. bpm version: commands/bpm_version.md
+            - 4.1.3. bpm plugins: commands/bpm_plugins.md
+            - 4.1.3. bpm config: commands/bpm_config.md
+        - 4.2. Build Commands:
+            - 4.2.1. bpm build: commands/bpm_build.md
+            - 4.2.2. bpm doc: commands/bpm_doc.md
+            - 4.2.3. bpm run: commands/bpm_run.md
+        - 4.3. Manifest Commands:
+            - 4.3.1. bpm add: commands/bpm_add.md
+            - 4.3.2. bpm add: commands/bpm_remove.md
+            - 4.3.3. bpm install: commands/bpm_install.md
+        - 4.4. Publishing Commands:
+            - 4.4.5. bpm publish: commands/bpm_publish.md
+# 4.4.1. cargo login
+# 4.4.2. cargo logout
+# 4.4.3. cargo owner
+# 4.4.4. cargo package
+
+# 4.4.6. cargo yank
+
+        - 4.5. Package Commands:
+            - 4.5.1. bpm init: commands/bpm_init.md
+            - 4.5.3. bpm new: commands/bpm_new.md
+
+# 4.4. Package Commands
+# 4.4.1. cargo init
+# 4.4.2. cargo install
+# 4.4.3. cargo new
+# 4.4.4. cargo search
+# 4.4.5. cargo uninstall
+
+# 4.4.2. cargo install
+# 4.4.4. cargo search
+# 4.4.5. cargo uninstall
+# 4.5. Publishing Commands
+# 4.5.1. cargo login
+# 4.5.2. cargo logout
+# 4.5.3. cargo owner
+# 4.5.4. cargo package
+# 4.5.5. cargo publish
+# 4.5.6. cargo yank
+# 4.3.2. cargo generate-lockfile
+# 4.3.3. cargo locate-project
+# 4.3.4. cargo metadata
+# 4.3.5. cargo pkgid
+# 4.3.6. cargo remove
+# 4.3.7. cargo tree
+# 4.3.8. cargo update
+# 4.3.9. cargo vendor
+# 4.3.10. cargo verify-project
+
+# 4.5. Publishing Commands
+# 4.5.1. cargo login
+# 4.5.2. cargo logout
+# 4.5.3. cargo owner
+# 4.5.4. cargo package
+# 4.5.5. cargo publish
+# 4.5.6. cargo yank
+
+
+# 4.2.1. cargo bench
+
+# 4.2.3. cargo check
+# 4.2.4. cargo clean
+
+# 4.2.6. cargo fetch
+# 4.2.7. cargo fix
+
+# 4.2.9. cargo rustc
+# 4.2.10. cargo rustdoc
+# 4.2.11. cargo test
+# 4.2.12. cargo report
+# 4.3. Manifest Commands
+# 4.3.1. cargo add
+# 4.3.2. cargo generate-lockfile
+# 4.3.3. cargo locate-project
+# 4.3.4. cargo metadata
+# 4.3.5. cargo pkgid
+# 4.3.6. cargo remove
+# 4.3.7. cargo tree
+# 4.3.8. cargo update
+# 4.3.9. cargo vendor
+# 4.3.10. cargo verify-project
+# 4.4. Package Commands
+# 4.4.1. cargo init
+# 4.4.2. cargo install
+# 4.4.3. cargo new
+# 4.4.4. cargo search
+# 4.4.5. cargo uninstall
+# 4.5. Publishing Commands
+# 4.5.1. cargo login
+# 4.5.2. cargo logout
+# 4.5.3. cargo owner
+# 4.5.4. cargo package
+# 4.5.5. cargo publish
+# 4.5.6. cargo yank
+# extra_css:
+#     - stylesheets/extra.css
+# extra:
+#     social:
+#         - icon: fontawesome/brands/twitter
+#           link: https://twitter.com/OrixTwil
+#         - icon: fontawesome/brands/youtube
+#           link: https://www.youtube.com/user/jede06600/videos
