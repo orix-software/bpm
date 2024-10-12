@@ -311,18 +311,18 @@ def build(args):
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
         if os.path.exists(file_to_compile_c):
-            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
-            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
-            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=True, text=True)
+            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
             shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
             print("Built : " + "build/bin/" + nom_sans_extension)
             return 0
 
         file_to_compile_s = repertoire + name + ".s"
         if os.path.exists(file_to_compile_s):
-            resultat = subprocess.run(['ca65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
-            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=True, text=True)
-            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=True, text=True)
+            resultat = subprocess.run(['ca65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+            resultat = subprocess.run(['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"], check=True, capture_output=False, text=True)
+            resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
             shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
             print("Built : " + "build/bin/" + nom_sans_extension)
             return 0
