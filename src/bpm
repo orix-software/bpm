@@ -18,15 +18,11 @@ main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
 symbs = [u'\u255a', u'\u2554', u'\u2569', u'\u2566', u'\u2560', u'\u2550', u'\u256c', u'\u2557', u'\u2551', u'\u255a', u'\u255d']
 
-#
-
 plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
     'orixsdk': 'Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)',
     'asm_bin_tpl': 'Assembly binary template for Orix'
     }
-
-#curl -X POST --data-binary "@requirements.txt" "http://api.orix.oric.org/v1/libtgz?version=2024.4&name=jede&key=5b5060526f28a3e8cd5b366f665dd83b"
 
 toml_file = "bpm.tml"
 user_folder = '.bpm/'
@@ -104,14 +100,26 @@ def download_file(url, local_filename, dependency_name):
     except requests.exceptions.RequestException as e:
         return 1
 
-def install_dependency_from_toml(toml_file):
+def install_dependency_from_toml(args):
+    if len(args) == 3:
+        if args[2] == "-h":
+            print("Install all dependencies\n")
+            print("Usage : bpm install\n")
+            print("\033[1;32mCommands:\033[0m")
+            print("    \033[1;36minstall\033[0m             install all dependencies for this project")
+
+            return 0
+
     try:
-        # Lire le fichier TOML
+    # Lire le fichier TOML
         with open(toml_file, 'r') as file:
             data = toml.load(file)
 
         if "dependencies" in data:
             dependencies = data["dependencies"]
+            if len(data["dependencies"]) == 0:
+                print("No dependencies")
+                return 0
             if len(dependencies) != 0:
                 print("Dependencies:")
                 for key, value in dependencies.items():
@@ -169,7 +177,19 @@ def remove_dependency_from_toml(file_path, dependency_name):
     except toml.TomlDecodeError:
         print(f"Impossible to read '{file_path}'.")
 
-def init_toml(file_path):
+def init_toml(args):
+    if len(args) == 3:
+        if args[2] == '-h':
+            print("Init project\n")
+            print("Usage : bpm init\n")
+            return
+            #print("\033[1;32mCommands:\033[0m")
+            #print("    \033[1;36minstall\033[0m             install plugin")
+
+    if os.path.exists(toml_file):
+        print("Already initialized")
+        return 0
+
     current_directory = os.getcwd()
     last_directory = os.path.basename(os.path.normpath(current_directory))
     now = datetime.now()
@@ -287,6 +307,7 @@ def build(args):
     with open(toml_file, 'r') as file:
         data = toml.load(file)
 
+    codetype = ""
     if "package" in data:
         package = data["package"]
         for key, value in package.items():
@@ -367,10 +388,27 @@ def usage():
     print("    \033[1;36mconfig      \033[0m    Manage config")
 
 def plugins(args):
-    if len(sys.argv) >= 3:
-        if sys.argv[2] == "help":
-            print("install : md2hlp/orixsdk/asm_bin_tpl")
+    if len(args) == 3:
+        if args[2] == "-h":
+            print("Manage plugins\n")
+            print("Usage : bpm plugins [command]\n")
+            print("\033[1;32mCommands:\033[0m")
+            print("    \033[1;36minstall\033[0m             install plugin")
 
+            return 0
+
+    if len(args) == 4:
+        if args[3] == "-h":
+            print("Manage plugins\n")
+            print("Usage : bpm plugins install [plugin_name]\n")
+            print("\033[1;32mAvailables plugins:\033[0m")
+
+            for cle, valeur in plugins_description.items():
+                print(f"\033[1;36m{cle}\033[0m: {valeur}")
+
+            return 0
+
+    if len(sys.argv) >= 3:
         if sys.argv[2] == "install":
             if len(sys.argv) == 4:
                 if sys.argv[3] == "orixsdk":
@@ -387,7 +425,7 @@ def plugins(args):
             print("Unknown parameter")
 
     if len(sys.argv) == 2:
-        print("Use 'bpm plugins help' for plugins help")
+        print("Use 'bpm plugins -h' for 'plugins' help")
         for cle, valeur in plugins_description.items():
             print(f"\033[1;36m{cle}\033[0m: {valeur}", end="")
             if cle == "md2hlp":
@@ -444,46 +482,120 @@ def print_frame(str_to_display, sep):
     print(symbs[10])
 
 def manage_config(args):
-    print("Use 'bpm config help' for help")
-    if len(sys.argv) > 2:
-        if sys.argv[2] == "help":
-            print("bpm config set main oricutron_path /path")
-            print("bpm config set project name /path")
-            print("bpm config set project codetype [lib|bin]")
+
+    valid_parameters_main = ['oricutron_path' , 'oricutron_replace_autoboot_run']
+    valid_parameters_main_desc = ['                  Set Oricutron path for main (general behavior), value must be path of Oricutron binary with filename binary in the path',
+                                  '  Set False or True. False will not modify /etc/autoboot in Oricutron']
+
+    valid_parameters_main_verify = ['path', 'boolean']
+
+    valid_parameters_project = ['name',  'codetype', 'oricutron_replace_autoboot_run']
+    valid_parameters_project_desc = ['                            Name of the project',
+                                     '                        Code type of the project (lib is a library, bin a command line [lib|bin]',
+                                     '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed']
+    valid_parameters_project_verify = ['string', 'values=bin,lib' ,'boolean']
+
+    # bpm set main -h
+    if len(args) == 5:
+        if args[4] == '-h' and args[2] == 'set' and args[3] == 'main':
+            # bpm set main -h
+            print("Set main config parameters\n")
+            print("Usage : bpm config set main parameter value\n")
+            print("\033[1;32mParameters\033[0m")
+            i = 0
+            for key in valid_parameters_main:
+                print(f"    \033[1;36m{key}\033[0m{valid_parameters_main_desc[i]}")
+                i = i + 1
             return 0
-        # bpm config set
-        if sys.argv[2] == "main":
-            if sys.argv[3] == "set":
-                if len(sys.argv) == 6:
-                    if sys.argv[4] == "oricutron_path":
-                        home_directory = os.path.expanduser('~')
-                        # Nom du répertoire à créer
-                        new_directory = f"{user_folder}/bpm"
-                        # Chemin complet du nouveau répertoire
-                        directory_path = home_directory + "/" + new_directory
-                        modify_local_toml_key(directory_path, sys.argv[5], 'main', "oricutron_path")
-                        return
-                    else:
-                        print("Unknown key")
-                else:
-                    print("Incorrect number of parameter")
 
-        if sys.argv[2] == "project":
-            if sys.argv[3] == "set":
-                if len(sys.argv) == 6:
-                    if sys.argv[4] == "name":
-                        modify_local_toml_key('bpm.tml', sys.argv[5], 'package', "name")
-                        return
-                    elif sys.argv[4] == "codetype":
-                        if sys.argv[4] == "lib" or sys.argv[4] == "bin":
-                            modify_local_toml_key('bpm.tml', sys.argv[5], 'package', "codetype")
-                            return
-                    else:
-                        print("Unknown key")
-                else:
-                    print("Incorrect number of parameter")
+    if len(args) == 5:
+        if args[4] == '-h' and args[2] == 'set' and args[3] == 'project':
+            print("Manage config\n")
+            print("Usage : bpm config set project parameter value\n")
+            print("\033[1;32mParameters\033[0m")
+            i = 0
+            for key in valid_parameters_project:
+                print(f"    \033[1;36m{key}\033[0m{valid_parameters_project_desc[i]}")
+                i = i + 1
+            return 0
 
-    elif len(sys.argv) == 2:
+    # bpm set -h
+    if len(args) == 4:
+        if args[3] == '-h' and args[2] == 'set':
+            print("Manage config\n")
+            print("Usage : bpm config set [command]\n")
+            print("\033[1;32mCommands:\033[0m")
+            print("    \033[1;36mmain\033[0m             set value for 'main' config (use -h after set for 'main' help)")
+            print("    \033[1;36mproject\033[0m          set value for 'project' config (use -h after set for 'project' help)")
+            return 0
+
+    if len(args) == 3:
+        if args[2] == '-h':
+            print("Manage config\n")
+            print("Usage : bpm config [command]\n")
+            print("\033[1;32mCommands:\033[0m")
+            print("    \033[1;36mset\033[0m             set value for main config or project config (use -h after set for 'set' help)")
+            return 0
+
+
+    if len(args) == 5:
+        if args[4] not in valid_parameters_project and args[3] == 'project':
+            print("'" + args[4] + "' is not a parameter allowed for '" + args[3] + "'")
+            return 1
+
+        if args[4] not in valid_parameters_main  and args[3] == 'main':
+            print("'" + args[4] + "' is not a parameter allowed for '" + args[3] + "'")
+            return 1
+
+        if args[2] == 'set' and args[3] == 'main':
+            print("Missing value for parameter '" + args[4] + "'")
+            return
+        if args[2] == 'set' and args[3] == 'project':
+            print("Missing value for parameter '" + args[4] + "'")
+            return
+
+    if len(args) == 6:
+        if args[2] == 'set' and args[3] == 'main':
+            if args[4] in valid_parameters_main:
+                verify_position = valid_parameters_main.index(args[4])
+                if valid_parameters_main_verify[verify_position] == 'boolean':
+                    if args[5] != 'True' and args[5] != 'False':
+                        print(f"Error {args[4]} requires True or False")
+                        return
+
+                home_directory = os.path.expanduser('~')
+
+                new_directory = f"{user_folder}/bpm"
+                # Chemin complet du nouveau répertoire
+                directory_path = home_directory + "/" + new_directory
+
+                print("Updating 'main' config value ...")
+                modify_local_toml_key(directory_path, args[5], 'main', args[4])
+                return
+            else:
+                print(f"Unknown key '{args[4]}' for 'main' config")
+                return
+
+        if args[2] == 'set' and args[3] == 'project':
+            verify_position = valid_parameters_project.index(args[4])
+            if args[4] in valid_parameters_project:
+                if valid_parameters_project_verify[verify_position] == 'boolean':
+                    if args[5] != 'True' and args[5] != 'False':
+                        print(f"Error {args[4]} requires True or False")
+                        return
+                print("Updating 'project' config value ...")
+                modify_local_toml_key('bpm.tml', args[5], 'package', args[4])
+                return
+            else:
+                print(f"Unknown key '{args[4]}' for 'project' config")
+                return
+
+    if len(sys.argv) == 2:
+
+        if not os.path.exists("bpm.tml"):
+            print("bpm.tml does not exist. Initialize first")
+            return 1
+
         home_directory = os.path.expanduser('~')
 
         # Nom du répertoire à créer
@@ -522,7 +634,6 @@ def publish():
     fichier_chemin="requirements.txt"
     url = "http://api.orix.oric.org/v1/libtgz?version=2024.4&name=jede&key=" + publish_key
 
-
     with open(fichier_chemin, 'rb') as fichier:
         fichiers = {'file': fichier}  # Préparer le fichier pour l'envoi
 
@@ -554,8 +665,6 @@ def install_asm_bin_tpl():
             with zipfile.ZipFile(BytesIO(response.content)) as z:
                 z.extractall(parent_folder)  # Décompresser dans ~/.bpm/tpl/
             print("Installed")
-
-
 
         else:
             print("Erreur lors du téléchargement. Code de statut:", response.status_code)
@@ -630,7 +739,15 @@ def build_doc(toml_file):
         install_md2hlp()
 
 def run_bin(args):
-    # Generate submit file
+    bpm_tmp_folder = "bpmtmp/"
+
+    if len(sys.argv) == 3:
+        if sys.argv[2] == '-h':
+            print("Run project\n")
+            print("Usage : bpm run\n")
+            return
+            #print("\033[1;32mCommands:\033[0m")
+            #print("    \033[1;36minstall\033[0m             install plugin")
 
     try:
         # Lire le fichier TOML
@@ -653,14 +770,18 @@ def run_bin(args):
                         with open("bpm.tml", 'r') as file:
                             data = toml.load(file)
 
+                        oricutron_replace_autoboot_run = "True"
                         if "package" in data:
                             package = data["package"]
                             print(data)
                             for key, value_field in package.items():
                                if key == "name":
                                    name_bin = value_field
-                                   print("###")
-                                   print(name_bin)
+                                   break
+                            package = data["package"]
+                            for key, value_field in package.items():
+                               if key == "oricutron_replace_autoboot_run":
+                                   oricutron_replace_autoboot_run = value_field
                                    break
 
                         else:
@@ -674,12 +795,16 @@ def run_bin(args):
                         print(path_oricutron + "/sdcard/bin/")
                         shutil.copy("build/bin/" + name_bin, path_oricutron + "/sdcard/BIN/" + name_bin.upper())
 
-
+                        old_autoboot_exists = False
                         # Generate submit file
-                        content = f"#!/bin/submit\n{name_bin}\n"
-
-                        with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
-                            file.write(content)
+                        print(f" oricutron_replace_autoboot_run = {oricutron_replace_autoboot_run}")
+                        if oricutron_replace_autoboot_run == "True":
+                            content = f"#!/bin/submit\n{name_bin}\n"
+                            if os.path.exists(path_oricutron + "/sdcard/ETC/AUTOBOOT"):
+                                shutil.copy(path_oricutron + "/sdcard/ETC/AUTOBOOT", bpm_tmp_folder + " AUTOBOOT_OLD")
+                                old_autoboot_exists = True
+                            with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
+                                file.write(content)
                         os.chdir(path_oricutron)
 
                         subprocess.run([value], check=True)
@@ -688,6 +813,9 @@ def run_bin(args):
                     finally:
                         # Revenir au répertoire initial
                         os.chdir(current_pwd)
+                        if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
+                            print("Restore old autoboot")
+                            shutil.copy(bpm_tmp_folder + " AUTOBOOT_OLD", path_oricutron + "/sdcard/ETC/AUTOBOOT")
 
     except FileNotFoundError:
         print(f"'{toml_file}' not found")
@@ -731,26 +859,27 @@ def main():
         else:
             print("remove needs an argument")
     elif action == 'install':
-        install_dependency_from_toml(toml_file)
+        install_dependency_from_toml(sys.argv)
     elif action == 'search':
         to_find = ""
         if len(sys.argv) == 3:
             to_find = sys.argv[2]
         search_lib(to_find)
     elif action == 'new':
-        if not os.path.exists(toml_file):
-            init_toml(toml_file)
-        else:
-            print("Already initialized")
+        init_toml(sys.argv)
     elif action == 'plugins':
         plugins(sys.argv)
     elif action == 'config':
         manage_config(sys.argv)
     elif action == 'build':
+        if len(sys.argv) == 3:
+            if sys.argv[2] == '-h':
+                print("bpm build")
+                return 0
         build(sys.argv)
     elif action == 'init':
         if not os.path.exists(toml_file):
-            init_toml(toml_file)
+            init_toml(sys.argv)
         else:
             print("Already initialized")
     elif action == 'publish':
