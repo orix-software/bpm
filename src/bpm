@@ -13,6 +13,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
+VERSION_BPM = "2024.4"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -207,11 +208,24 @@ def init_toml(args):
         with open(".gitignore", 'w') as file:
             file.write( content)
 
+    #oricutron_replace_autoboot_run
+
+    main_config_data = read_main_config_file()
+
+    oricutron_replace_autoboot_run_for_project = ""
+    if "main" in main_config_data:
+        main_properties = main_config_data["main"]
+        for key, value in main_properties.items():
+            if key == "oricutron_replace_autoboot_run":
+                oricutron_replace_autoboot_run_for_project = "oricutron_replace_autoboot_run = \"" + value + "\"\n"
+                break
+
     if not os.path.exists("bpm.tml"):
         print("Init bpm.tml")
         """Crée un fichier TOML avec des valeurs par défaut."""
         content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + str(current_year) + "." + str(current_trimester) + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
         content = content + "readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"bin\"\n"
+        content = content + oricutron_replace_autoboot_run_for_project
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
             file.write(content)
@@ -233,6 +247,64 @@ def init_toml(args):
             file.write(content)
     print(f"initialized")
 
+def check_update_bpm():
+    # Function which test if bpm can be updated
+
+    home_directory = os.path.expanduser('~')
+    directory_path = home_directory + "/" + user_folder
+    today = datetime.today()
+
+    # # Formater la date au format YYYY-MM-DD
+    today_format = today.strftime("%Y-%m-%d")
+
+    main_config_data = read_main_config_file()
+
+    if "main" in main_config_data:
+        main_properties = main_config_data["main"]
+        main_properties.setdefault("last_check_update", "0000-00-00")
+        main_properties.setdefault("bpm_version", VERSION_BPM)
+
+    if today_format == main_properties["last_check_update"]:
+        return 0
+
+    print("Checking if an update is available (Last check : " + main_config_data["main"]["last_check_update"] + ") ...\n")
+    get_version_bpm = "https://github.com/orix-software/bpm/blob/main/VERSION"
+    try:
+        response = requests.get(get_version_bpm)
+        response.raise_for_status()  # Vérifie si la requête a réussi
+        online_version = response.content.decode('utf-8')
+
+        if online_version.replace("\n", "") != main_config_data["main"]["bpm_version"]:
+            print("Not the last version, needs to update")
+            answer = input("A new version of bpm is available, if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
+    except requests.exceptions.RequestException as e:
+        print("Can not check if a new version of 'bpm' is not available")
+        return 1
+    main_properties["last_check_update"] = today_format
+
+    if answer == "update":
+        get_src_bpm = "https://github.com/orix-software/bpm/blob/main/src/bpm"
+        try:
+            response = requests.get(get_src_bpm)
+            src_code = response.content.decode('utf-8')
+            current_bpm_path = os.path.abspath(__file__)
+            with open(current_bpm_path, 'w') as fichier:
+                fichier.write(src_code)
+             main_config_data["main"]["bpm_version"] = online_version
+
+        except requests.exceptions.RequestException as e:
+            print("Can not update")
+        return 1
+
+    try:
+        # Update file
+        with open(directory_path + "/bpm", 'w') as fichier:
+            fichier.write( "[main]\n")
+            for key, value in main_properties.items():
+                fichier.write(f"{key} = \"{value}\"\n")
+    except FileNotFoundError:
+        print(f"'{main_config_path}' not found")
+
 def verify_installed():
     home_directory = os.path.expanduser('~')
     directory_path = home_directory + "/" + user_folder
@@ -241,12 +313,16 @@ def verify_installed():
         os.makedirs(directory_path, mode=0o755, exist_ok=True)
     if not os.path.isfile(directory_path + "/bpm"):
         # Créer le répertoire
-        str_init = "[main]\noricutron_path = \"oricutron\"\n"
+        str_init = "[main]\noricutron_path = \"oricutron\"\noricutron_replace_autoboot_run = \"True\"\n"
+        str_init = str_init + "bpm_version = \"" + VERSION_BPM + "\"\n"
+        str_init = str_init + "last_check_update = \"0000-00-00\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
 
 def search_lib(search_word: str):
+
     """Télécharge un fichier depuis une URL"""
+
     try:
         response = requests.get("http://repo.orix.oric.org/dists/official/tgz/6502/listtgz.txt")
         response.raise_for_status()  # Vérifie si la requête a réussi
@@ -449,10 +525,6 @@ def plugins(args):
                 else:
                     print(" \033[1;32m[Installed]\033[0m")
 
-
-
-
-
 def modify_local_toml_key(toml_file, new_name, section, property):
     # Lire le fichier TOML
     with open(toml_file, 'r') as fichier:
@@ -591,7 +663,6 @@ def manage_config(args):
                 return
 
     if len(sys.argv) == 2:
-
         if not os.path.exists("bpm.tml"):
             print("bpm.tml does not exist. Initialize first")
             return 1
@@ -738,6 +809,17 @@ def build_doc(toml_file):
     if not os.path.exists(file_path):
         install_md2hlp()
 
+def read_main_config_file():
+    # Returns array of the content of main config file
+    try:
+        # Lire le fichier TOML
+        with open(main_config_path, 'r') as file:
+            data = toml.load(file)
+        return data
+    except FileNotFoundError:
+        print(f"'{toml_file}' not found")
+
+
 def run_bin(args):
     bpm_tmp_folder = "bpmtmp/"
 
@@ -746,8 +828,6 @@ def run_bin(args):
             print("Run project\n")
             print("Usage : bpm run\n")
             return
-            #print("\033[1;32mCommands:\033[0m")
-            #print("    \033[1;36minstall\033[0m             install plugin")
 
     try:
         # Lire le fichier TOML
@@ -797,7 +877,7 @@ def run_bin(args):
 
                         old_autoboot_exists = False
                         # Generate submit file
-                        print(f" oricutron_replace_autoboot_run = {oricutron_replace_autoboot_run}")
+
                         if oricutron_replace_autoboot_run == "True":
                             content = f"#!/bin/submit\n{name_bin}\n"
                             if os.path.exists(path_oricutron + "/sdcard/ETC/AUTOBOOT"):
@@ -815,14 +895,15 @@ def run_bin(args):
                         os.chdir(current_pwd)
                         if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
                             print("Restore old autoboot")
-                            shutil.copy(bpm_tmp_folder + " AUTOBOOT_OLD", path_oricutron + "/sdcard/ETC/AUTOBOOT")
+                            shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", path_oricutron + "/sdcard/ETC/AUTOBOOT")
 
     except FileNotFoundError:
         print(f"'{toml_file}' not found")
 
 def main():
-    # Vérifier si l'argument 'list' est passé en ligne de commande
     verify_installed()
+
+    check_update_bpm()
 
     if len(sys.argv) == 1:
         usage()
@@ -840,7 +921,7 @@ def main():
         build(sys.argv)
         run_bin(sys.argv)
     elif action == '-V':
-        print("2024.4")
+        print(VERSION_BPM)
     elif action == 'doc' or action == 'd':
         build_doc(toml_file)
     elif action == 'list':
@@ -861,6 +942,12 @@ def main():
     elif action == 'install':
         install_dependency_from_toml(sys.argv)
     elif action == 'search':
+        if len(sys.argv) == 3:
+            if sys.argv[2] == '-h':
+                print("Search lib\n")
+                print("Usage : bpm search [libname]\n")
+                return
+
         to_find = ""
         if len(sys.argv) == 3:
             to_find = sys.argv[2]
