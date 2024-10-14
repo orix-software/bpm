@@ -250,8 +250,7 @@ def init_toml(args):
 def check_update_bpm():
     # Function which test if bpm can be updated
 
-    home_directory = os.path.expanduser('~')
-    directory_path = home_directory + "/" + user_folder
+
     today = datetime.today()
 
     # # Formater la date au format YYYY-MM-DD
@@ -302,8 +301,10 @@ def check_update_bpm():
 
         except requests.exceptions.RequestException as e:
             print("Can not update")
-        return 1
+            return 1
 
+    home_directory = os.path.expanduser('~')
+    directory_path = home_directory + "/" + user_folder
     try:
         # Update file
         with open(directory_path + "/bpm", 'w') as fichier:
