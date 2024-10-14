@@ -13,7 +13,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.3"
+VERSION_BPM = "2024.4.4"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -297,7 +297,7 @@ def check_update_bpm():
             except Exception as e:
                 print(f"Une erreur est survenue lors de l'écriture : {e}")
             finally:
-                main_config_data["main"]["bpm_version"] = online_version
+                main_properties["main"]["bpm_version"] = online_version
                 main_properties["last_check_update"] = today_format
 
         except requests.exceptions.RequestException as e:
