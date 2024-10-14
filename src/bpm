@@ -13,7 +13,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.1"
+VERSION_BPM = "2024.4.2"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -290,7 +290,7 @@ def check_update_bpm():
             current_bpm_path = os.path.abspath(__file__)
             with open(current_bpm_path, 'w') as fichier:
                 fichier.write(src_code)
-             main_config_data["main"]["bpm_version"] = online_version
+            main_config_data["main"]["bpm_version"] = online_version
 
         except requests.exceptions.RequestException as e:
             print("Can not update")
