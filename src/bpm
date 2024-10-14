@@ -288,6 +288,7 @@ def check_update_bpm():
             response = requests.get(get_src_bpm)
             src_code = response.content.decode('utf-8')
             current_bpm_path = os.path.abspath(__file__)
+            print("Write " + current_bpm_path)
             with open(current_bpm_path, 'w') as fichier:
                 fichier.write(src_code)
             main_config_data["main"]["bpm_version"] = online_version
