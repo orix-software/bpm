@@ -13,7 +13,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.2"
+VERSION_BPM = "2024.4.3"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -268,7 +268,7 @@ def check_update_bpm():
         return 0
 
     print("Checking if an update is available (Last check : " + main_config_data["main"]["last_check_update"] + ") ...\n")
-    get_version_bpm = "https://github.com/orix-software/bpm/blob/main/VERSION"
+    get_version_bpm = "https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/VERSION"
     try:
         response = requests.get(get_version_bpm)
         response.raise_for_status()  # Vérifie si la requête a réussi
@@ -276,14 +276,14 @@ def check_update_bpm():
 
         if online_version.replace("\n", "") != main_config_data["main"]["bpm_version"]:
             print("Not the last version, needs to update")
-            answer = input("A new version of bpm is available, if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
+            answer = input(f"A new version of bpm is available : {online_version}, if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
     except requests.exceptions.RequestException as e:
         print("Can not check if a new version of 'bpm' is not available")
         return 1
     main_properties["last_check_update"] = today_format
 
     if answer == "update":
-        get_src_bpm = "https://github.com/orix-software/bpm/blob/main/src/bpm"
+        get_src_bpm = "https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/src/bpm"
         try:
             response = requests.get(get_src_bpm)
             src_code = response.content.decode('utf-8')
