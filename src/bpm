@@ -289,8 +289,12 @@ def check_update_bpm():
             src_code = response.content.decode('utf-8')
             current_bpm_path = os.path.abspath(__file__)
             print("Write " + current_bpm_path)
-            with open(current_bpm_path, 'w') as fichier:
-                fichier.write(src_code)
+            try:
+                with open(current_bpm_path, 'w') as fichier:
+                    fichier.write(src_code)
+            # Afficher toutes les exceptions qui se produisent
+            except Exception as e:
+                print(f"Une erreur est survenue lors de l'écriture : {e}")
             main_config_data["main"]["bpm_version"] = online_version
 
         except requests.exceptions.RequestException as e:
