@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import tarfile
 import toml
 import sys
 import requests
@@ -13,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.5"
+VERSION_BPM = "2024.4.6"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -44,6 +45,19 @@ def decompress_and_extract(filename, dependency_name):
 
     except Exception as e:
         print(f"Decrunching error : {e}")
+
+def read_local_config_file():
+    file_path = "bpm.tml"
+    try:
+        # Lire le fichier TOML
+        with open(file_path, 'r') as file:
+            data = toml.load(file)
+        return data
+
+    except FileNotFoundError:
+        print(f"'{file_path}' not found")
+    except toml.TomlDecodeError:
+        print(f"Impossible to read '{file_path}'.")
 
 def add_dependency_to_toml(file_path, dependency_str):
     """Ajoute une nouvelle dépendance dans la section 'dependency' du fichier TOML"""
@@ -249,8 +263,7 @@ def init_toml(args):
 
 def check_update_bpm():
     # Function which test if bpm can be updated
-
-
+    answer = ""
     today = datetime.today()
 
     # # Formater la date au format YYYY-MM-DD
@@ -297,7 +310,6 @@ def check_update_bpm():
             # Afficher toutes les exceptions qui se produisent
             except Exception as e:
                 print(f"Une erreur est survenue lors de l'écriture : {e}")
-
 
         except requests.exceptions.RequestException as e:
             print("Can not update")
@@ -371,6 +383,10 @@ def search_lib(search_word: str):
         return 0
     except requests.exceptions.RequestException as e:
         return 1
+
+def build_package(source_dir, output_filename):
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 def lister_fichiers_s(repertoire):
     fichiers_s = [fichier for fichier in os.listdir(repertoire) if fichier.endswith('.s')]
@@ -471,6 +487,7 @@ def usage():
     print("    \033[1;36mpublish     \033[0m    Publish lib")
     print("    \033[1;36mplugins     \033[0m    Manage plugins")
     print("    \033[1;36mconfig      \033[0m    Manage config")
+    print("    \033[1;36mpackage     \033[0m    Manage package")
 
 def plugins(args):
     if len(args) == 3:
@@ -918,7 +935,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', 'publish', 'run']
+    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', 'package', 'publish', 'run']
     if sys.argv[1] not in valid_commands:
 
         usage()
@@ -956,11 +973,13 @@ def main():
                 print("Search lib\n")
                 print("Usage : bpm search [libname]\n")
                 return
-
         to_find = ""
         if len(sys.argv) == 3:
             to_find = sys.argv[2]
         search_lib(to_find)
+    elif action == 'package':
+        data = read_local_config_file()
+        build_package("build", data["name"])
     elif action == 'new':
         init_toml(sys.argv)
     elif action == 'plugins':
