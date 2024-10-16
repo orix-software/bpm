@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.6"
+VERSION_BPM = "2024.4.7"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -496,7 +496,6 @@ def plugins(args):
             print("Usage : bpm plugins [command]\n")
             print("\033[1;32mCommands:\033[0m")
             print("    \033[1;36minstall\033[0m             install plugin")
-
             return 0
 
     if len(args) == 4:
@@ -635,7 +634,6 @@ def manage_config(args):
             print("    \033[1;36mset\033[0m             set value for main config or project config (use -h after set for 'set' help)")
             return 0
 
-
     if len(args) == 5:
         if args[4] not in valid_parameters_project and args[3] == 'project':
             print("'" + args[4] + "' is not a parameter allowed for '" + args[3] + "'")
@@ -721,22 +719,78 @@ def manage_config(args):
             print(f"{key}={value}")
 
 
-def publish():
+def publish(filename: str, args, mode):
+    repo = "alpha"
+    if len(args) == 3:
+        if mode == "publish":
+            if args[2] == "-h":
+                print("Manage publish\n")
+                print("Usage : bpm publish [OPTIONS]\n")
+                print("\033[1;32mOptions:\033[0m")
+                print("    \033[1;36m--alpha\033[0m          Publish in alpha repo (default)")
+                print("    \033[1;36m--official\033[0m       Publish in official repo")
+                print("    \033[1;36m--personnal\033[0m      Publish in personnal (stored in login associated to the the BPM_PUBLISH_KEY) repo")
+                return 0
+        elif mode == "unpublish":
+            if args[2] == "-h":
+                print("Unpublish a pacjage\n")
+                print("Usage : bpm unpublish [OPTIONS]\n")
+                print("\033[1;32mOptions:\033[0m")
+                print("    \033[1;36m--alpha\033[0m          Unpublish from alpha repo (default)")
+                print("    \033[1;36m--official\033[0m       Unpublish from official repo")
+                print("    \033[1;36m--personnal\033[0m      Unpublish from personnal (stored in login associated to the the BPM_PUBLISH_KEY) repo")
+                return 0
+        if args[2] == "--alpha":
+            repo = "alpha"
+        elif args[2] == "--official":
+            repo = "offical"
+        elif args[2] == "--personnal":
+            repo = "personnal"
+        else:
+            print("Unknown parameter")
+
+    conf = read_local_config_file()
     publish_key = os.getenv('BPM_PUBLISH_KEY')
+    name = conf["package"]["name"]
+    version = conf["package"]["version"]
+    cpu = conf["package"]["cpu"]
 
     if publish_key is None:
         print("BPM_PUBLISH_KEY is not defined")
         return 1
-    #curl -X POST --data-binary "@requirements.txt" "http://api.orix.oric.org/v1/libtgz?version=2024.4&name=jede&key=X"
-    fichier_chemin="requirements.txt"
-    url = "http://api.orix.oric.org/v1/libtgz?version=2024.4&name=jede&key=" + publish_key
 
-    with open(fichier_chemin, 'rb') as fichier:
-        fichiers = {'file': fichier}  # Préparer le fichier pour l'envoi
+    if mode == "publish":
+        action = "add"
 
+    if mode == "unpublish":
+        action = "delete"
+
+    url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&action={action}&key=" + publish_key
+
+    if mode == "publish":
+        with open(filename, 'rb') as fichier:
+            fichiers = {filename: fichier}  # Préparer le fichier pour l'envoi
+
+            # Effectuer la requête POST
+            response = requests.post(url, files=fichiers)
+            print(response.content)
+            # Vérifier si la requête a réussi
+            if response.status_code == 200:
+                print("Success!")
+            else:
+                print(f"Failed. Error code : {response.status_code}")
+                print(f"API response: {response.text}")
+
+    if mode == "unpublish":
         # Effectuer la requête POST
-        print(fichiers)
-        response = requests.post(url, files=fichiers)
+        response = requests.post(url)
+        print(response.content)
+        # Vérifier si la requête a réussi
+        if response.status_code == 200:
+            print("Success!")
+        else:
+            print(f"Failed. Error code : {response.status_code}")
+            print(f"API response: {response.text}")
 
 def install_asm_bin_tpl():
     # Chatgpt:
@@ -935,7 +989,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', 'package', 'publish', 'run']
+    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', 'package', 'publish', 'run', 'unpublish']
     if sys.argv[1] not in valid_commands:
 
         usage()
@@ -979,7 +1033,7 @@ def main():
         search_lib(to_find)
     elif action == 'package':
         data = read_local_config_file()
-        build_package("build", data["name"])
+        build_package("build", data["package"]["name"] + ".tgz")
     elif action == 'new':
         init_toml(sys.argv)
     elif action == 'plugins':
@@ -998,8 +1052,12 @@ def main():
         else:
             print("Already initialized")
     elif action == 'publish':
-        publish()
-
+        data = read_local_config_file()
+        build_package("build", data["package"]["name"] + ".tgz")
+        publish(data["package"]["name"] + ".tgz", sys.argv, "publish")
+    elif action == 'unpublish':
+        data = read_local_config_file()
+        publish(data["package"]["name"] + ".tgz", sys.argv, "unpublish")
     # Lire et afficher les dépendances
 
 
