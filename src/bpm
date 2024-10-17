@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.9"
+VERSION_BPM = "2024.4.10"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -1120,6 +1120,7 @@ def main():
         search_lib(to_find)
     elif action == 'package':
         data = read_local_config_file()
+        build_doc(toml_file)
         build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
     elif action == 'new':
         init_toml(sys.argv)
@@ -1140,6 +1141,7 @@ def main():
             print("Already initialized")
     elif action == 'publish':
         data = read_local_config_file()
+        build_doc(toml_file)
         build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
         publish(data["package"]["name"] + ".tgz", sys.argv, "publish")
     elif action == 'unpublish':
