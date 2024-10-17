@@ -287,9 +287,9 @@ def check_update_bpm():
         online_version = response.content.decode('utf-8')
 
         if online_version.replace("\n", "") != main_config_data["main"]["bpm_version"]:
-            print("Not the last version, needs to update")
+
             current_version = main_config_data["main"]["bpm_version"]
-            answer = input(f"A new version of bpm is available.\nCurrent version : {current_version}, Available version : {online_version}.\n if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
+            answer = input(f"A new version of bpm is available.\nCurrent version : {current_version}, Available version : \033[1;36m{online_version}\033[0m .\n if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
     except requests.exceptions.RequestException as e:
         print("Can not check if a new version of 'bpm' is not available")
         return 1
