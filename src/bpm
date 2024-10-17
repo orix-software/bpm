@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.8"
+VERSION_BPM = "2024.4.9"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -24,6 +24,12 @@ plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
     'orixsdk': 'Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)',
     'asm_bin_tpl': 'Assembly binary template for Orix'
+    }
+
+plugins_installed = {
+    'md2hlp': False,
+    'orixsdk': False,
+    'asm_bin_tpl': False
     }
 
 toml_file = "bpm.tml"
@@ -384,13 +390,41 @@ def search_lib(search_word: str):
     except requests.exceptions.RequestException as e:
         return 1
 
-def build_package(source_dir, output_filename):
+def build_package(source_dir, output_filename, name, version):
+    if not os.path.exists(f"build/etc/bpm/{name}/{version}"):
+        # Créer le répertoire
+        os.makedirs(f"build/etc/bpm/{name}/{version}", mode=0o755, exist_ok=True)
+    if not os.path.exists("README.md"):
+        shutil.copy("README.md", f"build/etc/bpm/{name}/{version}/README.md")
+    shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tpl")
     with tarfile.open(output_filename, "w:gz") as tar:
         tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 def lister_fichiers_s(repertoire):
     fichiers_s = [fichier for fichier in os.listdir(repertoire) if fichier.endswith('.s')]
     return fichiers_s
+
+
+def generate_lib_for_bin(name: str):
+
+    for fichier in os.listdir("src/"):
+        assembly = False
+        # Vérifier si le fichier a l'extension .md
+        if fichier.endswith(".s") or fichier.endswith(".c") or fichier.endswith(".asm"):
+            if  os.path.exists("src/" + name + ".s"):
+                assembly = True
+                fichier_o = fichier.replace(".s", ".o")
+            else:
+                fichier_o = fichier.replace(".c", ".o")
+
+            if assembly == True and fichier != name + ".s":
+                resultat = subprocess.run(['ca65', '-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+
+            if assembly == False and fichier != name + ".c":
+                resultat = subprocess.run(['cc65', '-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+
 
 def build(args):
     repertoire = 'src/'
@@ -431,6 +465,9 @@ def build(args):
 
         if not os.path.exists(reloc_bin_path):
             print("Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
+
+
+        generate_lib_for_bin(name)
 
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
@@ -481,6 +518,7 @@ def usage():
     print("    \033[1;36mnew\033[0m             Init a new orix package")
     print("    \033[1;36minit\033[0m            Init an orix package in an existing directory")
     print("    \033[1;36mbuild\033[0m           Build")
+    print("    \033[1;36mdoc\033[0m             Build docs")
     print("    \033[1;36mrun\033[0m             Run")
     print("    \033[1;36mlist\033[0m            List packages")
     print("    \033[1;36madd         \033[0m    Add dependencies to a manifest file")
@@ -492,6 +530,52 @@ def usage():
     print("    \033[1;36mplugins     \033[0m    Manage plugins")
     print("    \033[1;36mconfig      \033[0m    Manage config")
     print("    \033[1;36mpackage     \033[0m    Manage package")
+
+def plugins_detect(mode):
+    for cle, valeur in plugins_description.items():
+        if mode == "display":
+            print(f"\033[1;36m{cle}\033[0m: {valeur}", end="")
+
+        if cle == "md2hlp":
+            file_path = os.path.join(folder_path_md2hlp , "md2hlp-master/")
+            if not os.path.exists(file_path):
+                if mode == "display":
+                    print(" \033[1;31m[Uninstalled]\033[0m")
+                else:
+                    plugins_installed['md2hlp'] = False
+            else:
+                if mode == "display":
+                    print(" \033[1;32m[Installed]\033[0m")
+                else:
+                    plugins_installed['md2hlp'] = True
+
+        if cle == "orixsdk":
+            folder_path_orixsdk = os.path.expanduser("~/.bpm/orixsdk/")
+            file_path = os.path.join(folder_path_orixsdk , "")
+            if not os.path.exists(file_path):
+                if mode == "display":
+                    print(" \033[1;31m[Uninstalled]\033[0m")
+                else:
+                    plugins_installed['md2hlp'] = False
+            else:
+                if mode == "display":
+                    print(" \033[1;32m[Installed]\033[0m")
+                else:
+                    plugins_installed['md2hlp'] = True
+
+        if cle == "asm_bin_tpl":
+            folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_bin_tpl/")
+            file_path = os.path.join(folder_path_asm_bin , "")
+            if not os.path.exists(file_path):
+                if mode == "display":
+                    print(" \033[1;31m[Uninstalled]\033[0m")
+                else:
+                    plugins_installed['md2hlp'] = False
+            else:
+                if mode == "display":
+                    print(" \033[1;32m[Installed]\033[0m")
+                else:
+                    plugins_installed['md2hlp'] = True
 
 def plugins(args):
     if len(args) == 3:
@@ -510,7 +594,6 @@ def plugins(args):
 
             for cle, valeur in plugins_description.items():
                 print(f"\033[1;36m{cle}\033[0m: {valeur}")
-
             return 0
 
     if len(sys.argv) >= 3:
@@ -531,28 +614,8 @@ def plugins(args):
 
     if len(sys.argv) == 2:
         print("Use 'bpm plugins -h' for 'plugins' help")
-        for cle, valeur in plugins_description.items():
-            print(f"\033[1;36m{cle}\033[0m: {valeur}", end="")
-            if cle == "md2hlp":
-                file_path = os.path.join(folder_path_md2hlp , "md2hlp-master/")
-                if not os.path.exists(file_path):
-                    print(" \033[1;31m[Uninstalled]\033[0m")
-                else:
-                    print(" \033[1;32m[Installed]\033[0m")
-            if cle == "orixsdk":
-                folder_path_orixsdk = os.path.expanduser("~/.bpm/orixsdk/")
-                file_path = os.path.join(folder_path_orixsdk , "")
-                if not os.path.exists(file_path):
-                    print(" \033[1;31m[Uninstalled]\033[0m")
-                else:
-                    print(" \033[1;32m[Installed]\033[0m")
-            if cle == "asm_bin_tpl":
-                folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_bin_tpl/")
-                file_path = os.path.join(folder_path_asm_bin , "")
-                if not os.path.exists(file_path):
-                    print(" \033[1;31m[Uninstalled]\033[0m")
-                else:
-                    print(" \033[1;32m[Installed]\033[0m")
+        plugins_detect("display")
+
 
 def modify_local_toml_key(toml_file, new_name, section, property):
     # Lire le fichier TOML
@@ -885,13 +948,33 @@ def install_md2hlp():
 def build_doc(toml_file):
     # Test md2hlp
     # Chatgpt :
-
-    folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
-    file_path = os.path.join(folder_path_md2hlp , "")
-
-    # Vérifier si le fichier existe
-    if not os.path.exists(file_path):
+    plugins_detect("detect")
+    if not plugins_installed['md2hlp']:
         install_md2hlp()
+    plugins_detect("detect")
+
+    if not plugins_installed['md2hlp']:
+        print('md2hlp not detected')
+        return 1
+
+    if not os.path.exists("src/md2hlp.cfg"):
+        home_directory = os.path.expanduser('~')
+        directory_path = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.cfg"
+        shutil.copy(directory_path, "docs/")
+
+    if not os.path.exists("build/usr/share/man/"):
+        os.makedirs("build/usr/share/man/", exist_ok=True)
+
+    home_directory = os.path.expanduser('~')
+    md2hlp_cmd = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.py3"
+
+    for fichier in os.listdir("docs"):
+        # Vérifier si le fichier a l'extension .md
+        if fichier.endswith(".md"):
+            my_file = fichier.replace('.md', ".hlp")
+            print(f"Generating {fichier} to build/usr/share/man/{my_file}")
+            resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
+
 
 def read_main_config_file():
     # Returns array of the content of main config file
@@ -1037,7 +1120,7 @@ def main():
         search_lib(to_find)
     elif action == 'package':
         data = read_local_config_file()
-        build_package("build", data["package"]["name"] + ".tgz")
+        build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
     elif action == 'new':
         init_toml(sys.argv)
     elif action == 'plugins':
@@ -1057,7 +1140,7 @@ def main():
             print("Already initialized")
     elif action == 'publish':
         data = read_local_config_file()
-        build_package("build", data["package"]["name"] + ".tgz")
+        build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
         publish(data["package"]["name"] + ".tgz", sys.argv, "publish")
     elif action == 'unpublish':
         data = read_local_config_file()
