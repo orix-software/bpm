@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.7"
+VERSION_BPM = "2024.4.8"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -474,6 +474,9 @@ def build(args):
 def usage():
     print("Orix build and package manager\n")
     print("Usage : bpm [OPTIONS] [COMMAND]\n")
+    print("\033[1;32mOptions:\033[0m")
+    print("    \033[1;36m-V\033[0m              Displays version")
+    print("")
     print("\033[1;32mCommands:\033[0m")
     print("    \033[1;36mnew\033[0m             Init a new orix package")
     print("    \033[1;36minit\033[0m            Init an orix package in an existing directory")
@@ -484,7 +487,8 @@ def usage():
     print("    \033[1;36mremove      \033[0m    Remove dependencies from a manifest file")
     print("    \033[1;36minstall     \033[0m    Install all dependencies from a manifest file")
     print("    \033[1;36msearch      \033[0m    Search package")
-    print("    \033[1;36mpublish     \033[0m    Publish lib")
+    print("    \033[1;36mpublish     \033[0m    Publish package")
+    print("    \033[1;36munpublish   \033[0m    Unpublish package")
     print("    \033[1;36mplugins     \033[0m    Manage plugins")
     print("    \033[1;36mconfig      \033[0m    Manage config")
     print("    \033[1;36mpackage     \033[0m    Manage package")
