@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.10"
+VERSION_BPM = "2024.4.12"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -429,8 +429,16 @@ def generate_lib_for_bin(name: str):
 def build(args):
     repertoire = 'src/'
     fichiers_s = lister_fichiers_s(repertoire)
-
     bpm_tmp_folder = "bpmtmp/"
+
+    if shutil.which("cl65") is None:
+        print("Error: cl65 is not installed")
+        return 1
+
+    if shutil.which("ar65") is None:
+        print("Error: ar65 is not installed")
+        return 1
+
 
     if not os.path.exists(bpm_tmp_folder):
         # Créer le répertoire
@@ -445,14 +453,8 @@ def build(args):
     codetype = ""
     if "package" in data:
         package = data["package"]
-        for key, value in package.items():
-            if key == "codetype":
-                codetype = value
-                break
-        for key, value in package.items():
-            if key == "name":
-                name = value
-                break
+        codetype = data["package"]["codetype"]
+        name = data["package"]["name"]
 
     if codetype == "bin":
         if not os.path.exists("build/bin/"):
@@ -505,8 +507,7 @@ def build(args):
             if codetype == "lib":
                 print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", bpm_tmp_folder + nom_sans_extension + ".o"], check=True, capture_output=True, text=True)
-            #@$(AR) r ch395.lib $@
-    #ca65 -ttelestrat $(@:.o=.s) -o $@ --include-dir src/include
+
 
 def usage():
     print("Orix build and package manager\n")
