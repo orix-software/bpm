@@ -1,0 +1,18 @@
+[package]
+name = "fdsfs"
+version = "2024.4"
+authors = [ "nobody@nobody.fr",]
+license = "MIT OR Apache-2.0"
+edition = "2018"
+cpu = "6502"
+readme = ""
+repository = ""
+documentation = ""
+description = ""
+homepage = ""
+buildfolder = "build"
+packagetype = "tgz"
+codetype = "bin"
+oricutron_replace_autoboot_run = "/mnt/c/Users/plifp/OneDrive/oric/oricutron_wsl/oricutron/oricutron"
+
+[dependencies]

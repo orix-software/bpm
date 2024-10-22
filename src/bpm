@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.13"
+VERSION_BPM = "2024.4.14"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -269,7 +269,7 @@ def init_toml(args):
             file.write(content)
     print(f"initialized")
 
-def check_update_bpm():
+def check_update_bpm(auto_update: bool):
     # Function which test if bpm can be updated
     answer = ""
     today = datetime.today()
@@ -295,15 +295,16 @@ def check_update_bpm():
         online_version = response.content.decode('utf-8')
 
         if online_version.replace("\n", "") != main_config_data["main"]["bpm_version"]:
-
             current_version = main_config_data["main"]["bpm_version"]
-            answer = input(f"A new version of bpm is available.\nCurrent version : {current_version}, Available version : \033[1;36m{online_version}\033[0m .\n if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
+            if auto_update == False:
+                answer = input(f"A new version of bpm is available.\nCurrent version : {current_version}, Available version : \033[1;36m{online_version}\033[0m .\n if you want to install it, type 'update' or else type 'skip' : \n[update/skip] ? ")
+
     except requests.exceptions.RequestException as e:
         print("Can not check if a new version of 'bpm' is not available")
         return 1
     main_properties["last_check_update"] = today_format
 
-    if answer == "update":
+    if answer == "update" or auto_update == True:
         get_src_bpm = "https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/src/bpm"
         try:
             response = requests.get(get_src_bpm)
@@ -516,6 +517,9 @@ def usage():
     print("Usage : bpm [OPTIONS] [COMMAND]\n")
     print("\033[1;32mOptions:\033[0m")
     print("    \033[1;36m-V\033[0m              Displays version")
+    print("    \033[1;36m--disable-check-update\033[0m              Disables check for new version")
+    print("    \033[1;36m--force-update\033[0m              Force bpm update")
+
     print("")
     print("\033[1;32mCommands:\033[0m")
     print("    \033[1;36mnew\033[0m             Init a new orix package")
@@ -1077,7 +1081,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--disable-check-update', 'package', 'publish', 'run', 'unpublish']
+    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'unpublish']
 
     if sys.argv[1] not in valid_commands:
         usage()
@@ -1085,11 +1089,15 @@ def main():
 
     action = sys.argv[1]
 
-    if action == '--disable-check-update':
+    if action == '--force-update':
+        sys.argv.remove("--force-update")
+        action = sys.argv[1]
+        check_update_bpm(True)
+    elif action == '--disable-check-update':
         sys.argv.remove("--disable-check-update")
         action = sys.argv[1]
     else:
-        check_update_bpm()
+        check_update_bpm(False)
         action = sys.argv[1]
 
     if action == 'run':
