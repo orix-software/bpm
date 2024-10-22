@@ -14,11 +14,13 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.12"
+VERSION_BPM = "2024.4.13"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
 symbs = [u'\u255a', u'\u2554', u'\u2569', u'\u2566', u'\u2560', u'\u2550', u'\u256c', u'\u2557', u'\u2551', u'\u255a', u'\u255d']
+
+
 
 plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
@@ -466,8 +468,8 @@ def build(args):
         reloc_bin_path = home_directory + "/" + new_directory
 
         if not os.path.exists(reloc_bin_path):
-            print("Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
-
+            print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
+            return 1
 
         generate_lib_for_bin(name)
 
@@ -1071,19 +1073,24 @@ def run_bin(args):
 def main():
     verify_installed()
 
-    check_update_bpm()
-
     if len(sys.argv) == 1:
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', 'package', 'publish', 'run', 'unpublish']
-    if sys.argv[1] not in valid_commands:
+    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--disable-check-update', 'package', 'publish', 'run', 'unpublish']
 
+    if sys.argv[1] not in valid_commands:
         usage()
         sys.exit(1)
 
     action = sys.argv[1]
+
+    if action == '--disable-check-update':
+        sys.argv.remove("--disable-check-update")
+        action = sys.argv[1]
+    else:
+        check_update_bpm()
+        action = sys.argv[1]
 
     if action == 'run':
         build(sys.argv)
