@@ -14,13 +14,11 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.14"
+VERSION_BPM = "2024.4.15"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
 symbs = [u'\u255a', u'\u2554', u'\u2569', u'\u2566', u'\u2560', u'\u2550', u'\u256c', u'\u2557', u'\u2551', u'\u255a', u'\u255d']
-
-
 
 plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
@@ -1027,17 +1025,8 @@ def run_bin(args):
                         oricutron_replace_autoboot_run = "True"
                         if "package" in data:
                             package = data["package"]
-                            print(data)
-                            for key, value_field in package.items():
-                               if key == "name":
-                                   name_bin = value_field
-                                   break
-                            package = data["package"]
-                            for key, value_field in package.items():
-                               if key == "oricutron_replace_autoboot_run":
-                                   oricutron_replace_autoboot_run = value_field
-                                   break
-
+                            name_bin =  data["package"]["name"]
+                            oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
                         else:
                             print("Error bpm.tml does not contains 'package' property")
                             return 1
@@ -1060,10 +1049,11 @@ def run_bin(args):
                             with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
                                 file.write(content)
                         os.chdir(path_oricutron)
-
                         subprocess.run([value], check=True)
+
                     except Exception as e:
                         print(f"Error : {e}")
+
                     finally:
                         # Revenir au répertoire initial
                         os.chdir(current_pwd)
@@ -1090,6 +1080,7 @@ def main():
     action = sys.argv[1]
 
     if action == '--force-update':
+        sys.argv.remove("--force-update")
         sys.argv.remove("--force-update")
         action = sys.argv[1]
         check_update_bpm(True)
