@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.15"
+VERSION_BPM = "2024.4.16"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -1081,8 +1081,8 @@ def main():
 
     if action == '--force-update':
         sys.argv.remove("--force-update")
-        sys.argv.remove("--force-update")
-        action = sys.argv[1]
+        if len(sys.argv) !=1:
+            action = sys.argv[1]
         check_update_bpm(True)
     elif action == '--disable-check-update':
         sys.argv.remove("--disable-check-update")
