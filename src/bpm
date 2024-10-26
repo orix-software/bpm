@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.16"
+VERSION_BPM = "2024.4.17"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -395,11 +395,12 @@ def build_package(source_dir, output_filename, name, version):
     if not os.path.exists(f"build/etc/bpm/{name}/{version}"):
         # Créer le répertoire
         os.makedirs(f"build/etc/bpm/{name}/{version}", mode=0o755, exist_ok=True)
-    if not os.path.exists("README.md"):
+    if os.path.exists("README.md"):
         shutil.copy("README.md", f"build/etc/bpm/{name}/{version}/README.md")
     shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tpl")
     with tarfile.open(output_filename, "w:gz") as tar:
         tar.add(source_dir, arcname=os.path.basename(source_dir))
+
 
 def lister_fichiers_s(repertoire):
     fichiers_s = [fichier for fichier in os.listdir(repertoire) if fichier.endswith('.s')]
@@ -919,12 +920,12 @@ def install_orixsdk():
             # Décompresser l'archive
             with zipfile.ZipFile(BytesIO(response.content)) as z:
                 z.extractall(parent_folder)  # Décompresser dans ~/.bpm/
-            print("Installed")
+            print("Orix-sdk Installed")
 
         else:
-            print("Download error. Code de statut:", response.status_code)
+            print("Download error. Status code:", response.status_code)
     else:
-        print("Already installed")
+        print("Orix-sdk Already installed")
 
 def install_md2hlp():
     # Chatgpt:
@@ -946,7 +947,7 @@ def install_md2hlp():
         with zipfile.ZipFile(BytesIO(response.content)) as z:
             z.extractall(folder_path_md2hlp )
 
-        print("Installed")
+        print("md2hlp installed")
     else:
         print("Download error. Error code :", response.status_code)
 
