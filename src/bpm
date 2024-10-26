@@ -462,7 +462,7 @@ def build(args):
     if not os.path.exists(f"build/etc/bpm/{version}"):
         os.makedirs(f"build/etc/bpm/{version}", mode=0o755, exist_ok=True)
 
-    shutil.copy("bpm.tml", f"build/etc/bpm/{version}/bpm.tml")
+    shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tml")
 
     if codetype == "bin":
         if not os.path.exists("build/bin/"):
