@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.17"
+VERSION_BPM = "2024.4.18"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -457,6 +457,12 @@ def build(args):
         package = data["package"]
         codetype = data["package"]["codetype"]
         name = data["package"]["name"]
+        version = data["package"]["version"]
+
+    if not os.path.exists(f"build/etc/bpm/{version}"):
+        os.makedirs(ff"build/etc/bpm/{version}", mode=0o755, exist_ok=True)
+
+    shutil.copy("bpm.tml", f"build/etc/bpm/{version}/bpm.tml")
 
     if codetype == "bin":
         if not os.path.exists("build/bin/"):
