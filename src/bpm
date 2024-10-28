@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.20"
+VERSION_BPM = "2024.4.21"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -824,11 +824,12 @@ def publish(filename: str, args, mode):
         if args[2] == "--alpha":
             repo = "alpha"
         elif args[2] == "--official":
-            repo = "offical"
+            repo = "official"
         elif args[2] == "--personnal":
             repo = "personnal"
         else:
             print("Unknown parameter")
+            return 1
 
     conf = read_local_config_file()
     publish_key = os.getenv('BPM_PUBLISH_KEY')
@@ -1159,10 +1160,10 @@ def main():
         data = read_local_config_file()
         build_doc(toml_file)
         build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
-        publish(data["package"]["name"] + ".tgz", sys.argv, "publish")
+        return publish(data["package"]["name"] + ".tgz", sys.argv, "publish")
     elif action == 'unpublish':
         data = read_local_config_file()
-        publish(data["package"]["name"] + ".tgz", sys.argv, "unpublish")
+        return publish(data["package"]["name"] + ".tgz", sys.argv, "unpublish")
     # Lire et afficher les dépendances
 
 
