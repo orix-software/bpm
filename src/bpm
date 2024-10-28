@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.23"
+VERSION_BPM = "2024.4.24"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -308,12 +308,13 @@ def check_update_bpm(auto_update: bool):
             response = requests.get(get_src_bpm)
             src_code = response.content.decode('utf-8')
             current_bpm_path = os.path.abspath(__file__)
-            print("Write " + current_bpm_path)
+            print(f"Updating to {online_version}")
             try:
                 with open(current_bpm_path, 'w') as fichier:
                     fichier.write(src_code)
                 main_properties["bpm_version"] = online_version
                 main_properties["last_check_update"] = today_format
+                print("Updated")
             # Afficher toutes les exceptions qui se produisent
             except Exception as e:
                 print(f"Une erreur est survenue lors de l'écriture : {e}")
@@ -513,7 +514,11 @@ def build(args):
         for fichier in fichiers_s:
             nom_sans_extension = os.path.splitext(fichier)[0]
             print("Building " + repertoire + fichier)
-            resultat = subprocess.run(['ca65', '-ttelestrat', repertoire + fichier, "-o", bpm_tmp_folder+ nom_sans_extension + ".o", "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            try:
+                resultat = subprocess.run(['ca65', '-ttelestrat', repertoire + fichier, "-o", bpm_tmp_folder+ nom_sans_extension + ".o", "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                return 1
             if codetype == "lib":
                 print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", bpm_tmp_folder + nom_sans_extension + ".o"], check=True, capture_output=True, text=True)
@@ -669,7 +674,7 @@ def manage_config(args):
 
     valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', ]
     valid_parameters_project_desc = ['                            Name of the project',
-                                     '                            Version of the project',
+                                     '                         Version of the project',
                                      '                        Code type of the project (lib is a library, bin a command line [lib|bin]',
                                      '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed']
     valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean']
