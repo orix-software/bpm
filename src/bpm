@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.21"
+VERSION_BPM = "2024.4.22"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -667,11 +667,12 @@ def manage_config(args):
 
     valid_parameters_main_verify = ['path', 'boolean']
 
-    valid_parameters_project = ['name',  'codetype', 'oricutron_replace_autoboot_run']
+    valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', ]
     valid_parameters_project_desc = ['                            Name of the project',
+                                     '                            Version of the project',
                                      '                        Code type of the project (lib is a library, bin a command line [lib|bin]',
                                      '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed']
-    valid_parameters_project_verify = ['string', 'values=bin,lib' ,'boolean']
+    valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean']
 
     # bpm set main -h
     if len(args) == 5:
@@ -708,7 +709,7 @@ def manage_config(args):
             return 0
 
     if len(args) == 3:
-        if args[2] == '-h':
+        if args[2] == '-h' or args[2] == 'help':
             print("Manage config\n")
             print("Usage : bpm config [command]\n")
             print("\033[1;32mCommands:\033[0m")
@@ -727,6 +728,7 @@ def manage_config(args):
         if args[2] == 'set' and args[3] == 'main':
             print("Missing value for parameter '" + args[4] + "'")
             return
+
         if args[2] == 'set' and args[3] == 'project':
             print("Missing value for parameter '" + args[4] + "'")
             return
