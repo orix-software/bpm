@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.22"
+VERSION_BPM = "2024.4.23"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -282,7 +282,7 @@ def check_update_bpm(auto_update: bool):
         main_properties.setdefault("last_check_update", "0000-00-00")
         main_properties.setdefault("bpm_version", VERSION_BPM)
 
-    if today_format == main_properties["last_check_update"]:
+    if today_format == main_properties["last_check_update"] and auto_update == False:
         return 0
 
     print("Checking if an update is available (Last check : " + main_config_data["main"]["last_check_update"] + ") ...\n")
