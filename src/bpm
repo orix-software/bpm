@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.25"
+VERSION_BPM = "2024.4.26"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -460,7 +460,7 @@ def build(args):
         version = data["package"]["version"]
 
     str_include = ""
-    if "dependencies" in data:
+    if "dependencies" in data and data["dependencies"]:
         if len(dependencies) != 0:
             for key, value in dependencies.items():
                 str_include = str_include + f"-I orixlibs/{key}/usr/include/asm/"
