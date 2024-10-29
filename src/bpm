@@ -14,7 +14,7 @@ import zipfile
 from io import BytesIO
 import shutil
 
-VERSION_BPM = "2024.4.26"
+VERSION_BPM = "2024.4.27"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -67,7 +67,7 @@ def read_local_config_file():
 
 def add_dependency_to_toml(file_path, dependency_str):
     """Ajoute une nouvelle dépendance dans la section 'dependency' du fichier TOML"""
-    if dependency_str == "--help":
+    if dependency_str == "-h":
         print("bpm add package@version")
     try:
         # Lire le fichier TOML
@@ -89,8 +89,8 @@ def add_dependency_to_toml(file_path, dependency_str):
 
         # Ajouter ou mettre à jour la dépendance dans le fichier TOML
         data["dependencies"][dependency_name] = dependency_version
-
-        value = download_file("http://repo.orix.oric.org/dists/" + dependency_version + "/tgz/6502/" + dependency_name + ".tgz", "orixlibs/" + dependency_name + ".tgz", dependency_name)
+        dependency_file = dependency_name + "lib"
+        value = download_file("http://repo.orix.oric.org/dists/" + dependency_version + "/tgz/6502/" + dependency_file + ".tgz", "orixlibs/" + dependency_name + ".tgz", dependency_name)
 
         if value == 0:
             # Écrire les modifications dans le fichier TOML
@@ -127,7 +127,7 @@ def install_dependency_from_toml(args):
             print("Install all dependencies\n")
             print("Usage : bpm install\n")
             print("\033[1;32mCommands:\033[0m")
-            print("    \033[1;36minstall\033[0m             install all dependencies for this project")
+            print("    \033[1;36minstall\033[0m             Install all dependencies for this project")
 
             return 0
 
@@ -180,23 +180,23 @@ def remove_dependency_from_toml(file_path, dependency_name):
     try:
         with open(file_path, 'r') as file:
             data = toml.load(file)
-
-        # Vérifier si la section "dependency" existe
-        if "dependencies" in data and dependency_name in data["dependencies"]:
-            del data["dependencies"][dependency_name]
-            print(f"{dependency_name} uninstalled")
-            shutil.rmtree("orixlibs/" + dependency_name)
-        else:
-            print(f"'{dependency_name}' dependency does not exist in bpm.tml")
-
-        # Écrire les modifications dans le fichier TOML
-        with open(file_path, 'w') as file:
-            toml.dump(data, file)
-
     except FileNotFoundError:
         print(f"'{file_path}' not found")
     except toml.TomlDecodeError:
         print(f"Impossible to read '{file_path}'.")
+
+    # Vérifier si la section "dependency" existe
+    if "dependencies" in data and dependency_name in data["dependencies"]:
+        del data["dependencies"][dependency_name]
+        print(f"{dependency_name} uninstalled")
+        shutil.rmtree("orixlibs/" + dependency_name)
+        # Écrire les modifications dans le fichier TOML
+        with open(file_path, 'w') as file:
+            toml.dump(data, file)
+    else:
+        print(f"'{dependency_name}' dependency does not exist in bpm.tml")
+
+
 
 def init_toml(args):
     if len(args) == 3:
@@ -210,6 +210,11 @@ def init_toml(args):
     if os.path.exists(toml_file):
         print("Already initialized")
         return 0
+    codetype = 'bin'
+    answer = input(f"This project is :\n1) A library\n2) A binary program\nanwer ?")
+    if answer == '2':
+        codetype = 'lib'
+
 
     current_directory = os.getcwd()
     last_directory = os.path.basename(os.path.normpath(current_directory))
@@ -244,7 +249,7 @@ def init_toml(args):
         print("Init bpm.tml")
         """Crée un fichier TOML avec des valeurs par défaut."""
         content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + str(current_year) + "." + str(current_trimester) + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
-        content = content + "readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"bin\"\n"
+        content = content + f"readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"{codetype}\"\n"
         content = content + oricutron_replace_autoboot_run_for_project
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
@@ -396,11 +401,20 @@ def build_package(source_dir, output_filename, name, version):
     if not os.path.exists(f"build/etc/bpm/{name}/{version}"):
         # Créer le répertoire
         os.makedirs(f"build/etc/bpm/{name}/{version}", mode=0o755, exist_ok=True)
+    if not os.path.exists(f"build/usr/share/{name}/{version}"):
+        # Créer le répertoire
+        os.makedirs(f"build/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
     if os.path.exists("README.md"):
-        shutil.copy("README.md", f"build/etc/bpm/{name}/{version}/README.md")
+        shutil.copy("README.md", f"build/usr/share/{name}/{version}/README.md")
     shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tpl")
+    # with tarfile.open(output_filename, "w:gz") as tar:
+    #     tar.add(source_dir, arcname=os.path.basename(source_dir))
     with tarfile.open(output_filename, "w:gz") as tar:
-        tar.add(source_dir, arcname=os.path.basename(source_dir))
+        for item in os.listdir(source_dir):
+            item_path = os.path.join(source_dir, item)
+            # Ajoute chaque fichier ou sous-répertoire sans inclure le répertoire racine `build`
+            tar.add(item_path, arcname=item)
+
 
 
 def lister_fichiers_s(repertoire):
@@ -454,13 +468,13 @@ def build(args):
 
     codetype = ""
     if "package" in data:
-        package = data["package"]
         codetype = data["package"]["codetype"]
         name = data["package"]["name"]
         version = data["package"]["version"]
 
     str_include = ""
     if "dependencies" in data and data["dependencies"]:
+        dependencies = data["dependencies"]
         if len(dependencies) != 0:
             for key, value in dependencies.items():
                 str_include = str_include + f"-I orixlibs/{key}/usr/include/asm/"
@@ -516,18 +530,35 @@ def build(args):
 
 
     if codetype == "lib":
+        print(f"Generate {name}.lib")
         for fichier in fichiers_s:
             nom_sans_extension = os.path.splitext(fichier)[0]
-            print("Building " + repertoire + fichier)
             try:
-                resultat = subprocess.run(['ca65', '-ttelestrat', repertoire + fichier, "-o", bpm_tmp_folder+ nom_sans_extension + ".o", "--include-dir", "src/include"], check=True, capture_output=True, text=True)
+                generate = False
+                fichier_source = repertoire + fichier
+                fichier_dest_o = bpm_tmp_folder + nom_sans_extension + ".o"
+                if os.path.exists(fichier_dest_o):
+                    if os.path.getmtime(fichier_dest_o) < os.path.getmtime(fichier_source):
+                        generate = True
+                else:
+                    generate = True
+
+                if generate == True:
+                    print("Building " + repertoire + fichier)
+                    resultat = subprocess.run(['ca65', '-ttelestrat', fichier_source, "-o", fichier_dest_o, "--include-dir", "src/include"], check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                 return 1
-            if codetype == "lib":
-                print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
-                resultat = subprocess.run(['ar65', 'r', name + ".lib", bpm_tmp_folder + nom_sans_extension + ".o"], check=True, capture_output=True, text=True)
 
+            if generate == True:
+                print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
+                resultat = subprocess.run(['ar65', 'r', name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
+            path_file_lib = f"build/usr/share/{name}/{version}"
+            if not os.path.exists(path_file_lib):
+                os.makedirs(path_file_lib, mode=0o755, exist_ok=True)
+            print(f"copy to {path_file_lib}")
+            shutil.copy(name + ".lib", f"{path_file_lib}/{name}.lib")
+        print("Build completed")
 
 def usage():
     print("Orix build and package manager\n")
@@ -848,6 +879,7 @@ def publish(filename: str, args, mode):
     name = conf["package"]["name"]
     version = conf["package"]["version"]
     cpu = conf["package"]["cpu"]
+    codetype = conf["package"]["codetype"]
 
     if publish_key is None:
         print("BPM_PUBLISH_KEY is not defined")
@@ -859,7 +891,7 @@ def publish(filename: str, args, mode):
     if mode == "unpublish":
         action = "delete"
 
-    url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&action={action}&key=" + publish_key
+    url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&codetype={codetype}&action={action}&key=" + publish_key
 
     if mode == "publish":
         with open(filename, 'rb') as fichier:
@@ -871,20 +903,25 @@ def publish(filename: str, args, mode):
             # Vérifier si la requête a réussi
             if response.status_code == 200:
                 print("Success!")
+                return 0
             else:
                 print(f"Failed. Error code : {response.status_code}")
                 print(f"API response: {response.text}")
+                return 1
 
     if mode == "unpublish":
         # Effectuer la requête POST
+        url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&action={action}&codetype={codetype}&key=" + publish_key
         response = requests.post(url)
         print(response.content)
         # Vérifier si la requête a réussi
         if response.status_code == 200:
             print("Success!")
+            return 0
         else:
             print(f"Failed. Error code : {response.status_code}")
             print(f"API response: {response.text}")
+            return 1
 
 def install_asm_bin_tpl():
     # Chatgpt:
@@ -1150,7 +1187,11 @@ def main():
     elif action == 'package':
         data = read_local_config_file()
         build_doc(toml_file)
-        build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
+        if data["package"]["codetype"] == "lib":
+            package_name = data["package"]["name"] + "lib.tgz"
+        else:
+            package_name = data["package"]["name"] + ".tgz"
+        build_package("build", package_name , data["package"]["name"], data["package"]["version"])
     elif action == 'new':
         init_toml(sys.argv)
     elif action == 'plugins':
@@ -1171,11 +1212,19 @@ def main():
     elif action == 'publish':
         data = read_local_config_file()
         build_doc(toml_file)
-        build_package("build", data["package"]["name"] + ".tgz", data["package"]["name"], data["package"]["version"])
-        return publish(data["package"]["name"] + ".tgz", sys.argv, "publish")
+        if data["package"]["codetype"] == "lib":
+            package_name = data["package"]["name"] + "lib.tgz"
+        else:
+            package_name = data["package"]["name"] + ".tgz"
+        build_package("build", package_name, data["package"]["name"], data["package"]["version"])
+        return publish(package_name, sys.argv, "publish")
     elif action == 'unpublish':
         data = read_local_config_file()
-        return publish(data["package"]["name"] + ".tgz", sys.argv, "unpublish")
+        if data["package"]["codetype"] == "lib":
+            package_name = data["package"]["name"] + "lib.tgz"
+        else:
+            package_name = data["package"]["name"] + ".tgz"
+        return publish(package_name, sys.argv, "unpublish")
     # Lire et afficher les dépendances
 
 
