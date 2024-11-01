@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.28"
+VERSION_BPM = "2024.4.29"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -176,6 +176,7 @@ def read_dependencies_from_toml(file_path):
     except toml.TomlDecodeError:
         print(f"Read error :  '{file_path}'.")
 
+
 def remove_dependency_from_toml(file_path, dependency_name):
     """Supprime une dépendance de la section 'dependency' du fichier TOML"""
     try:
@@ -196,7 +197,6 @@ def remove_dependency_from_toml(file_path, dependency_name):
             toml.dump(data, file)
     else:
         print(f"'{dependency_name}' dependency does not exist in bpm.tml")
-
 
 
 def init_toml(args):
@@ -419,7 +419,6 @@ def build_package(source_dir, output_filename, name, version):
             # Copie chaque fichier vers le répertoire de destination
             shutil.copy(file_path, destination_dir)
 
-
     if os.path.exists(f"src/include/"):
         source_dir = "src/include/"
         destination_dir = "build/usr/include/"
@@ -440,7 +439,6 @@ def build_package(source_dir, output_filename, name, version):
             item_path = os.path.join("build", item)
             # Ajoute chaque fichier ou sous-répertoire sans inclure le répertoire racine `build`
             tar.add(item_path, arcname=item)
-
 
 
 def lister_fichiers_s(repertoire):
@@ -1070,6 +1068,16 @@ def build_doc(toml_file):
             resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
 
 
+def update_package(args):
+    data = read_local_config_file()
+    if "dependencies" in data and len(data["dependencies"]) != 0:
+        dependencies = data["dependencies"]
+        for key, value in dependencies.items():
+            print(f"Updating : {key}")
+            remove_dependency_from_toml(toml_file, key)
+            add_dependency_to_toml(toml_file, f"{key}@{value}")
+
+
 def read_main_config_file():
     # Returns array of the content of main config file
     try:
@@ -1160,7 +1168,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'unpublish']
+    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
 
     if sys.argv[1] not in valid_commands:
         usage()
@@ -1214,6 +1222,8 @@ def main():
         if len(sys.argv) == 3:
             to_find = sys.argv[2]
         search_lib(to_find)
+    elif action == 'update':
+        update_package(sys.argv)
     elif action == 'package':
         data = read_local_config_file()
         build_doc(toml_file)

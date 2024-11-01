@@ -78,12 +78,15 @@ nav:
             - 4.2.1. bpm build: commands/bpm_build.md
             - 4.2.2. bpm doc: commands/bpm_doc.md
             - 4.2.3. bpm run: commands/bpm_run.md
+            - 4.2.4. bpm doc: commands/bpm_package.md
         - 4.3. Manifest Commands:
             - 4.3.1. bpm add: commands/bpm_add.md
-            - 4.3.2. bpm add: commands/bpm_remove.md
+            - 4.3.2. bpm remove: commands/bpm_remove.md
             - 4.3.3. bpm install: commands/bpm_install.md
+            - 4.3.4. bpm update: commands/bpm_update.md
         - 4.4. Publishing Commands:
-            - 4.4.5. bpm publish: commands/bpm_publish.md
+            - 4.4.1. bpm publish: commands/bpm_publish.md
+            - 4.4.2. bpm unpublish: commands/bpm_unpublish.md
 # 4.4.1. cargo login
 # 4.4.2. cargo logout
 # 4.4.3. cargo owner

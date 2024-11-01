@@ -1,4 +1,4 @@
-# Manage plugins
+# bpm plugins - Manage plugins
 
 ## bpm plugins
 

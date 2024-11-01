@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../bpm_add/">
+        <link rel="prev" href="../bpm_update/">
       
       
-        <link rel="next" href="../bpm_init/">
+        <link rel="next" href="../bpm_unpublish/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>4.4.5. bpm publish - bpm v2024.4 DOCUMENTATION</title>
+        <title>4.4.1. bpm publish - bpm v2024.4 DOCUMENTATION</title>
       
     
     
@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#bpm-publish-publish-package" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -93,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              4.4.5. bpm publish
+              4.4.1. bpm publish
             
           </span>
         </div>
@@ -614,7 +619,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bpm_config.md" class="md-nav__link">
+      <a href="../bpm_config/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -720,11 +725,32 @@
   
   
     <li class="md-nav__item">
-      <a href="../bpm_run.md" class="md-nav__link">
+      <a href="../bpm_run/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     4.2.3. bpm run
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bpm_package/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4.2.4. bpm doc
   </span>
   
 
@@ -805,11 +831,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../bpm_remove.md" class="md-nav__link">
+      <a href="../bpm_remove/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    4.3.2. bpm add
+    4.3.2. bpm remove
   </span>
   
 
@@ -826,11 +852,32 @@
   
   
     <li class="md-nav__item">
-      <a href="../bpm_install.md" class="md-nav__link">
+      <a href="../bpm_install/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     4.3.3. bpm install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bpm_update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4.3.4. bpm update
   </span>
   
 
@@ -898,17 +945,79 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    4.4.1. bpm publish
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    4.4.5. bpm publish
+    4.4.1. bpm publish
   </span>
   
 
       </a>
       
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-publish-official" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm publish --official
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bpm_unpublish/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4.4.2. bpm unpublish
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1031,6 +1140,25 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-publish-official" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm publish --official
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1045,9 +1173,9 @@
                   
 
 
-  <h1>4.4.5. bpm publish</h1>
-
-
+<h1 id="bpm-publish-publish-package">bpm publish - publish package</h1>
+<h2 id="bpm-publish-official">bpm publish --official</h2>
+<p>Publish package into official repo (depending of the version)</p>
 
 
 
