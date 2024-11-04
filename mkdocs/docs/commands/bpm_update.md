@@ -1,3 +1,3 @@
 # bpm update
 
-uninstall and reinstall all dependencies
+Uninstall and reinstall all dependencies

@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.29"
+VERSION_BPM = "2024.4.30"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -212,10 +212,11 @@ def init_toml(args):
         print("Already initialized")
         return 0
     codetype = 'bin'
-    answer = input(f"This project is :\n1) A library\n2) A binary program\nanwer ?")
+    answer = input(f"This project is :\n1) A library\n2) A binary program\n3) A rom\nanswer ?")
     if answer == '2':
         codetype = 'lib'
-
+    if answer == '3':
+        codetype = 'rom'
 
     current_directory = os.getcwd()
     last_directory = os.path.basename(os.path.normpath(current_directory))
@@ -262,7 +263,7 @@ def init_toml(args):
 
     if not os.path.exists("src/" + last_directory + ".c"):
         print("Init " + "src/" + last_directory + ".c")
-        content = "#include <stdio.h>\n main() {printf(\"Hello word\"); }\n"
+        content = "#include <stdio.h>\n main() {\nprintf(\"Hello word\");\n}\n"
         with open("src/" + last_directory + ".c", 'w') as file:
             file.write(content)
 
@@ -512,6 +513,35 @@ def build(args):
 
     shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tml")
 
+    if codetype == "rom":
+        rom_path = f"build/usr/share/{name}/{version}/"
+        if not os.path.exists(rom_path):
+            os.makedirs(rom_path, mode=0o755, exist_ok=True)
+
+        plugins_detect("no_display")
+        print(plugins_installed)
+        if plugins_installed['orixsdk']:
+            # if not os.path.exists(f"orixlibs/orixsdk/macros/"):
+            #     os.makedirs(f"orixlibs/orixsdk/macros", mode=0o755, exist_ok=True)
+            # home_directory = os.path.expanduser('~')
+            # path_orixsdk = f"{home_directory}/orixsdk/orix-sdk-master/macros/"
+            # shutil.copy(path_orixsdk + "*", f"orixlibs/orixsdk/macros")
+            arg_include.append("-I")
+            arg_include.append(f"orixlibs/orixsdk/macros")
+
+
+        nom_sans_extension = name
+        file_to_compile_s = repertoire + name + ".s"
+        cmd_cl65 = ['ca65']
+        arg_cl65 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + name + ".ld65", "--include-dir", "src/include"]
+        resultat = subprocess.run(cmd_cl65 + arg_include + arg_cl65, check=True, capture_output=False, text=True)
+
+        cmd_ld65 = ['ld65']
+        arg_ld65 = ['-tnone' , bpm_tmp_folder + name + ".ld65", "-o", bpm_tmp_folder + name + ".rom"]
+        resultat = subprocess.run(cmd_ld65 + arg_ld65, check=True, capture_output=False, text=True)
+
+        shutil.copy(bpm_tmp_folder + name + ".rom", rom_path + name + ".rom")
+
     if codetype == "bin":
         if not os.path.exists("build/bin/"):
             os.makedirs("build/bin/", mode=0o755, exist_ok=True)
@@ -639,12 +669,12 @@ def plugins_detect(mode):
                 if mode == "display":
                     print(" \033[1;31m[Uninstalled]\033[0m")
                 else:
-                    plugins_installed['md2hlp'] = False
+                    plugins_installed['orixsdk'] = False
             else:
                 if mode == "display":
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
-                    plugins_installed['md2hlp'] = True
+                    plugins_installed['orixsdk'] = True
 
         if cle == "asm_bin_tpl":
             folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_bin_tpl/")
@@ -653,12 +683,12 @@ def plugins_detect(mode):
                 if mode == "display":
                     print(" \033[1;31m[Uninstalled]\033[0m")
                 else:
-                    plugins_installed['md2hlp'] = False
+                    plugins_installed['asm_bin_tpl'] = False
             else:
                 if mode == "display":
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
-                    plugins_installed['md2hlp'] = True
+                    plugins_installed['asm_bin_tpl'] = True
 
 def plugins(args):
     if len(args) == 3:
@@ -1091,6 +1121,8 @@ def read_main_config_file():
 
 def run_bin(args):
     bpm_tmp_folder = "bpmtmp/"
+    old_autoboot_exists = False
+    current_pwd = os.getcwd()
 
     if len(sys.argv) == 3:
         if sys.argv[2] == '-h':
@@ -1098,68 +1130,76 @@ def run_bin(args):
             print("Usage : bpm run\n")
             return
 
+
+
     try:
         # Lire le fichier TOML
         with open(main_config_path, 'r') as file:
             data = toml.load(file)
 
         if "main" in data:
-            dependencies = data["main"]
-            for key, value in dependencies.items():
-                if key == "oricutron_path":
-                    current_pwd = os.getcwd()
-                    if value == "":
-                        print("oricutron_path is empty, set it with 'bpm config set oricutron_path *Yourpath*'")
-                        return
-                    if not os.path.isfile(value):
-                        print(f"Error : in 'oricutron_path' parameter, {value} is not a file. Set Oricutron path with 'bpm config set oricutron_path *Yourpath*'")
-                        return
-                    try:
-
-                        with open("bpm.tml", 'r') as file:
-                            data = toml.load(file)
-
-                        oricutron_replace_autoboot_run = "True"
-                        if "package" in data:
-                            package = data["package"]
-                            name_bin =  data["package"]["name"]
-                            oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
-                        else:
-                            print("Error bpm.tml does not contains 'package' property")
-                            return 1
-
-                        filename = os.path.basename(value)
-                        path_oricutron = os.path.dirname(value)
-                        print(" ### Oricutron ### ")
-                        print(path_oricutron)
-                        print(path_oricutron + "/sdcard/bin/")
-                        shutil.copy("build/bin/" + name_bin, path_oricutron + "/sdcard/BIN/" + name_bin.upper())
-
-                        old_autoboot_exists = False
-                        # Generate submit file
-
-                        if oricutron_replace_autoboot_run == "True":
-                            content = f"#!/bin/submit\n{name_bin}\n"
-                            if os.path.exists(path_oricutron + "/sdcard/ETC/AUTOBOOT"):
-                                shutil.copy(path_oricutron + "/sdcard/ETC/AUTOBOOT", bpm_tmp_folder + " AUTOBOOT_OLD")
-                                old_autoboot_exists = True
-                            with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
-                                file.write(content)
-                        os.chdir(path_oricutron)
-                        subprocess.run([value], check=True)
-
-                    except Exception as e:
-                        print(f"Error : {e}")
-
-                    finally:
-                        # Revenir au répertoire initial
-                        os.chdir(current_pwd)
-                        if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
-                            print("Restore old autoboot")
-                            shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", path_oricutron + "/sdcard/ETC/AUTOBOOT")
+            path_oricutron = data["main"]["oricutron_path"]
+            if path_oricutron == "":
+                print("oricutron_path is empty, set it with 'bpm config set oricutron_path *Yourpath*'")
+                return
+            if not os.path.isfile(path_oricutron):
+                print(f"Error : in 'oricutron_path' parameter, {path_oricutron} is not a file. Set Oricutron path with 'bpm config set oricutron_path *Yourpath*'")
+                return
 
     except FileNotFoundError:
-        print(f"'{toml_file}' not found")
+        print(f"'{main_config_path}' not found")
+
+
+
+    with open("bpm.tml", 'r') as file:
+        data = toml.load(file)
+    oricutron_replace_autoboot_run = "True"
+    if "package" in data:
+        name =  data["package"]["name"]
+        codetype =  data["package"]["codetype"]
+        version =  data["package"]["version"]
+        oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
+    else:
+        print("Error bpm.tml does not contains 'package' property")
+        return 1
+
+    bin_oricutron = path_oricutron
+    path_oricutron = os.path.dirname(path_oricutron)
+
+    if codetype == "bin":
+        shutil.copy("build/bin/" + name, path_oricutron + "/sdcard/BIN/" + name.upper())
+
+    if codetype == "rom":
+        path_to_oricutron_rom = f"/sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
+        if not os.path.exists(path_oricutron + path_to_oricutron_rom):
+            os.makedirs(path_oricutron + path_to_oricutron_rom, exist_ok=True)
+            print("creating")
+            print(path_oricutron)
+            print(path_to_oricutron_rom)
+        shutil.copy(f"build/usr/share/{name}/{version}/{name}.rom", path_oricutron + path_to_oricutron_rom)
+
+    # Generate submit file
+
+    if oricutron_replace_autoboot_run == "True":
+        content = f"#!/bin/submit\n{name}\n"
+        if os.path.exists(path_oricutron + "/sdcard/ETC/AUTOBOOT"):
+            shutil.copy(path_oricutron + "/sdcard/ETC/AUTOBOOT", bpm_tmp_folder + " AUTOBOOT_OLD")
+            old_autoboot_exists = True
+            with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
+                file.write(content)
+
+    os.chdir(path_oricutron)
+    try:
+        subprocess.run([bin_oricutron], check=True)
+    except Exception as e:
+        print(f"Error : {e}")
+    finally:
+        # Revenir au répertoire initial
+        os.chdir(current_pwd)
+        if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
+            print("Restore old autoboot")
+            shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", path_oricutron + "/sdcard/ETC/AUTOBOOT")
+
 
 def main():
     verify_installed()
