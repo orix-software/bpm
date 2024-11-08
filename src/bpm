@@ -15,23 +15,34 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.30"
+VERSION_BPM = "2024.4.31"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
+
 symbs = [u'\u255a', u'\u2554', u'\u2569', u'\u2566', u'\u2560', u'\u2550', u'\u256c', u'\u2557', u'\u2551', u'\u255a', u'\u255d']
 
 plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
     'orixsdk': 'Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)',
-    'asm_bin_tpl': 'Assembly binary template for Orix'
+    'asm_bin_tpl': 'Assembly binary template for Orix',
+    'asm_rom_tpl': 'Assembly rom templta for Orix'
     }
 
 plugins_installed = {
     'md2hlp': False,
     'orixsdk': False,
-    'asm_bin_tpl': False
+    'asm_bin_tpl': False,
+    'asm_rom_tpl': False
     }
+
+plugins_url = {
+    'md2hlp': 'FIXME',
+    'orixsdk': 'FIXME',
+    'asm_bin_tpl': 'https://github.com/assinie/new-project/archive/refs/heads/main.zip',
+    'asm_rom_tpl': 'https://github.com/assinie/orix-cart/archive/refs/heads/master.zip'
+}
+
 
 toml_file = "bpm.tml"
 user_folder = '.bpm/'
@@ -64,7 +75,7 @@ def read_local_config_file():
     except FileNotFoundError:
         print(f"'{file_path}' not found")
     except toml.TomlDecodeError:
-        print(f"Impossible to read '{file_path}'.")
+        print(f"Impossible to read d'{file_path}'.")
 
 def add_dependency_to_toml(file_path, dependency_str):
     """Ajoute une nouvelle dépendance dans la section 'dependency' du fichier TOML"""
@@ -134,8 +145,7 @@ def install_dependency_from_toml(args):
 
     try:
     # Lire le fichier TOML
-        with open(toml_file, 'r') as file:
-            data = toml.load(file)
+        data = read_local_config_file()
 
         if "dependencies" in data:
             dependencies = data["dependencies"]
@@ -154,11 +164,10 @@ def install_dependency_from_toml(args):
     except FileNotFoundError:
         print(f"'{toml_file}' not found")
 
-def read_dependencies_from_toml(file_path):
+def read_dependencies_from_toml():
     try:
         # Lire le fichier TOML
-        with open(file_path, 'r') as file:
-            data = toml.load(file)
+        data = read_local_config_file()
 
         # Vérifier si la section "dependency" existe
         if "dependencies" in data:
@@ -172,20 +181,19 @@ def read_dependencies_from_toml(file_path):
         else:
             print("'dependencies' section does not exists in bpm.tml")
     except FileNotFoundError:
-        print(f"file not found : '{file_path}'")
+        print(f"file not found : 'bpm.tml'")
     except toml.TomlDecodeError:
-        print(f"Read error :  '{file_path}'.")
+        print(f"Read error :  'bpm.tml'.")
 
 
-def remove_dependency_from_toml(file_path, dependency_name):
+def remove_dependency_from_toml(dependency_name):
     """Supprime une dépendance de la section 'dependency' du fichier TOML"""
     try:
-        with open(file_path, 'r') as file:
-            data = toml.load(file)
+        data = read_local_config_file()
     except FileNotFoundError:
-        print(f"'{file_path}' not found")
+        print(f"'{bpm.tml}' not found")
     except toml.TomlDecodeError:
-        print(f"Impossible to read '{file_path}'.")
+        print(f"Impossible to read '{bpm.tml}'.")
 
     # Vérifier si la section "dependency" existe
     if "dependencies" in data and dependency_name in data["dependencies"]:
@@ -193,7 +201,7 @@ def remove_dependency_from_toml(file_path, dependency_name):
         print(f"{dependency_name} uninstalled")
         shutil.rmtree("orixlibs/" + dependency_name)
         # Écrire les modifications dans le fichier TOML
-        with open(file_path, 'w') as file:
+        with open(toml_file, 'w') as file:
             toml.dump(data, file)
     else:
         print(f"'{dependency_name}' dependency does not exist in bpm.tml")
@@ -208,14 +216,30 @@ def init_toml(args):
             #print("\033[1;32mCommands:\033[0m")
             #print("    \033[1;36minstall\033[0m             install plugin")
 
+    code_template = ""
+
     if os.path.exists(toml_file):
         print("Already initialized")
         return 0
     codetype = 'bin'
-    answer = input(f"This project is :\n1) A library\n2) A binary program\n3) A rom\nanswer ?")
+    answer = input(f"This project is :\n1) A binary program\n2) A library\n3) A rom\nanswer ?")
+
     if answer == '2':
         codetype = 'lib'
+
     if answer == '3':
+        is_rom_template = input(f"Do you want to use prebuild template (n/Y)\nanswer :")
+        if is_rom_template == 'Y':
+            plugins_detect("no_display")
+            if plugins_installed['asm_rom_tpl'] == False:
+                print("Please install asm_rom_tpl plugin")
+                return 1
+            if plugins_installed['orixsdk'] == False:
+                print("Please install orixsdk plugin")
+                return 1
+            code_template = "asm_rom_tpl"
+
+
         codetype = 'rom'
 
     current_directory = os.getcwd()
@@ -251,7 +275,7 @@ def init_toml(args):
         print("Init bpm.tml")
         """Crée un fichier TOML avec des valeurs par défaut."""
         content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + str(current_year) + "." + str(current_trimester) + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
-        content = content + f"readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"{codetype}\"\n"
+        content = content + f"readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"{codetype}\"\ntemplatecode = \"{code_template}\"\npathsrc = \"src\"\n"
         content = content + oricutron_replace_autoboot_run_for_project
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
@@ -261,17 +285,33 @@ def init_toml(args):
         print("Init src folder")
         os.makedirs("src", mode=0o755, exist_ok=True)
 
-    if not os.path.exists("src/" + last_directory + ".c"):
-        print("Init " + "src/" + last_directory + ".c")
-        content = "#include <stdio.h>\n main() {\nprintf(\"Hello word\");\n}\n"
-        with open("src/" + last_directory + ".c", 'w') as file:
-            file.write(content)
+    if not os.path.exists("docs"):
+        os.makedirs("docs", mode=0o755, exist_ok=True)
+
+    if codetype == 'bin':
+        if not os.path.exists("src/" + last_directory + ".c"):
+            print("Init " + "src/" + last_directory + ".c")
+            content = "#include <stdio.h>\nint main() {\n  printf(\"Hello word\");\n  return 0;\n}\n"
+            with open("src/" + last_directory + ".c", 'w') as file:
+                file.write(content)
+
+    if codetype == 'rom':
+        folder_path_rom_bin = os.path.expanduser("~/.bpm/tpl/asm_rom_tpl/orix-cart-master/")
+        if not os.path.exists("macros"):
+            os.makedirs("macros", mode=0o755, exist_ok=True)
+            shutil.copy(folder_path_rom_bin + "macros/rom_cmd.mac", "macros/rom_cmd.mac")
+        shutil.copy(folder_path_rom_bin + "src/rom_cmd.s", f"src/{last_directory}.s")
+
 
     if not os.path.exists("VERSION"):
         print("Init VERSION file")
         content = str(current_year) + "." + str(current_trimester)
         with open("VERSION", 'w') as file:
             file.write(content)
+
+    if code_template == "asm_rom_tpl":
+        add_dependency_to_toml(toml_file, "orixsdk@2023.3")
+
     print(f"initialized")
 
 def check_update_bpm(auto_update: bool):
@@ -349,7 +389,7 @@ def verify_installed():
         os.makedirs(directory_path, mode=0o755, exist_ok=True)
     if not os.path.isfile(directory_path + "/bpm"):
         # Créer le répertoire
-        str_init = "[main]\noricutron_path = \"oricutron\"\noricutron_replace_autoboot_run = \"True\"\n"
+        str_init = "[main]\noricutron_path = \"oricutron\"\noricutron_replace_autoboot_run = \"True\"\ndefault_rom_oricutron_for_code = 4\n"
         str_init = str_init + "bpm_version = \"" + VERSION_BPM + "\"\n"
         str_init = str_init + "last_check_update = \"0000-00-00\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
@@ -400,9 +440,16 @@ def search_lib(search_word: str):
         return 1
 
 def build_package(source_dir, output_filename, name, version):
-    if not os.path.exists(f"build/etc/bpm/{name}/{version}"):
+    if not os.path.exists(toml_file):
+        print("This project is not initialized (Missing bpm.tml)")
+        return 1
+
+    build_bpm_etc_path = f"build/etc/bpm/{name}/{version}"
+
+    if not os.path.exists(build_bpm_etc_path):
         # Créer le répertoire
-        os.makedirs(f"build/etc/bpm/{name}/{version}", mode=0o755, exist_ok=True)
+        os.makedirs(build_bpm_etc_path, mode=0o755, exist_ok=True)
+
     if not os.path.exists(f"build/usr/share/{name}/{version}"):
         # Créer le répertoire
         os.makedirs(f"build/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
@@ -469,6 +516,13 @@ def generate_lib_for_bin(name: str):
 
 
 def build(args):
+
+    if not os.path.exists(toml_file):
+        print("This project is not initialized (Missing bpm.tml)")
+        return 0
+
+    LD_FLAGS = []
+
     repertoire = 'src/'
     fichiers_s = lister_fichiers_s(repertoire)
     bpm_tmp_folder = "bpmtmp/"
@@ -488,16 +542,17 @@ def build(args):
     if not os.path.exists("build"):
         os.makedirs("build", mode=0o755, exist_ok=True)
 
-    with open(toml_file, 'r') as file:
-        data = toml.load(file)
+    data = read_local_config_file()
 
     codetype = ""
     if "package" in data:
         codetype = data["package"]["codetype"]
         name = data["package"]["name"]
         version = data["package"]["version"]
+        templatecode = data["package"]["templatecode"]
 
     arg_include = []
+
     if "dependencies" in data and data["dependencies"]:
         dependencies = data["dependencies"]
         if len(dependencies) != 0:
@@ -513,22 +568,44 @@ def build(args):
 
     shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tml")
 
+
     if codetype == "rom":
         rom_path = f"build/usr/share/{name}/{version}/"
         if not os.path.exists(rom_path):
             os.makedirs(rom_path, mode=0o755, exist_ok=True)
 
-        plugins_detect("no_display")
-        print(plugins_installed)
-        if plugins_installed['orixsdk']:
-            # if not os.path.exists(f"orixlibs/orixsdk/macros/"):
-            #     os.makedirs(f"orixlibs/orixsdk/macros", mode=0o755, exist_ok=True)
-            # home_directory = os.path.expanduser('~')
-            # path_orixsdk = f"{home_directory}/orixsdk/orix-sdk-master/macros/"
-            # shutil.copy(path_orixsdk + "*", f"orixlibs/orixsdk/macros")
-            arg_include.append("-I")
-            arg_include.append(f"orixlibs/orixsdk/macros")
+        if templatecode == "asm_rom_tpl":
+            plugins_detect("no_display")
+            print(plugins_installed)
+            if plugins_installed['orixsdk']:
+                if not os.path.exists(f"orixlibs/orixsdk/macros/"):
+                    os.makedirs(f"orixlibs/orixsdk/macros", mode=0o755, exist_ok=True)
+                home_directory = os.path.expanduser('~')
+                path_orixsdk = f"{home_directory}/.bpm/orixsdk/orix-sdk-master/macros/"
+                # Parcourir tous les fichiers dans le répertoire source
+                for fichier in os.listdir(path_orixsdk):
+                    # Chemin complet du fichier source
+                    source_fichier = os.path.join(path_orixsdk, fichier)
 
+                    # Vérifier si c'est un fichier (et non un sous-dossier)
+                    if os.path.isfile(source_fichier):
+                        # Copier le fichier vers le répertoire de destination
+                        shutil.copy(source_fichier, f"orixlibs/orixsdk/macros")
+                        #print(f"Copié {source_fichier} vers orixlibs/orixsdk/macros")
+
+
+                #shutil.copy(path_orixsdk + "*", f"orixlibs/orixsdk/macros")
+                arg_include.append("-I")
+                arg_include.append(f"orixlibs/orixsdk/macros")
+
+            if  os.path.exists(f"macros"):
+                arg_include.append("-I")
+                arg_include.append(f".")
+
+            home_directory = os.path.expanduser('~')
+            path_orixsdk = f"{home_directory}/.bpm/tpl/asm_rom_tpl/orix-cart-master/cfg/rom.cfg"
+            LD_FLAGS.append('-C')
+            LD_FLAGS.append(path_orixsdk)
 
         nom_sans_extension = name
         file_to_compile_s = repertoire + name + ".s"
@@ -536,9 +613,16 @@ def build(args):
         arg_cl65 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + name + ".ld65", "--include-dir", "src/include"]
         resultat = subprocess.run(cmd_cl65 + arg_include + arg_cl65, check=True, capture_output=False, text=True)
 
+
+
         cmd_ld65 = ['ld65']
-        arg_ld65 = ['-tnone' , bpm_tmp_folder + name + ".ld65", "-o", bpm_tmp_folder + name + ".rom"]
-        resultat = subprocess.run(cmd_ld65 + arg_ld65, check=True, capture_output=False, text=True)
+        if templatecode == "asm_rom_tpl":
+            arg_ld65 = [ bpm_tmp_folder + name + ".ld65", "-o", bpm_tmp_folder + name + ".rom", "orixlibs/orixsdk/usr/lib/orix-sdk.lib"]
+            resultat = subprocess.run(cmd_ld65 + LD_FLAGS + arg_ld65, check=True, capture_output=False, text=True)
+
+        else:
+            arg_ld65 = ['-tnone' , bpm_tmp_folder + name + ".ld65", "-o", bpm_tmp_folder + name + ".rom"]
+            resultat = subprocess.run(cmd_ld65 + arg_ld65, check=True, capture_output=False, text=True)
 
         shutil.copy(bpm_tmp_folder + name + ".rom", rom_path + name + ".rom")
 
@@ -562,8 +646,9 @@ def build(args):
         if os.path.exists(file_to_compile_c):
             try:
                 arg_cl65 = ['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
+                arg_cl65_2304 = ['cl65', '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 resultat = subprocess.run(arg_cl65 + arg_include, check=True, capture_output=False, text=True)
-                resultat = subprocess.run(arg_cl65 + arg_include, check=True, capture_output=False, text=True)
+                resultat = subprocess.run(arg_cl65_2304 + arg_include, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
                 print("Built : " + "build/bin/" + nom_sans_extension)
@@ -575,8 +660,9 @@ def build(args):
         if os.path.exists(file_to_compile_s):
             try:
                 arg_cl65 = ['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
+                arg_cl65_2304 = ['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 resultat = subprocess.run(arg_cl65 + arg_include, check=True, capture_output=False, text=True)
-                resultat = subprocess.run(arg_cl65 + arg_include, check=True, capture_output=False, text=True)
+                resultat = subprocess.run(arg_cl65_2304 + arg_include, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
                 print("Built : " + "build/bin/" + nom_sans_extension)
@@ -690,6 +776,20 @@ def plugins_detect(mode):
                 else:
                     plugins_installed['asm_bin_tpl'] = True
 
+        if cle == "asm_rom_tpl":
+            folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_rom_tpl/")
+            file_path = os.path.join(folder_path_asm_bin , "")
+            if not os.path.exists(file_path):
+                if mode == "display":
+                    print(" \033[1;31m[Uninstalled]\033[0m")
+                else:
+                    plugins_installed['asm_rom_tpl'] = False
+            else:
+                if mode == "display":
+                    print(" \033[1;32m[Installed]\033[0m")
+                else:
+                    plugins_installed['asm_rom_tpl'] = True
+
 def plugins(args):
     if len(args) == 3:
         if args[2] == "-h":
@@ -715,9 +815,11 @@ def plugins(args):
                 if sys.argv[3] == "orixsdk":
                     install_orixsdk()
                 elif sys.argv[3] == "asm_bin_tpl":
-                    install_asm_bin_tpl()
+                    install_tpl_from_github('asm_bin_tpl')
                 elif sys.argv[3] == "md2hlp":
                     install_md2hlp()
+                elif sys.argv[3] == "asm_rom_tpl":
+                    install_tpl_from_github('asm_rom_tpl')
                 else:
                     print("Unknown plugin")
             else:
@@ -737,7 +839,6 @@ def modify_local_toml_key(toml_file, new_name, section, property):
 
     # Vérifier si la section section existe et changer la valeur de 'name'
     contenu[section][property] = new_name
-
 
     # Réécrire le fichier avec la nouvelle valeur
     with open(toml_file, 'w') as fichier:
@@ -759,19 +860,23 @@ def print_frame(str_to_display, sep):
     print(symbs[10])
 
 def manage_config(args):
-
-    valid_parameters_main = ['oricutron_path' , 'oricutron_replace_autoboot_run']
+    valid_parameters_main = ['oricutron_path' , 'oricutron_replace_autoboot_run' , 'default_rom_oricutron_for_code']
     valid_parameters_main_desc = ['                  Set Oricutron path for main (general behavior), value must be path of Oricutron binary with filename binary in the path',
-                                  '  Set False or True. False will not modify /etc/autoboot in Oricutron']
+                                  '  Set False or True. False will not modify /etc/autoboot in Oricutron',
+                                  '  Default rom when code type is rom : the .rom will be inserted into this slot'
+                                  ]
 
-    valid_parameters_main_verify = ['path', 'boolean']
+    valid_parameters_main_verify = ['path', 'boolean', 'string']
 
-    valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', ]
+    valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', 'oricutron_path', 'default_rom_oricutron_for_code']
     valid_parameters_project_desc = ['                            Name of the project',
                                      '                         Version of the project',
                                      '                        Code type of the project (lib is a library, bin a command line [lib|bin]',
-                                     '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed']
-    valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean']
+                                     '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed',
+                                     '       Set Oricutron path for current project',
+                                     '  Default rom when code type is rom : the .rom will be inserted into this slot'
+                                    ]
+    valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean', 'string', 'string']
 
     # bpm set main -h
     if len(args) == 5:
@@ -887,7 +992,7 @@ def manage_config(args):
                 contenu = fichier.read()
                 print(contenu)
         except FileNotFoundError:
-            print(f"Le fichier '{chemin_fichier}' n'a pas été trouvé.")
+            print(f"Le fichier '{directory_path}' n'a pas été trouvé.")
         except Exception as e:
             print(f"Une erreur est survenue : {e}")
 
@@ -981,11 +1086,11 @@ def publish(filename: str, args, mode):
             print(f"API response: {response.text}")
             return 1
 
-def install_asm_bin_tpl():
+def install_tpl_from_github(plugin_name):
     # Chatgpt:
     # Si le folder ~/.bpm/tpl/asm_bin_tpl/ n'existe pas, telecharge https://github.com/assinie/new-project/archive/refs/heads/main.zip, dezippe le dans ~/.bpm/tpl/
     # Définir le chemin du dossier asm_bin_tpl
-    folder_path = os.path.expanduser("~/.bpm/tpl/asm_bin_tpl/")
+    folder_path = os.path.expanduser(f"~/.bpm/tpl/{plugin_name}/")
 
     # Vérifier si le dossier existe
     if not os.path.exists(folder_path):
@@ -996,8 +1101,8 @@ def install_asm_bin_tpl():
             os.makedirs(parent_folder)
 
         # Télécharger l'archive depuis GitHub
-        url = "https://github.com/assinie/new-project/archive/refs/heads/main.zip"
-        response = requests.get(url)
+        #url = "https://github.com/assinie/new-project/archive/refs/heads/main.zip"
+        response = requests.get(plugins_url[plugin_name])
 
         # Vérifier si le téléchargement est réussi
         if response.status_code == 200:
@@ -1068,6 +1173,11 @@ def install_md2hlp():
         print("Download error. Error code :", response.status_code)
 
 def build_doc(toml_file):
+
+    if not os.path.exists(toml_file):
+        print("This project is not initialized (Missing bpm.tml)")
+        return 0
+
     # Test md2hlp
     # Chatgpt :
     plugins_detect("detect")
@@ -1099,12 +1209,16 @@ def build_doc(toml_file):
 
 
 def update_package(args):
+    if not os.path.exists(toml_file):
+        print("This project is not initialized (Missing bpm.tml)")
+        return 1
+
     data = read_local_config_file()
     if "dependencies" in data and len(data["dependencies"]) != 0:
         dependencies = data["dependencies"]
         for key, value in dependencies.items():
             print(f"Updating : {key}")
-            remove_dependency_from_toml(toml_file, key)
+            remove_dependency_from_toml(key)
             add_dependency_to_toml(toml_file, f"{key}@{value}")
 
 
@@ -1130,8 +1244,6 @@ def run_bin(args):
             print("Usage : bpm run\n")
             return
 
-
-
     try:
         # Lire le fichier TOML
         with open(main_config_path, 'r') as file:
@@ -1143,21 +1255,37 @@ def run_bin(args):
                 print("oricutron_path is empty, set it with 'bpm config set oricutron_path *Yourpath*'")
                 return
             if not os.path.isfile(path_oricutron):
-                print(f"Error : in 'oricutron_path' parameter, {path_oricutron} is not a file. Set Oricutron path with 'bpm config set oricutron_path *Yourpath*'")
+                print(f"Error : in 'oricutron_path' parameter, {path_oricutron} is not a file. Set Oricutron path with 'bpm config set main oricutron_path *Yourpath*'")
                 return
+
+            default_rom_oricutron_for_code = 4
+
+            if "default_rom_oricutron_for_code" in data["main"]:
+                if data["main"]["default_rom_oricutron_for_code"] != "":
+                    default_rom_oricutron_for_code = int(data["main"]["default_rom_oricutron_for_code"])
+
 
     except FileNotFoundError:
         print(f"'{main_config_path}' not found")
 
 
+    data = read_local_config_file()
 
-    with open("bpm.tml", 'r') as file:
-        data = toml.load(file)
     oricutron_replace_autoboot_run = "True"
     if "package" in data:
         name =  data["package"]["name"]
         codetype =  data["package"]["codetype"]
         version =  data["package"]["version"]
+        if "default_rom_oricutron_for_code" in data["package"]:
+            if data["package"]["default_rom_oricutron_for_code"] != "":
+                default_rom_oricutron_for_code = int(data["package"]["default_rom_oricutron_for_code"])
+
+        if data["package"]["oricutron_path"] != "":
+            path_oricutron_project = data["package"]["oricutron_path"]
+            if not os.path.isfile(path_oricutron_project):
+                print(f"Error : in 'oricutron_path' parameter, {path_oricutron_project} is not a file. Set Oricutron path with 'bpm config set project oricutron_path *Yourpath*'")
+                return
+            path_oricutron = path_oricutron_project
         oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
     else:
         print("Error bpm.tml does not contains 'package' property")
@@ -1170,26 +1298,59 @@ def run_bin(args):
         shutil.copy("build/bin/" + name, path_oricutron + "/sdcard/BIN/" + name.upper())
 
     if codetype == "rom":
-        path_to_oricutron_rom = f"/sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
+        path_to_oricutron_rom = f"sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
         if not os.path.exists(path_oricutron + path_to_oricutron_rom):
             os.makedirs(path_oricutron + path_to_oricutron_rom, exist_ok=True)
-            print("creating")
-            print(path_oricutron)
-            print(path_to_oricutron_rom)
-        shutil.copy(f"build/usr/share/{name}/{version}/{name}.rom", path_oricutron + path_to_oricutron_rom)
+
+        shutil.copy(f"build/usr/share/{name}/{version}/{name}.rom", path_oricutron + '/' + path_to_oricutron_rom)
+
+
+        path_twilighte_board_cfg_plugin = path_oricutron + "/plugins/twilighte_board/twilighte.cfg"
+        with open(path_twilighte_board_cfg_plugin, "r") as file:
+            lines = file.readlines()
+
+
+        if default_rom_oricutron_for_code == "":
+            default_rom_oricutron_for_code = 4
+
+        if default_rom_oricutron_for_code < 10:
+            default_rom_oricutron_for_code_str = f"rom0{default_rom_oricutron_for_code}"
+        else:
+            default_rom_oricutron_for_code_str = f"rom{default_rom_oricutron_for_code}"
+
+        if default_rom_oricutron_for_code < 42 and default_rom_oricutron_for_code > 31:
+            default_rom_oricutron_for_code_str = f"ram0{default_rom_oricutron_for_code}"
+
+        if default_rom_oricutron_for_code > 42:
+            default_rom_oricutron_for_code_str = f"ram{default_rom_oricutron_for_code}"
+
+
+        twilbank_found = False
+        with open(path_twilighte_board_cfg_plugin, "w") as file:
+            for line in lines:
+                if f"twilbankrom{default_rom_oricutron_for_code_str}" in line:
+                    file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
+                    twilbank_found = True
+                else:
+                    file.write(line)
+            if not twilbank_found:
+                file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
+
 
     # Generate submit file
-
+    autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
+    full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
     if oricutron_replace_autoboot_run == "True":
         content = f"#!/bin/submit\n{name}\n"
-        if os.path.exists(path_oricutron + "/sdcard/ETC/AUTOBOOT"):
-            shutil.copy(path_oricutron + "/sdcard/ETC/AUTOBOOT", bpm_tmp_folder + " AUTOBOOT_OLD")
+        if os.path.exists(full_autoboot_oricutron_folder):
+            shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + " AUTOBOOT_OLD")
             old_autoboot_exists = True
-            with open(path_oricutron + "/sdcard/ETC/AUTOBOOT", 'w') as file:
+            with open(full_autoboot_oricutron_folder, 'w') as file:
                 file.write(content)
 
     os.chdir(path_oricutron)
     try:
+        print(f"Execute : {bin_oricutron}")
         subprocess.run([bin_oricutron], check=True)
     except Exception as e:
         print(f"Error : {e}")
@@ -1236,8 +1397,14 @@ def main():
     elif action == 'doc' or action == 'd':
         build_doc(toml_file)
     elif action == 'list':
-        read_dependencies_from_toml(toml_file)
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
+        read_dependencies_from_toml()
     elif action == 'add':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
         if  len(sys.argv) == 3:
             dependency_str = sys.argv[2]
             add_dependency_to_toml(toml_file, dependency_str)
@@ -1245,12 +1412,18 @@ def main():
             print("Missing parameter")
             print("Type 'bpm add --help'")
     elif action == 'remove':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
         if len(sys.argv) == 3:
             dependency_name = sys.argv[2]
-            remove_dependency_from_toml(toml_file, dependency_name)
+            remove_dependency_from_toml(dependency_name)
         else:
             print("remove needs an argument")
     elif action == 'install':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
         install_dependency_from_toml(sys.argv)
     elif action == 'search':
         if len(sys.argv) == 3:
@@ -1265,6 +1438,9 @@ def main():
     elif action == 'update':
         update_package(sys.argv)
     elif action == 'package':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
         data = read_local_config_file()
         build_doc(toml_file)
         build(sys.argv)
@@ -1291,16 +1467,33 @@ def main():
         else:
             print("Already initialized")
     elif action == 'publish':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
+        tgz_to_upload = ""
+        if len(sys.argv) == 4:
+            if sys.argv[2] == 'pathtgz':
+                tgz_to_upload = sys.argv[3]
+
         data = read_local_config_file()
-        build_doc(toml_file)
-        build(sys.argv)
+
+        if tgz_to_upload == "":
+            build_doc(toml_file)
+            build(sys.argv)
+
         if data["package"]["codetype"] == "lib":
             package_name = data["package"]["name"] + "lib.tgz"
         else:
             package_name = data["package"]["name"] + ".tgz"
-        build_package("build", package_name, data["package"]["name"], data["package"]["version"])
+
+        if tgz_to_upload == "":
+            build_package("build", package_name, data["package"]["name"], data["package"]["version"])
+
         return publish(package_name, sys.argv, "publish")
     elif action == 'unpublish':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
         data = read_local_config_file()
         if data["package"]["codetype"] == "lib":
             package_name = data["package"]["name"] + "lib.tgz"
