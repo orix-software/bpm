@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.31"
+VERSION_BPM = "2024.4.32"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -301,7 +301,6 @@ def init_toml(args):
             os.makedirs("macros", mode=0o755, exist_ok=True)
             shutil.copy(folder_path_rom_bin + "macros/rom_cmd.mac", "macros/rom_cmd.mac")
         shutil.copy(folder_path_rom_bin + "src/rom_cmd.s", f"src/{last_directory}.s")
-
 
     if not os.path.exists("VERSION"):
         print("Init VERSION file")
@@ -1237,12 +1236,25 @@ def run_bin(args):
     bpm_tmp_folder = "bpmtmp/"
     old_autoboot_exists = False
     current_pwd = os.getcwd()
-
+    binary_to_launch = ""
     if len(sys.argv) == 3:
         if sys.argv[2] == '-h':
             print("Run project\n")
-            print("Usage : bpm run\n")
+            print("Usage : bpm run [--bin MYBINARY]\n")
+            print("bla")
             return
+
+        if sys.argv[2] == '--bin':
+            print("Missing binary")
+            print("Run project\n")
+            print("Usage : bpm run [--bin MYBINARY]\n")
+            return
+
+    if len(sys.argv) == 4:
+        if sys.argv[2] == '--bin':
+            binary_to_launch = sys.argv[3]
+            print("Binary")
+            print(binary_to_launch)
 
     try:
         # Lire le fichier TOML
@@ -1264,10 +1276,8 @@ def run_bin(args):
                 if data["main"]["default_rom_oricutron_for_code"] != "":
                     default_rom_oricutron_for_code = int(data["main"]["default_rom_oricutron_for_code"])
 
-
     except FileNotFoundError:
         print(f"'{main_config_path}' not found")
-
 
     data = read_local_config_file()
 
@@ -1279,14 +1289,14 @@ def run_bin(args):
         if "default_rom_oricutron_for_code" in data["package"]:
             if data["package"]["default_rom_oricutron_for_code"] != "":
                 default_rom_oricutron_for_code = int(data["package"]["default_rom_oricutron_for_code"])
-
-        if data["package"]["oricutron_path"] != "":
-            path_oricutron_project = data["package"]["oricutron_path"]
-            if not os.path.isfile(path_oricutron_project):
-                print(f"Error : in 'oricutron_path' parameter, {path_oricutron_project} is not a file. Set Oricutron path with 'bpm config set project oricutron_path *Yourpath*'")
-                return
-            path_oricutron = path_oricutron_project
-        oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
+        if "oricutron_path" in data["package"]:
+            if data["package"]["oricutron_path"] != "":
+                path_oricutron_project = data["package"]["oricutron_path"]
+                if not os.path.isfile(path_oricutron_project):
+                    print(f"Error : in 'oricutron_path' parameter, {path_oricutron_project} is not a file. Set Oricutron path with 'bpm config set project oricutron_path *Yourpath*'")
+                    return
+                path_oricutron = path_oricutron_project
+            oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
     else:
         print("Error bpm.tml does not contains 'package' property")
         return 1
@@ -1299,8 +1309,9 @@ def run_bin(args):
 
     if codetype == "rom":
         path_to_oricutron_rom = f"sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
-        if not os.path.exists(path_oricutron + path_to_oricutron_rom):
-            os.makedirs(path_oricutron + path_to_oricutron_rom, exist_ok=True)
+
+        if not os.path.exists(path_oricutron + '/' + path_to_oricutron_rom):
+            os.makedirs(path_oricutron + '/' + path_to_oricutron_rom, exist_ok=True)
 
         shutil.copy(f"build/usr/share/{name}/{version}/{name}.rom", path_oricutron + '/' + path_to_oricutron_rom)
 
@@ -1328,25 +1339,38 @@ def run_bin(args):
         twilbank_found = False
         with open(path_twilighte_board_cfg_plugin, "w") as file:
             for line in lines:
-                if f"twilbankrom{default_rom_oricutron_for_code_str}" in line:
-                    file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
+                if f"twilbank{default_rom_oricutron_for_code_str}" in line:
+                    #print(f"Writing !!!twilbankrom{default_rom_oricutron_for_code_str}")
                     twilbank_found = True
+                    file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
+                    break
                 else:
                     file.write(line)
+
             if not twilbank_found:
-                file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
+                    file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
+
 
 
     # Generate submit file
     autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
     full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
     if oricutron_replace_autoboot_run == "True":
-        content = f"#!/bin/submit\n{name}\n"
+        if binary_to_launch == "":
+            content = f"#!/bin/submit\n{name}\n"
+        else:
+            content = f"#!/bin/submit\n{binary_to_launch}\n"
+
+        # if not os.path.exists(path_oricutron + "/sdcard/ETC/"):
+        #     os.makedirs(path_oricutron + "/sdcard/ETC/", exist_ok=True)
+        #     open(full_autoboot_oricutron_folder, 'a').close()
+
         if os.path.exists(full_autoboot_oricutron_folder):
             shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + " AUTOBOOT_OLD")
             old_autoboot_exists = True
-            with open(full_autoboot_oricutron_folder, 'w') as file:
-                file.write(content)
+
+        with open(full_autoboot_oricutron_folder, 'w') as file:
+            file.write(content)
 
     os.chdir(path_oricutron)
     try:
