@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.32"
+VERSION_BPM = "2024.4.33"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -26,7 +26,7 @@ plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
     'orixsdk': 'Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)',
     'asm_bin_tpl': 'Assembly binary template for Orix',
-    'asm_rom_tpl': 'Assembly rom templta for Orix'
+    'asm_rom_tpl': 'Assembly rom template for Orix'
     }
 
 plugins_installed = {
@@ -38,9 +38,24 @@ plugins_installed = {
 
 plugins_url = {
     'md2hlp': 'FIXME',
-    'orixsdk': 'FIXME',
+    'orixsdk': 'https://github.com/assinie/orix-sdk/archive/refs/heads/master.zip',
     'asm_bin_tpl': 'https://github.com/assinie/new-project/archive/refs/heads/main.zip',
     'asm_rom_tpl': 'https://github.com/assinie/orix-cart/archive/refs/heads/master.zip'
+}
+
+plugins_url_version = {
+    'md2hlp': 'FIXME',
+    'orixsdk': 'https://raw.githubusercontent.com/assinie/orix-sdk/refs/heads/master/VERSION',
+    'asm_bin_tpl': 'https://raw.githubusercontent.com/assinie/new-project/refs/heads/main/VERSION',
+    'asm_rom_tpl': 'https://raw.githubusercontent.com/assinie/orix-cart/refs/heads/master/VERSION'
+}
+
+
+plugins_main_property_name = {
+    'md2hlp': 'default_md2hlp_version',
+    'orixsdk': 'default_orixsdk_version',
+    'asm_bin_tpl': 'default_asm_bin_tpl_version',
+    'asm_rom_tpl': 'default_asm_rom_tpl_version'
 }
 
 
@@ -263,20 +278,34 @@ def init_toml(args):
 
     main_config_data = read_main_config_file()
 
+    default_asm_bin_tpl_version = ""
+    default_asm_rom_tpl_version = ""
+    default_orixsdk_version = ""
     oricutron_replace_autoboot_run_for_project = ""
+
     if "main" in main_config_data:
+        print(main_config_data)
         main_properties = main_config_data["main"]
-        for key, value in main_properties.items():
-            if key == "oricutron_replace_autoboot_run":
-                oricutron_replace_autoboot_run_for_project = "oricutron_replace_autoboot_run = \"" + value + "\"\n"
-                break
+        default_asm_bin_tpl_version = main_properties["default_asm_bin_tpl_version"]
+        default_asm_rom_tpl_version = main_properties["default_asm_rom_tpl_version"]
+        default_orixsdk_version = main_properties["default_orixsdk_version"]
+        default_kernel_version = main_properties["default_kernel_version"]
+        oricutron_replace_autoboot_run_for_project = main_properties["oricutron_replace_autoboot_run"]
+        # for key, value in main_properties.items():
+        #     if key == "oricutron_replace_autoboot_run":
+        #         oricutron_replace_autoboot_run_for_project = "oricutron_replace_autoboot_run = \"" + value + "\"\n"
+        #         break
 
     if not os.path.exists("bpm.tml"):
         print("Init bpm.tml")
         """Crée un fichier TOML avec des valeurs par défaut."""
         content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + str(current_year) + "." + str(current_trimester) + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
         content = content + f"readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"{codetype}\"\ntemplatecode = \"{code_template}\"\npathsrc = \"src\"\n"
-        content = content + oricutron_replace_autoboot_run_for_project
+        content = content + oricutron_replace_autoboot_run_for_project + "\n"
+        content = content + f"asm_bin_tpl_version = \"{default_asm_bin_tpl_version}\"\n"
+        content = content + f"asm_rom_tpl_version = \"{default_asm_rom_tpl_version}\"\n"
+        content = content + f"orixsdk_version = \"{default_orixsdk_version}\"\n"
+        content = content + f"orix_minimal_kernel_version = \"{default_kernel_version}\"\n"
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
             file.write(content)
@@ -295,21 +324,21 @@ def init_toml(args):
             with open("src/" + last_directory + ".c", 'w') as file:
                 file.write(content)
 
-    if codetype == 'rom':
-        folder_path_rom_bin = os.path.expanduser("~/.bpm/tpl/asm_rom_tpl/orix-cart-master/")
-        if not os.path.exists("macros"):
-            os.makedirs("macros", mode=0o755, exist_ok=True)
-            shutil.copy(folder_path_rom_bin + "macros/rom_cmd.mac", "macros/rom_cmd.mac")
-        shutil.copy(folder_path_rom_bin + "src/rom_cmd.s", f"src/{last_directory}.s")
-
     if not os.path.exists("VERSION"):
         print("Init VERSION file")
         content = str(current_year) + "." + str(current_trimester)
         with open("VERSION", 'w') as file:
             file.write(content)
 
-    if code_template == "asm_rom_tpl":
+    if code_template == "asm_rom_tpl" and codetype == 'rom':
+        if default_asm_rom_tpl_version == "":
+            print("Fatal 'default_asm_rom_tpl_version' can be empty in ~/.bpm/bpm")
         add_dependency_to_toml(toml_file, "orixsdk@2023.3")
+        folder_path_rom_bin = os.path.expanduser(f"~/.bpm/plugins/{default_asm_rom_tpl_version}/asm_rom_tpl/orix-cart-master/")
+        if not os.path.exists("macros"):
+            os.makedirs("macros", mode=0o755, exist_ok=True)
+            shutil.copy(folder_path_rom_bin + "macros/rom_cmd.mac", "macros/rom_cmd.mac")
+        shutil.copy(folder_path_rom_bin + "src/rom_cmd.s", f"src/{last_directory}.s")
 
     print(f"initialized")
 
@@ -391,6 +420,10 @@ def verify_installed():
         str_init = "[main]\noricutron_path = \"oricutron\"\noricutron_replace_autoboot_run = \"True\"\ndefault_rom_oricutron_for_code = 4\n"
         str_init = str_init + "bpm_version = \"" + VERSION_BPM + "\"\n"
         str_init = str_init + "last_check_update = \"0000-00-00\"\n"
+        str_init = str_init + "default_orixsdk_version = \"\"\n"
+        str_init = str_init + "default_asm_bin_tpl_version = \"\"\n"
+        str_init = str_init + "default_asm_rom_tpl_version = \"\"\n"
+        str_init = str_init + "default_kernel_version = \"2024.1\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
 
@@ -520,6 +553,9 @@ def build(args):
         print("This project is not initialized (Missing bpm.tml)")
         return 0
 
+    # Detect orixsdk version
+    orixsdk_version = "2023.3.0"
+
     LD_FLAGS = []
 
     repertoire = 'src/'
@@ -630,7 +666,7 @@ def build(args):
             os.makedirs("build/bin/", mode=0o755, exist_ok=True)
 
         home_directory = os.path.expanduser('~')
-        new_directory = f"{user_folder}/orixsdk/orix-sdk-master/bin/relocbin.py3"
+        new_directory = f"{user_folder}/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
 
         reloc_bin_path = home_directory + "/" + new_directory
 
@@ -705,6 +741,8 @@ def build(args):
 
 def usage():
     print("Orix build and package manager\n")
+    print("Documentation : https://orix-software.github.io/bpm/\n")
+
     print("Usage : bpm [OPTIONS] [COMMAND]\n")
     print("\033[1;32mOptions:\033[0m")
     print("    \033[1;36m-V\033[0m              Displays version")
@@ -748,7 +786,7 @@ def plugins_detect(mode):
                     plugins_installed['md2hlp'] = True
 
         if cle == "orixsdk":
-            folder_path_orixsdk = os.path.expanduser("~/.bpm/orixsdk/")
+            folder_path_orixsdk = os.path.expanduser("~/.bpm/plugins/orixsdk/")
             file_path = os.path.join(folder_path_orixsdk , "")
             if not os.path.exists(file_path):
                 if mode == "display":
@@ -756,13 +794,14 @@ def plugins_detect(mode):
                 else:
                     plugins_installed['orixsdk'] = False
             else:
+                plugin_version = [d for d in os.listdir(folder_path_orixsdk) if os.path.isdir(os.path.join(folder_path_orixsdk, d))]
                 if mode == "display":
-                    print(" \033[1;32m[Installed]\033[0m")
+                    print(f" \033[1;32m (Available versions : {plugin_version}) [Installed]\033[0m")
                 else:
                     plugins_installed['orixsdk'] = True
 
         if cle == "asm_bin_tpl":
-            folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_bin_tpl/")
+            folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/asm_bin_tpl/")
             file_path = os.path.join(folder_path_asm_bin , "")
             if not os.path.exists(file_path):
                 if mode == "display":
@@ -770,13 +809,14 @@ def plugins_detect(mode):
                 else:
                     plugins_installed['asm_bin_tpl'] = False
             else:
+                plugin_version = [d for d in os.listdir(folder_path_asm_bin) if os.path.isdir(os.path.join(folder_path_asm_bin, d))]
                 if mode == "display":
-                    print(" \033[1;32m[Installed]\033[0m")
+                    print(f" \033[1;32m (Available versions : {plugin_version}) [Installed]\033[0m")
                 else:
                     plugins_installed['asm_bin_tpl'] = True
 
         if cle == "asm_rom_tpl":
-            folder_path_asm_bin = os.path.expanduser("~/.bpm/tpl/asm_rom_tpl/")
+            folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins//asm_rom_tpl/")
             file_path = os.path.join(folder_path_asm_bin , "")
             if not os.path.exists(file_path):
                 if mode == "display":
@@ -784,8 +824,9 @@ def plugins_detect(mode):
                 else:
                     plugins_installed['asm_rom_tpl'] = False
             else:
+                plugin_version = [d for d in os.listdir(folder_path_asm_bin) if os.path.isdir(os.path.join(folder_path_asm_bin, d))]
                 if mode == "display":
-                    print(" \033[1;32m[Installed]\033[0m")
+                    print(f" \033[1;32m (Available versions : {plugin_version}) [Installed]\033[0m")
                 else:
                     plugins_installed['asm_rom_tpl'] = True
 
@@ -812,7 +853,7 @@ def plugins(args):
         if sys.argv[2] == "install":
             if len(sys.argv) == 4:
                 if sys.argv[3] == "orixsdk":
-                    install_orixsdk()
+                    install_tpl_from_github('orixsdk')
                 elif sys.argv[3] == "asm_bin_tpl":
                     install_tpl_from_github('asm_bin_tpl')
                 elif sys.argv[3] == "md2hlp":
@@ -1089,18 +1130,30 @@ def install_tpl_from_github(plugin_name):
     # Chatgpt:
     # Si le folder ~/.bpm/tpl/asm_bin_tpl/ n'existe pas, telecharge https://github.com/assinie/new-project/archive/refs/heads/main.zip, dezippe le dans ~/.bpm/tpl/
     # Définir le chemin du dossier asm_bin_tpl
-    folder_path = os.path.expanduser(f"~/.bpm/tpl/{plugin_name}/")
+    folder_path = os.path.expanduser(f"~/.bpm/plugins/{plugin_name}/")
+    # Get version
+    response = requests.get(plugins_url_version[plugin_name])
+
+
+    if response.status_code == 200:
+        plugin_version = response.text
+        plugin_version = plugin_version.replace("\n", "")
+
+    else:
+        print(f"Download error: {response.status_code}")
+        return 1
+
+    path_plugin = folder_path + plugin_version
 
     # Vérifier si le dossier existe
-    if not os.path.exists(folder_path):
+    if not os.path.exists(path_plugin):
 
-        # Créer le dossier parent ~/.bpm/tpl/ s'il n'existe pas
-        parent_folder = os.path.dirname(folder_path)
+        # Créer le dossier parent ~/.bpm/{plugin_name}/{plugin_version} s'il n'existe pas
+        parent_folder = os.path.dirname(path_plugin + "/" + plugin_version)
         if not os.path.exists(parent_folder):
             os.makedirs(parent_folder)
 
         # Télécharger l'archive depuis GitHub
-        #url = "https://github.com/assinie/new-project/archive/refs/heads/main.zip"
         response = requests.get(plugins_url[plugin_name])
 
         # Vérifier si le téléchargement est réussi
@@ -1108,17 +1161,22 @@ def install_tpl_from_github(plugin_name):
             # Décompresser l'archive
             with zipfile.ZipFile(BytesIO(response.content)) as z:
                 z.extractall(parent_folder)  # Décompresser dans ~/.bpm/tpl/
+            answer = input(f"Set this version '{plugin_version}' for the next project ? (N/y)")
+            if answer == 'y' or answer == 'Y':
+                main_config_path = os.path.expanduser(f"~/.bpm/bpm")
+                modify_local_toml_key(main_config_path, plugin_version, 'main', plugins_main_property_name[plugin_name])
             print("Installed")
 
         else:
             print("Erreur lors du téléchargement. Code de statut:", response.status_code)
     else:
-        print("Le dossier asm_bin_tpl existe déjà dans", folder_path)
+        print(f"Le dossier {plugin_name} existe déjà dans", path_plugin)
 
 
 def install_orixsdk():
     # Chatgpt:
     # Si le folder ~/.bpm/orixsdk/ n'existe pas, telecharge https://github.com/assinie/orix-sdk/archive/refs/heads/master.zip, dezippe le dans ~/.bpm/
+    # https://raw.githubusercontent.com/assinie/orix-sdk/refs/heads/master/VERSION
     folder_path = os.path.expanduser("~/.bpm/orixsdk/")
 
     # Vérifier si le dossier existe
@@ -1131,8 +1189,7 @@ def install_orixsdk():
             os.makedirs(parent_folder)
 
         # Télécharger l'archive depuis GitHub
-        url = "https://github.com/assinie/orix-sdk/archive/refs/heads/master.zip"
-        response = requests.get(url)
+        response = requests.get(plugins_url['orixsdk'])
 
         # Vérifier si le téléchargement est réussi
         if response.status_code == 200:
