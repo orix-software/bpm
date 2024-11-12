@@ -630,6 +630,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    4.1.3. bpm config
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -639,6 +650,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-config-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm config set
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-config-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm config add
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="bpm config add">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bpm-config-add-project-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm config add project binary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1146,6 +1209,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-config-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm config set
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-config-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm config add
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="bpm config add">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bpm-config-add-project-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm config add project binary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1160,6 +1264,12 @@
 
 
 <h1 id="bpm-config">bpm config</h1>
+<h2 id="bpm-config-set">bpm config set</h2>
+<h2 id="bpm-config-add">bpm config add</h2>
+<h3 id="bpm-config-add-project-binary">bpm config add project binary</h3>
+<p>Add a "curl" binary into bin list to generate :</p>
+<p>"bpm config add project binary curl tests/curl.c"</p>
+<p>In that case, "bpm run --bin curl" will launch "curl" compiled from tests/curl.c</p>
 
 
 

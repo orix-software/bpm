@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.33"
+VERSION_BPM = "2024.4.34"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -502,6 +502,10 @@ def build_package(source_dir, output_filename, name, version):
             # Copie chaque fichier vers le répertoire de destination
             shutil.copy(file_path, destination_dir)
 
+        for file_path in glob.glob(os.path.join(source_dir, "*.mac")):
+            # Copie chaque fichier vers le répertoire de destination
+            shutil.copy(file_path, destination_dir)
+
     if os.path.exists(f"src/include/"):
         source_dir = "src/include/"
         destination_dir = "build/usr/include/"
@@ -556,6 +560,8 @@ def build(args):
         print("This project is not initialized (Missing bpm.tml)")
         return 0
 
+
+
     # Detect orixsdk version
     orixsdk_version = "2023.3.0"
 
@@ -600,8 +606,14 @@ def build(args):
             orixsdk_version  = data["package"]["orixsdk_version"]
         else:
             orixsdk_version = ""
+            print("Error orixsdk version plugin is not installed")
+            return 1
 
     arg_include = []
+    arg_ld_libs = []
+
+    user_folder = os.path.expanduser('~')
+    reloc_bin_path =  f"{user_folder}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
 
     if "dependencies" in data and data["dependencies"]:
         dependencies = data["dependencies"]
@@ -609,6 +621,7 @@ def build(args):
             for key, value in dependencies.items():
                 arg_include.append("-I")
                 arg_include.append(f"orixlibs/{key}/usr/include/asm/")
+                arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
 
 
     if not os.path.exists(f"build/etc/bpm/{version}"):
@@ -679,10 +692,10 @@ def build(args):
         if not os.path.exists("build/bin/"):
             os.makedirs("build/bin/", mode=0o755, exist_ok=True)
 
-        home_directory = os.path.expanduser('~')
-        new_directory = f"{user_folder}/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
 
-        reloc_bin_path = home_directory + "/" + new_directory
+        #new_directory = f"{user_folder}/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
+
+        #reloc_bin_path = home_directory + "/" + new_directory
 
         if not os.path.exists(reloc_bin_path):
             print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
@@ -752,6 +765,34 @@ def build(args):
             os.makedirs(path_file_lib, mode=0o755, exist_ok=True)
         shutil.copy(name + ".lib", f"{path_file_lib}/{name}.lib")
         print("Build completed")
+
+    # Build all binary in [[bin]] section
+    file_path = "bpm.tml"
+    with open(file_path, "r") as file:
+        data = toml.load(file)
+
+    # Afficher tous les noms dans [[bin]]
+    if "bin" in data:
+        if not os.path.exists("build/bin/"):
+            os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+        for bin_entry in data["bin"]:
+            if "name" in bin_entry:
+                file_to_compile_c = bin_entry["path"]
+                if os.path.exists(file_to_compile_c):
+                    try:
+                        arg_cl65 = ['cl65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048', name + ".lib"]
+                        arg_cl65_2304 = ['cl65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304', name + ".lib"]
+                        resultat = subprocess.run(arg_cl65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
+                        resultat = subprocess.run(arg_cl65_2304 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
+                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
+                        shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + bin_entry["name"])
+                        print("Built : " + "build/bin/" + bin_entry["name"])
+                    except subprocess.CalledProcessError as e:
+                        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                    return 0
+
+
+
 
 def usage():
     print("Orix build and package manager\n")
@@ -950,6 +991,13 @@ def manage_config(args):
             return 0
 
     if len(args) == 5:
+        if args[4] == '-h' and args[2] == 'add' and args[3] == 'project':
+            print("Manage config\n")
+            print("Usage : bpm config add project binary binarybin path\n")
+            print("\033[1;32mParameters\033[0m")
+            i = 0
+
+    if len(args) == 5:
         if args[4] == '-h' and args[2] == 'set' and args[3] == 'project':
             print("Manage config\n")
             print("Usage : bpm config set project parameter value\n")
@@ -994,6 +1042,21 @@ def manage_config(args):
         if args[2] == 'set' and args[3] == 'project':
             print("Missing value for parameter '" + args[4] + "'")
             return
+
+    if len(args) == 7:
+        if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary':
+            #bpm config add project binary binarybin path
+            with open("bpm.tml", "r") as file:
+                data = toml.load(file)
+            # Ajouter la section [[bin]] avec les valeurs souhaitées
+            bin_section = {"name": args[5], "path": args[6]}
+
+            data["bin"] = []
+            data["bin"].append(bin_section)
+
+            # Enregistrer les modifications dans le fichier
+            with open("bpm.tml", "w") as file:
+                toml.dump(data, file)
 
     if len(args) == 6:
         if args[2] == 'set' and args[3] == 'main':
@@ -1352,8 +1415,22 @@ def run_bin(args):
     bin_oricutron = path_oricutron
     path_oricutron = os.path.dirname(path_oricutron)
 
-    if codetype == "bin":
-        shutil.copy("build/bin/" + name, path_oricutron + "/sdcard/BIN/" + name.upper())
+
+    #shutil.copy("build/bin/" + name, path_oricutron + "/sdcard/BIN/" + name.upper())
+    if os.path.exists("build/bin"):
+        build_bin = "build/bin/"
+        dest_oricutron_bin = path_oricutron + "/sdcard/BIN/"
+        # Copier tout le contenu de build/bin
+        for item in os.listdir(build_bin):
+            source_path = os.path.join(build_bin, item)
+            destination_path = os.path.join(dest_oricutron_bin, item.upper())
+
+            if os.path.isdir(source_path):
+                shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
+            else:
+                shutil.copy2(source_path, destination_path)
+
+
 
     if codetype == "rom":
         path_to_oricutron_rom = f"sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
