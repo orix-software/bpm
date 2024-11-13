@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.34"
+VERSION_BPM = "2024.4.35"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -644,7 +644,7 @@ def build(args):
                 if not os.path.exists(f"orixlibs/orixsdk/macros/"):
                     os.makedirs(f"orixlibs/orixsdk/macros", mode=0o755, exist_ok=True)
                 home_directory = os.path.expanduser('~')
-                path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}orix-sdk-master/macros/"
+                path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
                 # Parcourir tous les fichiers dans le répertoire source
                 for fichier in os.listdir(path_orixsdk):
                     # Chemin complet du fichier source
