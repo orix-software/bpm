@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.35"
+VERSION_BPM = "2024.4.36"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -533,7 +533,7 @@ def lister_fichiers_s(repertoire):
     return fichiers_s
 
 
-def generate_lib_for_bin(name: str):
+def generate_lib_for_bin(name: str, arg_include):
 
     for fichier in os.listdir("src/"):
         assembly = False
@@ -546,11 +546,13 @@ def generate_lib_for_bin(name: str):
                 fichier_o = fichier.replace(".c", ".o")
 
             if assembly == True and fichier != name + ".s":
-                resultat = subprocess.run(['ca65', '-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                bin_ca65 = ['ca65']
+                arg_ca65 = ['-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o]
+                resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
 
             if assembly == False and fichier != name + ".c":
-                resultat = subprocess.run(['cc65', '-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
 
 
@@ -559,8 +561,6 @@ def build(args):
     if not os.path.exists(toml_file):
         print("This project is not initialized (Missing bpm.tml)")
         return 0
-
-
 
     # Detect orixsdk version
     orixsdk_version = "2023.3.0"
@@ -594,19 +594,23 @@ def build(args):
         name = data["package"]["name"]
         version = data["package"]["version"]
         templatecode = data["package"]["templatecode"]
+
         if "asm_bin_tpl_version" in data["package"]:
             asm_bin_tpl_version = data["package"]["asm_bin_tpl_version"]
         else:
             asm_bin_tpl_version = ""
+
         if "asm_rom_tpl_version" in data["package"]:
             asm_rom_tpl_version = data["package"]["asm_rom_tpl_version"]
         else:
             asm_rom_tpl_version = ""
+
         if "orixsdk_version" in data["package"]:
             orixsdk_version  = data["package"]["orixsdk_version"]
         else:
             orixsdk_version = ""
-            print("Error orixsdk version plugin is not installed")
+            if codetype == "bin":
+                print("Error orixsdk version plugin is not installed, it's required to produce reloc binary")
             return 1
 
     arg_include = []
@@ -632,34 +636,20 @@ def build(args):
     shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tml")
 
 
+    plugins_detect("no_display")
+    print(plugins_installed)
+    if plugins_installed['orixsdk']:
+        home_directory = os.path.expanduser('~')
+        path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
+        arg_include.append("-I")
+        arg_include.append(path_orixsdk)
+
+
     if codetype == "rom":
         rom_path = f"build/usr/share/{name}/{version}/"
         if not os.path.exists(rom_path):
             os.makedirs(rom_path, mode=0o755, exist_ok=True)
-
         if templatecode == "asm_rom_tpl":
-            plugins_detect("no_display")
-            print(plugins_installed)
-            if plugins_installed['orixsdk']:
-                if not os.path.exists(f"orixlibs/orixsdk/macros/"):
-                    os.makedirs(f"orixlibs/orixsdk/macros", mode=0o755, exist_ok=True)
-                home_directory = os.path.expanduser('~')
-                path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
-                # Parcourir tous les fichiers dans le répertoire source
-                for fichier in os.listdir(path_orixsdk):
-                    # Chemin complet du fichier source
-                    source_fichier = os.path.join(path_orixsdk, fichier)
-
-                    # Vérifier si c'est un fichier (et non un sous-dossier)
-                    if os.path.isfile(source_fichier):
-                        # Copier le fichier vers le répertoire de destination
-                        shutil.copy(source_fichier, f"orixlibs/orixsdk/macros")
-                        #print(f"Copié {source_fichier} vers orixlibs/orixsdk/macros")
-
-
-                #shutil.copy(path_orixsdk + "*", f"orixlibs/orixsdk/macros")
-                arg_include.append("-I")
-                arg_include.append(f"orixlibs/orixsdk/macros")
 
             if  os.path.exists(f"macros"):
                 arg_include.append("-I")
@@ -670,8 +660,11 @@ def build(args):
             LD_FLAGS.append('-C')
             LD_FLAGS.append(path_orixsdk)
 
+        generate_lib_for_bin(name, arg_include)
+
         nom_sans_extension = name
         file_to_compile_s = repertoire + name + ".s"
+        print(f"Build : {file_to_compile_s}")
         cmd_cl65 = ['ca65']
         arg_cl65 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + name + ".ld65", "--include-dir", "src/include"]
         resultat = subprocess.run(cmd_cl65 + arg_include + arg_cl65, check=True, capture_output=False, text=True)
@@ -692,16 +685,11 @@ def build(args):
         if not os.path.exists("build/bin/"):
             os.makedirs("build/bin/", mode=0o755, exist_ok=True)
 
-
-        #new_directory = f"{user_folder}/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
-
-        #reloc_bin_path = home_directory + "/" + new_directory
-
         if not os.path.exists(reloc_bin_path):
             print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
             return 1
 
-        generate_lib_for_bin(name)
+        generate_lib_for_bin(name, arg_include)
 
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
@@ -721,6 +709,7 @@ def build(args):
         file_to_compile_s = repertoire + name + ".s"
         if os.path.exists(file_to_compile_s):
             try:
+                print(f"Build : {file_to_compile_s}")
                 arg_cl65 = ['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 arg_cl65_2304 = ['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 resultat = subprocess.run(arg_cl65 + arg_include, check=True, capture_output=False, text=True)
@@ -751,8 +740,9 @@ def build(args):
 
                 if generate == True:
                     print("Building " + repertoire + fichier)
-                    arg_ca65 = ['ca65', '-ttelestrat', fichier_source, "-o", fichier_dest_o, "--include-dir", "src/include"]
-                    resultat = subprocess.run(arg_ca65 + arg_include, check=True, capture_output=True, text=True)
+                    bin_ca65 = ['ca65']
+                    arg_ca65 = ['-ttelestrat', fichier_source, "-o", fichier_dest_o, "--include-dir", "src/include"]
+                    resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                 return 1
