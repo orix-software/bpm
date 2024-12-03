@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.36"
+VERSION_BPM = "2024.4.37"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -609,9 +609,9 @@ def build(args):
             orixsdk_version  = data["package"]["orixsdk_version"]
         else:
             orixsdk_version = ""
-            if codetype == "bin":
-                print("Error orixsdk version plugin is not installed, it's required to produce reloc binary")
-            return 1
+            if codetype != "bin":
+                print("Error : 'orixsdk_version' plugin is not installed available into package section of bpm.tml, it's required to produce reloc binary, set it to version installed (see bpm plugins)")
+                return 1
 
     arg_include = []
     arg_ld_libs = []

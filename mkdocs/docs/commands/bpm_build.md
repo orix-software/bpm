@@ -12,5 +12,4 @@ Compile local packages and all of their dependencies.
 
 ## EXIT STATUS
 
-
 ## SEE ALSO
