@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.39"
+VERSION_BPM = "2024.4.40"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -26,28 +26,32 @@ plugins_description = {
     'md2hlp': 'Build markdown into hlp file (text mode)',
     'orixsdk': 'Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)',
     'asm_bin_tpl': 'Assembly binary template for Orix',
-    'asm_rom_tpl': 'Assembly rom template for Orix'
+    'asm_rom_tpl': 'Assembly rom template for Orix',
+    'github_action': 'Template for github action'
     }
 
 plugins_installed = {
     'md2hlp': False,
     'orixsdk': False,
     'asm_bin_tpl': False,
-    'asm_rom_tpl': False
+    'asm_rom_tpl': False,
+    'github_action': False
     }
 
 plugins_url = {
     'md2hlp': 'FIXME',
     'orixsdk': 'https://github.com/assinie/orix-sdk/archive/refs/heads/master.zip',
     'asm_bin_tpl': 'https://github.com/assinie/new-project/archive/refs/heads/main.zip',
-    'asm_rom_tpl': 'https://github.com/assinie/orix-cart/archive/refs/heads/master.zip'
+    'asm_rom_tpl': 'https://github.com/assinie/orix-cart/archive/refs/heads/master.zip',
+    'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/master/plugins/templates/github/action/#VERSION#/main.yml',
 }
 
 plugins_url_version = {
     'md2hlp': 'FIXME',
     'orixsdk': 'https://raw.githubusercontent.com/assinie/orix-sdk/refs/heads/master/VERSION',
     'asm_bin_tpl': 'https://raw.githubusercontent.com/assinie/new-project/refs/heads/main/VERSION',
-    'asm_rom_tpl': 'https://raw.githubusercontent.com/assinie/orix-cart/refs/heads/master/VERSION'
+    'asm_rom_tpl': 'https://raw.githubusercontent.com/assinie/orix-cart/refs/heads/master/VERSION',
+    'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/master/plugins/templates/github/action/VERSION',
 }
 
 
@@ -458,7 +462,7 @@ def search_lib(search_word: str):
         with open(directory_path + "/listtgz.txt", 'wb') as f:
             f.write(response.content)
         if search_word == "":
-            content = content.replace(';lib', '')  # Retirer ";lib"
+            content = content.replace(';lib', ' - ')  # Retirer ";lib"
             content = content.replace(';', ' ')    # Remplacer ; par des espaces
             print(content)
         else:
@@ -924,6 +928,22 @@ def plugins_detect(mode):
                 else:
                     plugins_installed['asm_rom_tpl'] = True
 
+        if cle == "github_action":
+            folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/github_action/")
+            file_path = os.path.join(folder_path_asm_bin , "")
+            if not os.path.exists(file_path):
+                val = install_tpl_from_github("github_action", 0)
+                if val != 1:
+                    print(" \033[1;32m[Installed]\033[0m")
+                else:
+                    plugins_installed['github_action'] = False
+            else:
+                plugin_version = [d for d in os.listdir(folder_path_asm_bin) if os.path.isdir(os.path.join(folder_path_asm_bin, d))]
+                if mode == "display":
+                    print(f" \033[1;32m (Available versions : {plugin_version}) [Installed]\033[0m")
+                else:
+                    plugins_installed['github_action'] = True
+
 def plugins(args):
     if len(args) == 3:
         if args[2] == "-h":
@@ -1203,6 +1223,7 @@ def publish(filename: str, args, mode):
     version = conf["package"]["version"]
     cpu = conf["package"]["cpu"]
     codetype = conf["package"]["codetype"]
+    description = conf["package"]["description"]
 
     if publish_key is None:
         print("BPM_PUBLISH_KEY is not defined")
@@ -1214,7 +1235,7 @@ def publish(filename: str, args, mode):
     if mode == "unpublish":
         action = "delete"
 
-    url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&codetype={codetype}&action={action}&key=" + publish_key
+    url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&codetype={codetype}&action={action}&description={description}&key=" + publish_key
 
     if mode == "publish":
         with open(filename, 'rb') as fichier:
