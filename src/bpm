@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.40"
+VERSION_BPM = "2024.4.42"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -43,7 +43,7 @@ plugins_url = {
     'orixsdk': 'https://github.com/assinie/orix-sdk/archive/refs/heads/master.zip',
     'asm_bin_tpl': 'https://github.com/assinie/new-project/archive/refs/heads/main.zip',
     'asm_rom_tpl': 'https://github.com/assinie/orix-cart/archive/refs/heads/master.zip',
-    'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/master/plugins/templates/github/action/#VERSION#/main.yml',
+    'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/plugins/templates/github/action/#VERSION#/main.yml',
 }
 
 plugins_url_version = {
@@ -51,7 +51,7 @@ plugins_url_version = {
     'orixsdk': 'https://raw.githubusercontent.com/assinie/orix-sdk/refs/heads/master/VERSION',
     'asm_bin_tpl': 'https://raw.githubusercontent.com/assinie/new-project/refs/heads/main/VERSION',
     'asm_rom_tpl': 'https://raw.githubusercontent.com/assinie/orix-cart/refs/heads/master/VERSION',
-    'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/master/plugins/templates/github/action/VERSION',
+    'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/plugins/templates/github/action/VERSION',
 }
 
 
@@ -59,7 +59,8 @@ plugins_main_property_name = {
     'md2hlp': 'default_md2hlp_version',
     'orixsdk': 'default_orixsdk_version',
     'asm_bin_tpl': 'default_asm_bin_tpl_version',
-    'asm_rom_tpl': 'default_asm_rom_tpl_version'
+    'asm_rom_tpl': 'default_asm_rom_tpl_version',
+    'github_action': 'default_github_action_version'
 }
 
 
@@ -259,9 +260,9 @@ def init_toml(args):
                 print("Please install orixsdk plugin")
                 return 1
             code_template = "asm_rom_tpl"
-
-
         codetype = 'rom'
+
+
 
     current_directory = os.getcwd()
     last_directory = os.path.basename(os.path.normpath(current_directory))
@@ -295,6 +296,7 @@ def init_toml(args):
         default_asm_bin_tpl_version = main_properties["default_asm_bin_tpl_version"]
         default_asm_rom_tpl_version = main_properties["default_asm_rom_tpl_version"]
         default_orixsdk_version = main_properties["default_orixsdk_version"]
+        default_github_action_version = main_properties["default_github_action_version"]
         default_kernel_version = main_properties["default_kernel_version"]
         oricutron_replace_autoboot_run_for_project = main_properties["oricutron_replace_autoboot_run"]
         # for key, value in main_properties.items():
@@ -311,6 +313,7 @@ def init_toml(args):
         content = content + f"asm_bin_tpl_version = \"{default_asm_bin_tpl_version}\"\n"
         content = content + f"asm_rom_tpl_version = \"{default_asm_rom_tpl_version}\"\n"
         content = content + f"orixsdk_version = \"{default_orixsdk_version}\"\n"
+        content = content + f"default_github_action_version = \"{default_github_action_version}\"\n"
         content = content + f"orix_minimal_kernel_version = \"{default_kernel_version}\"\n"
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
@@ -346,6 +349,13 @@ def init_toml(args):
             os.makedirs("macros", mode=0o755, exist_ok=True)
             shutil.copy(folder_path_rom_bin + "macros/rom_cmd.mac", "macros/rom_cmd.mac")
         shutil.copy(folder_path_rom_bin + "src/rom_cmd.s", f"src/{last_directory}.s")
+
+    if plugins_installed['github_action'] == True:
+        answer = input(f"Add github action main.yml into project: y/N ?")
+        if answer == 'y':
+            os.makedirs(".github/workflows/", exist_ok=True)
+            home_directory = os.path.expanduser(f'~/.bpm/plugins/github_action/{default_github_action_version}/')
+            shutil.copy(home_directory + "main.yml", ".github/workflows/main.yml")
 
     print(f"initialized")
 
@@ -430,6 +440,7 @@ def verify_installed():
         str_init = str_init + "default_orixsdk_version = \"\"\n"
         str_init = str_init + "default_asm_bin_tpl_version = \"\"\n"
         str_init = str_init + "default_asm_rom_tpl_version = \"\"\n"
+        str_init = str_init + "default_github_action_version = \"\"\n"
         str_init = str_init + "default_kernel_version = \"2024.1\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
@@ -978,6 +989,8 @@ def plugins(args):
                     install_md2hlp()
                 elif sys.argv[3] == "asm_rom_tpl":
                     install_tpl_from_github('asm_rom_tpl', replace_for_new_project)
+                elif sys.argv[3] == "github_action":
+                    install_tpl_from_github('github_action', replace_for_new_project)
                 else:
                     print("Unknown plugin")
             else:
@@ -1276,7 +1289,6 @@ def install_tpl_from_github(plugin_name, replace_for_next_version):
     # Get version
     response = requests.get(plugins_url_version[plugin_name])
 
-
     if response.status_code == 200:
         plugin_version = response.text
         plugin_version = plugin_version.replace("\n", "")
@@ -1298,13 +1310,24 @@ def install_tpl_from_github(plugin_name, replace_for_next_version):
             os.makedirs(parent_folder)
 
         # Télécharger l'archive depuis GitHub
-        response = requests.get(plugins_url[plugin_name])
+
+        url_for_plugin = plugins_url[plugin_name].replace("#VERSION#", plugin_version)
+        response = requests.get(url_for_plugin)
+
 
         # Vérifier si le téléchargement est réussi
         if response.status_code == 200:
             # Décompresser l'archive
-            with zipfile.ZipFile(BytesIO(response.content)) as z:
-                z.extractall(parent_folder)  # Décompresser dans ~/.bpm/tpl/
+            if url_for_plugin.endswith(".zip"):
+                with zipfile.ZipFile(BytesIO(response.content)) as z:
+                    z.extractall(parent_folder)  # Décompresser dans ~/.bpm/tpl/
+            else:
+
+                destfile = parent_folder + "/" + url_for_plugin.split("/")[-1]
+
+                with open(destfile, "wb") as file:
+                    file.write(response.content)
+
             if replace_for_next_version == 0:
                 answer = input(f"Set this version '{plugin_version}' for future projects ? (N/y)")
             if answer == 'y' or answer == 'Y' or replace_for_next_version == 1:
