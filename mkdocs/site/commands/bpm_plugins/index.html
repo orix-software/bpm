@@ -664,9 +664,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugins" class="md-nav__link">
+  <a href="#displays-installed-plugins" class="md-nav__link">
     <span class="md-ellipsis">
-      Plugins
+      Displays installed plugins
     </span>
   </a>
   
@@ -1228,9 +1228,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#plugins" class="md-nav__link">
+  <a href="#displays-installed-plugins" class="md-nav__link">
     <span class="md-ellipsis">
-      Plugins
+      Displays installed plugins
     </span>
   </a>
   
@@ -1256,11 +1256,16 @@
 <p>Usage : bpm plugins</p>
 <h2 id="bpm-install">bpm install</h2>
 <p>Usage : bpm plugins install [plugin_name]</p>
-<h2 id="plugins">Plugins</h2>
-<p>Availables plugins:
-md2hlp: Build markdown into hlp file (text mode)
-orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)
-asm_bin_tpl: Assembly binary template for Orix</p>
+<h2 id="displays-installed-plugins">Displays installed plugins</h2>
+<pre><code class="language-bash">~$ bpm plugins
+Use 'bpm plugins -h' for 'plugins' help
+md2hlp: Build markdown into hlp file (text mode) [Installed]
+orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)  (Available versions : ['2023.3.0']) [Installed]
+asm_bin_tpl: Assembly binary template for Orix  (Available versions : ['alpha']) [Installed]
+asm_rom_tpl: Assembly rom template for Orix  (Available versions : ['2024.4', 'alpha']) [Installed]
+github_action: Template for github action  (Available versions : ['2024.4']) [Installed]
+generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1', '2024.4']) [Installed]
+</code></pre>
 
 
 

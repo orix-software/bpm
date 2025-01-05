@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2024.4.42"
+VERSION_BPM = "2025.1.1"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -27,7 +27,8 @@ plugins_description = {
     'orixsdk': 'Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)',
     'asm_bin_tpl': 'Assembly binary template for Orix',
     'asm_rom_tpl': 'Assembly rom template for Orix',
-    'github_action': 'Template for github action'
+    'github_action': 'Template for github action',
+    'generatedoc': 'Tool to comment source code and generate markdown'
     }
 
 plugins_installed = {
@@ -35,7 +36,8 @@ plugins_installed = {
     'orixsdk': False,
     'asm_bin_tpl': False,
     'asm_rom_tpl': False,
-    'github_action': False
+    'github_action': False,
+    'generatedoc': False
     }
 
 plugins_url = {
@@ -44,6 +46,7 @@ plugins_url = {
     'asm_bin_tpl': 'https://github.com/assinie/new-project/archive/refs/heads/main.zip',
     'asm_rom_tpl': 'https://github.com/assinie/orix-cart/archive/refs/heads/master.zip',
     'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/plugins/templates/github/action/#VERSION#/main.yml',
+    'generatedoc': 'https://github.com/orix-software/generatedoc/archive/refs/heads/main.zip',
 }
 
 plugins_url_version = {
@@ -52,6 +55,7 @@ plugins_url_version = {
     'asm_bin_tpl': 'https://raw.githubusercontent.com/assinie/new-project/refs/heads/main/VERSION',
     'asm_rom_tpl': 'https://raw.githubusercontent.com/assinie/orix-cart/refs/heads/master/VERSION',
     'github_action': 'https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/plugins/templates/github/action/VERSION',
+    'generatedoc': 'https://raw.githubusercontent.com/orix-software/generatedoc/refs/heads/main/VERSION'
 }
 
 
@@ -60,7 +64,8 @@ plugins_main_property_name = {
     'orixsdk': 'default_orixsdk_version',
     'asm_bin_tpl': 'default_asm_bin_tpl_version',
     'asm_rom_tpl': 'default_asm_rom_tpl_version',
-    'github_action': 'default_github_action_version'
+    'github_action': 'default_github_action_version',
+    'generatedoc': 'default_generatedoc_version'
 }
 
 
@@ -153,6 +158,7 @@ def download_file(url, local_filename, dependency_name):
     except requests.exceptions.RequestException as e:
         return 1
 
+
 def install_dependency_from_toml(args):
     if len(args) == 3:
         if args[2] == "-h":
@@ -235,8 +241,6 @@ def init_toml(args):
             print("Init project\n")
             print("Usage : bpm init\n")
             return
-            #print("\033[1;32mCommands:\033[0m")
-            #print("    \033[1;36minstall\033[0m             install plugin")
 
     code_template = ""
 
@@ -291,18 +295,15 @@ def init_toml(args):
     oricutron_replace_autoboot_run_for_project = ""
 
     if "main" in main_config_data:
-        print(main_config_data)
         main_properties = main_config_data["main"]
         default_asm_bin_tpl_version = main_properties["default_asm_bin_tpl_version"]
         default_asm_rom_tpl_version = main_properties["default_asm_rom_tpl_version"]
         default_orixsdk_version = main_properties["default_orixsdk_version"]
+        default_generatedoc_version = main_properties["default_generatedoc_version"]
         default_github_action_version = main_properties["default_github_action_version"]
         default_kernel_version = main_properties["default_kernel_version"]
         oricutron_replace_autoboot_run_for_project = main_properties["oricutron_replace_autoboot_run"]
-        # for key, value in main_properties.items():
-        #     if key == "oricutron_replace_autoboot_run":
-        #         oricutron_replace_autoboot_run_for_project = "oricutron_replace_autoboot_run = \"" + value + "\"\n"
-        #         break
+
 
     if not os.path.exists("bpm.tml"):
         print("Init bpm.tml")
@@ -314,6 +315,7 @@ def init_toml(args):
         content = content + f"asm_rom_tpl_version = \"{default_asm_rom_tpl_version}\"\n"
         content = content + f"orixsdk_version = \"{default_orixsdk_version}\"\n"
         content = content + f"default_github_action_version = \"{default_github_action_version}\"\n"
+        content = content + f"default_generatedoc_version = \"{default_generatedoc_version}\"\n"
         content = content + f"orix_minimal_kernel_version = \"{default_kernel_version}\"\n"
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
@@ -442,6 +444,7 @@ def verify_installed():
         str_init = str_init + "default_asm_rom_tpl_version = \"\"\n"
         str_init = str_init + "default_github_action_version = \"\"\n"
         str_init = str_init + "default_kernel_version = \"2024.1\"\n"
+        str_init = str_init + "default_generatedoc_version = \"\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
 
@@ -687,7 +690,6 @@ def build(args):
 
 
     plugins_detect("no_display")
-    print(plugins_installed)
     if plugins_installed['orixsdk']:
         home_directory = os.path.expanduser('~')
         path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
@@ -796,8 +798,6 @@ def build(args):
                 else:
                     generate = True
 
-
-
                 if generate == True or generate_all == True:
                     print("Building " + repertoire + fichier)
                     bin_ca65 = ['ca65']
@@ -813,8 +813,11 @@ def build(args):
         path_file_lib = f"build/usr/share/{name}/{version}"
         if not os.path.exists(path_file_lib):
             os.makedirs(path_file_lib, mode=0o755, exist_ok=True)
-        shutil.copy(name + ".lib", f"{path_file_lib}/{name}.lib")
-        print("Build completed")
+        if os.path.exists(name + ".lib"):
+            shutil.copy(name + ".lib", f"{path_file_lib}/{name}.lib")
+            print("Build completed")
+        else:
+            print("No build done")
 
     # Build all binary in [[bin]] section
     file_path = "bpm.tml"
@@ -841,23 +844,20 @@ def build(args):
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                     return 0
 
-
-
-
 def usage():
     print("Orix build and package manager\n")
     print("Documentation : https://orix-software.github.io/bpm/\n")
 
     print("Usage : bpm [OPTIONS] [COMMAND]\n")
     print("\033[1;32mOptions:\033[0m")
-    print("    \033[1;36m-V\033[0m              Displays version")
-    print("    \033[1;36m--disable-check-update\033[0m              Disables check for new version")
+    print("    \033[1;36m-V\033[0m                     Displays version")
+    print("    \033[1;36m--disable-check-update\033[0m Disables check for new version")
     print("    \033[1;36m--force-update\033[0m              Force bpm update")
 
     print("")
     print("\033[1;32mCommands:\033[0m")
     print("    \033[1;36mnew\033[0m             Init a new orix package")
-    print("    \033[1;36minit\033[0m            Init an orix package in an existing directory")
+#    print("    \033[1;36minit\033[0m            Init an orix package in an existing directory")
     print("    \033[1;36mbuild\033[0m           Build")
     print("    \033[1;36mdoc\033[0m             Build docs")
     print("    \033[1;36mrun\033[0m             Run")
@@ -955,6 +955,22 @@ def plugins_detect(mode):
                 else:
                     plugins_installed['github_action'] = True
 
+        if cle == "generatedoc":
+            folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/generatedoc/")
+            file_path = os.path.join(folder_path_asm_bin , "")
+            if not os.path.exists(file_path):
+                val = install_tpl_from_github("generatedoc", 0)
+                if val != 1:
+                    print(" \033[1;32m[Installed]\033[0m")
+                else:
+                    plugins_installed['asm_romgeneratedoc_tpl'] = False
+            else:
+                plugin_version = [d for d in os.listdir(folder_path_asm_bin) if os.path.isdir(os.path.join(folder_path_asm_bin, d))]
+                if mode == "display":
+                    print(f" \033[1;32m (Available versions : {plugin_version}) [Installed]\033[0m")
+                else:
+                    plugins_installed['generatedoc'] = True
+
 def plugins(args):
     if len(args) == 3:
         if args[2] == "-h":
@@ -991,6 +1007,8 @@ def plugins(args):
                     install_tpl_from_github('asm_rom_tpl', replace_for_new_project)
                 elif sys.argv[3] == "github_action":
                     install_tpl_from_github('github_action', replace_for_new_project)
+                elif sys.argv[3] == "generatedoc":
+                    install_tpl_from_github('generatedoc', replace_for_new_project)
                 else:
                     print("Unknown plugin")
             else:
@@ -1284,7 +1302,7 @@ def install_tpl_from_github(plugin_name, replace_for_next_version):
     # Chatgpt:
     # Si le folder ~/.bpm/tpl/asm_bin_tpl/ n'existe pas, telecharge https://github.com/assinie/new-project/archive/refs/heads/main.zip, dezippe le dans ~/.bpm/tpl/
     # Définir le chemin du dossier asm_bin_tpl
-
+    answer = ""
     folder_path = os.path.expanduser(f"~/.bpm/plugins/{plugin_name}/")
     # Get version
     response = requests.get(plugins_url_version[plugin_name])
@@ -1294,7 +1312,7 @@ def install_tpl_from_github(plugin_name, replace_for_next_version):
         plugin_version = plugin_version.replace("\n", "")
 
     else:
-        print(f"Download error: {response.status_code}")
+        print(f"Impossible to download VERSION definition : {plugins_url_version[plugin_name]} {response.status_code}")
         return 1
 
     print(f"\nInstalling plugin : {plugin_name} Version : {plugin_version}")
@@ -1322,14 +1340,13 @@ def install_tpl_from_github(plugin_name, replace_for_next_version):
                 with zipfile.ZipFile(BytesIO(response.content)) as z:
                     z.extractall(parent_folder)  # Décompresser dans ~/.bpm/tpl/
             else:
-
                 destfile = parent_folder + "/" + url_for_plugin.split("/")[-1]
-
                 with open(destfile, "wb") as file:
                     file.write(response.content)
 
             if replace_for_next_version == 0:
-                answer = input(f"Set this version '{plugin_version}' for future projects ? (N/y)")
+                answer = input(f"Set this version '{plugin_version}' for new projects ? (N/y)")
+
             if answer == 'y' or answer == 'Y' or replace_for_next_version == 1:
                 main_config_path = os.path.expanduser(f"~/.bpm/bpm")
                 modify_local_toml_key(main_config_path, plugin_version, 'main', plugins_main_property_name[plugin_name])
@@ -1367,39 +1384,96 @@ def install_md2hlp():
         print("Download error. Error code :", response.status_code)
 
 def build_doc(toml_file):
+    md2hlp_generate = False
+    generatedoc_generate = False
 
     if not os.path.exists(toml_file):
         print("This project is not initialized (Missing bpm.tml)")
         return 0
+
+    data = read_local_config_file()
 
     # Test md2hlp
     # Chatgpt :
     plugins_detect("detect")
     if not plugins_installed['md2hlp']:
         install_md2hlp()
+
+    if not plugins_installed['generatedoc']:
+        install_tpl_from_github("generatedoc", 0)
     plugins_detect("detect")
 
+    if not plugins_installed['generatedoc']:
+        print('generatedoc not detected, skipping generatedoc generation')
+    else:
+        generatedoc_generate = True
+
     if not plugins_installed['md2hlp']:
-        print('md2hlp not detected')
-        return 1
+        print('md2hlp not detected, skipping md2hlp generation')
+    else:
+        md2hlp_generate = True
 
-    if not os.path.exists("src/md2hlp.cfg"):
+    if "package" in data:
+        package = data["package"]
+        if "default_generatedoc_version" in package:
+            default_generatedoc_version = package["default_generatedoc_version"]
+        else:
+            main_config_data = read_main_config_file()
+            if "main" in main_config_data:
+                if "default_generatedoc_version" in main_config_data["main"]:
+                    default_generatedoc_version = main_config_data["main"]["default_generatedoc_version"]
+                else:
+                    generatedoc_generate = False
+                    print("Generate doc default version not found in main config.")
+            else:
+                generatedoc_generate = False
+                print("Missing main section in main config.")
+    else:
+        print("Error missing package section in bpm.tml")
+
+    if md2hlp_generate:
+        if not os.path.exists("src/md2hlp.cfg"):
+            home_directory = os.path.expanduser('~')
+            directory_path = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.cfg"
+            shutil.copy(directory_path, "docs/")
+
+        if not os.path.exists("build/usr/share/man/"):
+            os.makedirs("build/usr/share/man/", exist_ok=True)
+
         home_directory = os.path.expanduser('~')
-        directory_path = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.cfg"
-        shutil.copy(directory_path, "docs/")
+        md2hlp_cmd = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.py3"
 
-    if not os.path.exists("build/usr/share/man/"):
-        os.makedirs("build/usr/share/man/", exist_ok=True)
+        for fichier in os.listdir("docs"):
+            # Vérifier si le fichier a l'extension .md
+            if fichier.endswith(".md"):
+                my_file = fichier.replace('.md', ".hlp")
+                print(f"[md2hlp] Generating {fichier} to build/usr/share/man/{my_file}")
+                resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
 
-    home_directory = os.path.expanduser('~')
-    md2hlp_cmd = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.py3"
+    if generatedoc_generate:
+        # if not os.path.exists("src/md2hlp.cfg"):
+        #     home_directory = os.path.expanduser('~')
+        #     directory_path = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.cfg"
+        #     shutil.copy(directory_path, "docs/")
 
-    for fichier in os.listdir("docs"):
-        # Vérifier si le fichier a l'extension .md
-        if fichier.endswith(".md"):
-            my_file = fichier.replace('.md', ".hlp")
-            print(f"Generating {fichier} to build/usr/share/man/{my_file}")
-            resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
+        # if not os.path.exists("build/usr/share/man/"):
+        #     os.makedirs("build/usr/share/man/", exist_ok=True)
+
+        home_directory = os.path.expanduser('~')
+        generatedoc_cmd_assembly = home_directory + f"/.bpm/plugins/generatedoc/{default_generatedoc_version}/generatedoc-main/src/ca65todoc.py"
+        generatedoc_cmd_c = home_directory + f"/.bpm/plugins/generatedoc/{default_generatedoc_version}/generatedoc-main/src/ca65todoc_c_proto.py"
+
+        for fichier in os.listdir("src"):
+            # Vérifier si le fichier a l'extension .md
+            if fichier.endswith(".s"):
+                my_file = fichier.replace('.s', ".md")
+                print(f"[ca65tomd] Generating doc for src/{fichier} to docs/{my_file}")
+
+                #ca65todoc_c_proto.py
+                if fichier.startswith('_'):
+                    resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
+                else:
+                    resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
 
 
 def update_package(args):
@@ -1602,7 +1676,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'init', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
+    valid_commands = ['build', 'config', 'd', 'doc', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
 
     if sys.argv[1] not in valid_commands:
         usage()
