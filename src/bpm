@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2025.1.1"
+VERSION_BPM = "2025.1.2"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -331,7 +331,7 @@ def init_toml(args):
     if codetype == 'bin':
         if not os.path.exists("src/" + last_directory + ".c"):
             print("Init " + "src/" + last_directory + ".c")
-            content = "#include <stdio.h>\nint main() {\n  printf(\"Hello word\");\n  return 0;\n}\n"
+            content = "#include <stdio.h>\nint main() {\n  printf(\"Hello word Orix\n\");\n  return 0;\n}\n"
             with open("src/" + last_directory + ".c", 'w') as file:
                 file.write(content)
 
@@ -845,14 +845,14 @@ def build(args):
                     return 0
 
 def usage():
-    print("Orix build and package manager\n")
+    print(f"Orix build and package manager ({VERSION_BPM})\n")
     print("Documentation : https://orix-software.github.io/bpm/\n")
 
     print("Usage : bpm [OPTIONS] [COMMAND]\n")
     print("\033[1;32mOptions:\033[0m")
     print("    \033[1;36m-V\033[0m                     Displays version")
     print("    \033[1;36m--disable-check-update\033[0m Disables check for new version")
-    print("    \033[1;36m--force-update\033[0m              Force bpm update")
+    print("    \033[1;36m--force-update\033[0m         Force bpm update")
 
     print("")
     print("\033[1;32mCommands:\033[0m")
@@ -1581,14 +1581,13 @@ def run_bin(args):
         # Copier tout le contenu de build/bin
         for item in os.listdir(build_bin):
             source_path = os.path.join(build_bin, item)
-            destination_path = os.path.join(dest_oricutron_bin, item.upper())
+            destination_path = os.path.join(dest_oricutron_bin, item.lower())
 
             if os.path.isdir(source_path):
                 shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
             else:
                 shutil.copy2(source_path, destination_path)
-
-
+                print("Copy ...")
 
     if codetype == "rom":
         path_to_oricutron_rom = f"sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
@@ -1602,7 +1601,6 @@ def run_bin(args):
         path_twilighte_board_cfg_plugin = path_oricutron + "/plugins/twilighte_board/twilighte.cfg"
         with open(path_twilighte_board_cfg_plugin, "r") as file:
             lines = file.readlines()
-
 
         if default_rom_oricutron_for_code == "":
             default_rom_oricutron_for_code = 4
@@ -1633,7 +1631,9 @@ def run_bin(args):
             if not twilbank_found:
                     file.write(f"twilbank{default_rom_oricutron_for_code_str}='{path_to_oricutron_rom}/{name}'\n")
 
-
+    # if codetype == "bin":
+    #     print(path_oricutron + '/sdcard/bin')
+    #     shutil.copy(f"build/bin/{name}", path_oricutron + f'/sdcard/bin/{name}')
 
     # Generate submit file
     autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
@@ -1673,6 +1673,8 @@ def main():
     verify_installed()
 
     if len(sys.argv) == 1:
+        check_update_bpm(False)
+        plugins_detect("not_display")
         usage()
         sys.exit(1)
 

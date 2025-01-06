@@ -323,6 +323,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#initialize-bpm-and-install-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initialize bpm and install plugins
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      First project
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1198,6 +1216,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#initialize-bpm-and-install-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initialize bpm and install plugins
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#first-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      First project
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1217,8 +1253,56 @@
 <h2 id="first-start">First start</h2>
 <p>bpm needs <em>'Oricutron'</em> and <em>'cc65'</em> in order to work properly.</p>
 <p>Theses binaries must be installed and cc65 (as ca65, ar65, ld65 must be in your PATH).</p>
-<h1 id="initialize-bpm-and-install-plugins">Initialize bpm and install plugins</h1>
-<pre><code class="language-bash">
+<h2 id="initialize-bpm-and-install-plugins">Initialize bpm and install plugins</h2>
+<p>Each day "bpm" will check if a new version is available and will ask if you want to install this version</p>
+<pre><code class="language-bash">~$ bpm
+</code></pre>
+<p>it will install all plugins</p>
+<pre><code class="language-bash">~$ bpm plugins
+Use 'bpm plugins -h' for 'plugins' help
+md2hlp: Build markdown into hlp file (text mode) [Installed]
+orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)  (Available versions : ['2023.3.0']) [Installed]
+asm_bin_tpl: Assembly binary template for Orix  (Available versions : ['2024.4']) [Installed]
+asm_rom_tpl: Assembly rom template for Orix  (Available versions : ['2024.4']) [Installed]
+github_action: Template for github action  (Available versions : ['2024.4']) [Installed]
+generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1']) [Installed]
+</code></pre>
+<h2 id="first-project">First project</h2>
+<p>We create a binary from which will be loaded from /bin orix folder</p>
+<pre><code class="language-bash">~$ mkdir myprgm
+~$ bpm new
+This project is :
+1) A binary program
+2) A library
+3) A rom
+answer ?
+</code></pre>
+<p>Press 1</p>
+<pre><code class="language-bash">Init .gitignore
+Init bpm.tml
+Init src folder
+Init src/myprgm.c
+Init VERSION file
+Add github action main.yml into project: y/N ?
+</code></pre>
+<p>Press N</p>
+<pre><code class="language-bash">initialized
+</code></pre>
+<pre><code class="language-bash">~$ cat src/myprgm.c
+#include &lt;stdio.h&gt;
+int main() {
+  printf(&quot;Hello word&quot;);
+  return 0;
+}
+</code></pre>
+<p>Launch build</p>
+<pre><code class="language-bash">~$ bpm build
+Creating build/etc/bpm/myprgm/2025.1
+Format 2 overhead:  304 304 1 2424 303
+Generate file ...
+-Generate file version: 2
+-Truncate reloc table from 304 to 303 (-0.33%)
+Built : build/bin/myprogram
 </code></pre>
 
 

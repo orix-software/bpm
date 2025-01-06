@@ -736,6 +736,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    4.2.3. bpm run
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -745,6 +756,43 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#behavior-for-bpm-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Behavior for 'bpm run'
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior-in-oricutron-sdcard-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Behavior in oricutron sdcard/ folder
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1146,6 +1194,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#behavior-for-bpm-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Behavior for 'bpm run'
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behavior-in-oricutron-sdcard-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Behavior in oricutron sdcard/ folder
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1160,6 +1234,17 @@
 
 
 <h1 id="bpm-run">bpm run</h1>
+<p>Build an run program.</p>
+<p>The Oricutron path must be set in main config file or local config file (manifest).</p>
+<p>add a oricutron path for main config :</p>
+<pre><code class="language-bash">bpm config set main oricutron_path /mnt/c/Users/mypath/oric/oricutron_plugins/oricutron
+</code></pre>
+<p>for current manifest :</p>
+<pre><code class="language-bash">bpm config set project oricutron_path /mnt/c/Users/mypath/oric/oricutron_plugins/oricutron
+</code></pre>
+<h2 id="behavior-for-bpm-run">Behavior for 'bpm run'</h2>
+<p>oricutron_path is missing, it will read oricutron_path from main config.</p>
+<h2 id="behavior-in-oricutron-sdcard-folder">Behavior in oricutron sdcard/ folder</h2>
 <p>If AUTOBOOT is already in etc/autoboot. bpm saves it and restore it.</p>
 <p>If there is no autoboot before "bpm run starts", sur autoboot from bpm will be removed.</p>
 <p>For autoexecute AUTOBOOT, 'submit' binary must bin in sdcard/bin/</p>
