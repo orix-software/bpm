@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2025.1.2"
+VERSION_BPM = "2025.1.3"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -71,6 +71,12 @@ plugins_main_property_name = {
 
 toml_file = "bpm.tml"
 user_folder = '.bpm/'
+
+def convert_binary_name_to_seven_chars(name) -> str:
+    if len(name) > 7:
+        print("Warn : name is greater than 7 chars. binary name is truncated for Orix")
+    return name[:7]
+
 
 def decompress_and_extract(filename, dependency_name):
     """Décompresse un fichier .gz et extrait une archive .tar"""
@@ -752,6 +758,7 @@ def build(args):
                 arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 resultat = subprocess.run(bin_cl65 + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(bin_cl65 + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
+                nom_sans_extension = convert_binary_name_to_seven_chars(nom_sans_extension)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
                 print("Built : " + "build/bin/" + nom_sans_extension)
@@ -1257,7 +1264,7 @@ def publish(filename: str, args, mode):
     description = conf["package"]["description"]
 
     if publish_key is None:
-        print("BPM_PUBLISH_KEY is not defined")
+        print("BPM_PUBLISH_KEY is not defined in order to publish on repo.orix.oric.org. To get one, send an email to jede[at]oric[dot]org")
         return 1
 
     if mode == "publish":
@@ -1636,37 +1643,43 @@ def run_bin(args):
     #     shutil.copy(f"build/bin/{name}", path_oricutron + f'/sdcard/bin/{name}')
 
     # Generate submit file
-    autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
-    full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
-    if oricutron_replace_autoboot_run == "True":
-        if binary_to_launch == "":
-            content = f"#!/bin/submit\n{name}\n"
-        else:
-            content = f"#!/bin/submit\n{binary_to_launch}\n"
+    if codetype == "bin":
+        autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
+        full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
+        if oricutron_replace_autoboot_run == "True":
+            if binary_to_launch == "":
+                name_7 = convert_binary_name_to_seven_chars(name)
+                content = f"#!/bin/submit\n{name_7}\n"
+            else:
+                name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
+                content = f"#!/bin/submit\n{name_7}\n"
 
-        # if not os.path.exists(path_oricutron + "/sdcard/ETC/"):
-        #     os.makedirs(path_oricutron + "/sdcard/ETC/", exist_ok=True)
-        #     open(full_autoboot_oricutron_folder, 'a').close()
+            # if not os.path.exists(path_oricutron + "/sdcard/ETC/"):
+            #     os.makedirs(path_oricutron + "/sdcard/ETC/", exist_ok=True)
+            #     open(full_autoboot_oricutron_folder, 'a').close()
 
-        if os.path.exists(full_autoboot_oricutron_folder):
-            shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + "AUTOBOOT_OLD")
-            old_autoboot_exists = True
+            if os.path.exists(full_autoboot_oricutron_folder):
+                shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + "AUTOBOOT_OLD")
+                old_autoboot_exists = True
 
-        with open(full_autoboot_oricutron_folder, 'w') as file:
-            file.write(content)
+            with open(full_autoboot_oricutron_folder, 'w') as file:
+                file.write(content)
 
-    os.chdir(path_oricutron)
-    try:
-        print(f"Execute : {bin_oricutron}")
-        subprocess.run([bin_oricutron], check=True)
-    except Exception as e:
-        print(f"Error : {e}")
-    finally:
-        # Revenir au répertoire initial
-        os.chdir(current_pwd)
-        if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
-            print("Restore old autoboot")
-            shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", full_autoboot_oricutron_folder)
+        os.chdir(path_oricutron)
+        try:
+            print(f"Execute : {bin_oricutron}")
+            subprocess.run([bin_oricutron], check=True)
+        except Exception as e:
+            print(f"Error : {e}")
+        finally:
+            # Revenir au répertoire initial
+            os.chdir(current_pwd)
+            if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
+                print("Restore old autoboot")
+                shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", full_autoboot_oricutron_folder)
+
+    if codetype == 'lib':
+        print("lib is not managed yet with 'bpm run' command")
 
 
 def main():

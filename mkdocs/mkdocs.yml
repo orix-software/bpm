@@ -1,4 +1,4 @@
-site_name: bpm v2024.4 DOCUMENTATION
+site_name: bpm v2025.1 DOCUMENTATION
 
 # markdown_extensions:
 #     - pymdownx.highlight
@@ -54,7 +54,7 @@ nav:
         - 1.2. First Steps with bpm: first_step.md
     - 2. Bpm Guide:
         - 2.1. BPM Overview: why.md
-        - 2.2. Creating a New Package: init.md
+        - 2.2. Creating a New Package: commands/bpm_new.md
             # - 1.3. Working on an Existing Package: package.md
             # - 1.4. Dependencies: package.md
         - 2.5. Package Layout: package.md
@@ -65,7 +65,7 @@ nav:
             # - 1.10. Build Cache: package.md
             #overview_command.md
     - 3. Bpm reference:
-        - blabla: blabla.md
+        - blabla: commands/bpm.md
     # #overview_command.md
     - 4. Bpm Commands:
         - 4.1 General Commands:
@@ -97,8 +97,7 @@ nav:
 # 4.4.6. cargo yank
 
         - 4.5. Package Commands:
-            - 4.5.1. bpm init: commands/bpm_init.md
-            - 4.5.3. bpm new: commands/bpm_new.md
+            - 4.5.1. bpm new: commands/bpm_new.md
 
 # 4.4. Package Commands
 # 4.4.1. cargo init
