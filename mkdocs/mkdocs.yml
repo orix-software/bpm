@@ -97,18 +97,7 @@ nav:
 # 4.4.6. cargo yank
 
         - 4.5. Package Commands:
-            - 4.5.1. bpm new: commands/bpm_new.md
 
-# 4.4. Package Commands
-# 4.4.1. cargo init
-# 4.4.2. cargo install
-# 4.4.3. cargo new
-# 4.4.4. cargo search
-# 4.4.5. cargo uninstall
-
-# 4.4.2. cargo install
-# 4.4.4. cargo search
-# 4.4.5. cargo uninstall
 # 4.5. Publishing Commands
 # 4.5.1. cargo login
 # 4.5.2. cargo logout

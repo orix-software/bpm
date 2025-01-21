@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2025.1.3"
+VERSION_BPM = "2025.1.4"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -604,7 +604,7 @@ def build(args):
 
     if not os.path.exists(toml_file):
         print("This project is not initialized (Missing bpm.tml)")
-        return 0
+        return 1
 
     # Detect orixsdk version
     orixsdk_version = "2023.3.0"
@@ -764,6 +764,7 @@ def build(args):
                 print("Built : " + "build/bin/" + nom_sans_extension)
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                return 1
             return 0
 
         file_to_compile_s = repertoire + name + ".s"
@@ -880,9 +881,14 @@ def usage():
     print("    \033[1;36mpackage     \033[0m    Manage package")
 
 def plugins_detect(mode):
+    force_version_for_new_project = 0
+
     for cle, valeur in plugins_description.items():
         if mode == "display":
             print(f"\033[1;36m{cle}\033[0m: {valeur}", end="")
+
+        if mode == "update_and_force_new_version_for_next_project":
+            force_version_for_new_project = 1
 
         if cle == "md2hlp":
             file_path = os.path.join(folder_path_md2hlp , "md2hlp-master/")
@@ -902,7 +908,7 @@ def plugins_detect(mode):
             folder_path_orixsdk = os.path.expanduser("~/.bpm/plugins/orixsdk/")
             file_path = os.path.join(folder_path_orixsdk , "")
             if not os.path.exists(file_path):
-                val = install_tpl_from_github("orixsdk", 0)
+                val = install_tpl_from_github("orixsdk", force_version_for_new_project)
                 if val != 1:
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
@@ -918,7 +924,7 @@ def plugins_detect(mode):
             folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/asm_bin_tpl/")
             file_path = os.path.join(folder_path_asm_bin , "")
             if not os.path.exists(file_path):
-                val = install_tpl_from_github("asm_bin_tpl", 0)
+                val = install_tpl_from_github("asm_bin_tpl", force_version_for_new_project)
                 if val != 1:
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
@@ -934,7 +940,7 @@ def plugins_detect(mode):
             folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/asm_rom_tpl/")
             file_path = os.path.join(folder_path_asm_bin , "")
             if not os.path.exists(file_path):
-                val = install_tpl_from_github("asm_rom_tpl", 0)
+                val = install_tpl_from_github("asm_rom_tpl", force_version_for_new_project)
                 if val != 1:
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
@@ -950,7 +956,7 @@ def plugins_detect(mode):
             folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/github_action/")
             file_path = os.path.join(folder_path_asm_bin , "")
             if not os.path.exists(file_path):
-                val = install_tpl_from_github("github_action", 0)
+                val = install_tpl_from_github("github_action", force_version_for_new_project)
                 if val != 1:
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
@@ -966,7 +972,7 @@ def plugins_detect(mode):
             folder_path_asm_bin = os.path.expanduser("~/.bpm/plugins/generatedoc/")
             file_path = os.path.join(folder_path_asm_bin , "")
             if not os.path.exists(file_path):
-                val = install_tpl_from_github("generatedoc", 0)
+                val = install_tpl_from_github("generatedoc", force_version_for_new_project)
                 if val != 1:
                     print(" \033[1;32m[Installed]\033[0m")
                 else:
@@ -997,6 +1003,8 @@ def plugins(args):
             for cle, valeur in plugins_description.items():
                 print(f"\033[1;36m{cle}\033[0m: {valeur}")
             return 0
+
+
     replace_for_new_project = 0
     if len(sys.argv) >= 3:
         if sys.argv[2] == "install":
@@ -1352,7 +1360,7 @@ def install_tpl_from_github(plugin_name, replace_for_next_version):
                     file.write(response.content)
 
             if replace_for_next_version == 0:
-                answer = input(f"Set this version '{plugin_version}' for new projects ? (N/y)")
+                answer = input(f"Set this plugin version '{plugin_version}' for next projects (this plugin version will be set when 'bpm new' is sent)? (N/y)")
 
             if answer == 'y' or answer == 'Y' or replace_for_next_version == 1:
                 main_config_path = os.path.expanduser(f"~/.bpm/bpm")
@@ -1704,7 +1712,17 @@ def main():
         if len(sys.argv) !=1:
             action = sys.argv[1]
         check_update_bpm(True)
-        plugins_detect("not_display")
+        update_and_force_new_version_for_next_project = 0
+        for arg in sys.argv:
+            if arg == "--replace-for-new-project":
+                update_and_force_new_version_for_next_project = 1
+        #update_and_force_new_version_for_next_project
+        #--replace-for-new-project
+        if update_and_force_new_version_for_next_project == 1:
+            plugins_detect("update_and_force_new_version_for_next_project")
+        else:
+            plugins_detect("not_display")
+
     elif action == '--disable-check-update':
         sys.argv.remove("--disable-check-update")
         action = sys.argv[1]
@@ -1714,8 +1732,9 @@ def main():
         plugins_detect("not_display")
 
     if action == 'run':
-        build(sys.argv)
-        run_bin(sys.argv)
+        ret = build(sys.argv)
+        if ret == 0:
+            run_bin(sys.argv)
     elif action == '-V':
         print(VERSION_BPM)
     elif action == 'doc' or action == 'd':
