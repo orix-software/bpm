@@ -58,7 +58,6 @@ plugins_url_version = {
     'generatedoc': 'https://raw.githubusercontent.com/orix-software/generatedoc/refs/heads/main/VERSION'
 }
 
-
 plugins_main_property_name = {
     'md2hlp': 'default_md2hlp_version',
     'orixsdk': 'default_orixsdk_version',
