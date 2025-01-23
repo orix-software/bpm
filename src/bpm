@@ -15,7 +15,7 @@ from io import BytesIO
 import shutil
 import glob
 
-VERSION_BPM = "2025.1.4"
+VERSION_BPM = "2025.1.5"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -66,7 +66,6 @@ plugins_main_property_name = {
     'github_action': 'default_github_action_version',
     'generatedoc': 'default_generatedoc_version'
 }
-
 
 toml_file = "bpm.tml"
 user_folder = '.bpm/'
@@ -322,6 +321,7 @@ def init_toml(args):
         content = content + f"default_github_action_version = \"{default_github_action_version}\"\n"
         content = content + f"default_generatedoc_version = \"{default_generatedoc_version}\"\n"
         content = content + f"orix_minimal_kernel_version = \"{default_kernel_version}\"\n"
+        content = content + f"orix_run_pre_script = \"\"\n"
         content = content + "\n[dependencies]\n"
         with open("bpm.tml", 'w') as file:
             file.write(content)
@@ -1071,15 +1071,16 @@ def manage_config(args):
 
     valid_parameters_main_verify = ['path', 'boolean', 'string']
 
-    valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', 'oricutron_path', 'default_rom_oricutron_for_code']
+    valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', 'oricutron_path', 'default_rom_oricutron_for_code', 'orix_run_pre_script']
     valid_parameters_project_desc = ['                            Name of the project',
                                      '                         Version of the project',
                                      '                        Code type of the project (lib is a library, bin a command line [lib|bin]',
                                      '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed',
-                                     '       Set Oricutron path for current project',
-                                     '  Default rom when code type is rom : the .rom will be inserted into this slot'
+                                     '                  Set Oricutron path for current project',
+                                     '  Default rom when code type is rom : the .rom will be inserted into this slot',
+                                     '             Pre submit script : will be added before project command'
                                     ]
-    valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean', 'string', 'string']
+    valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean', 'string', 'string', 'string']
 
     # bpm set main -h
     if len(args) == 5:
@@ -1520,6 +1521,8 @@ def run_bin(args):
     old_autoboot_exists = False
     current_pwd = os.getcwd()
     binary_to_launch = ""
+    orix_run_pre_script = ""
+
     if len(sys.argv) == 3:
         if sys.argv[2] == '-h':
             print("Run project\n")
@@ -1572,6 +1575,10 @@ def run_bin(args):
         if "default_rom_oricutron_for_code" in data["package"]:
             if data["package"]["default_rom_oricutron_for_code"] != "":
                 default_rom_oricutron_for_code = int(data["package"]["default_rom_oricutron_for_code"])
+
+        if "orix_run_pre_script" in data["package"]:
+            orix_run_pre_script = data["package"]["orix_run_pre_script"]
+
         if "oricutron_path" in data["package"]:
             if data["package"]["oricutron_path"] != "":
                 path_oricutron_project = data["package"]["oricutron_path"]
@@ -1653,13 +1660,27 @@ def run_bin(args):
     if codetype == "bin":
         autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
         full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
+
+        orix_run_pre_script_content = ""
+        if orix_run_pre_script != "":
+            try:
+
+                # Ouverture et lecture du fichier
+                with open(orix_run_pre_script, 'r') as fichier:
+                    orix_run_pre_script_content = fichier.read()
+
+            except FileNotFoundError:
+                print(f"File not found '{orix_run_pre_script}' ('orix_run_pre_script' defines in project config file)")
+            except Exception as e:
+                print(f"error : {e}")
+
         if oricutron_replace_autoboot_run == "True":
             if binary_to_launch == "":
                 name_7 = convert_binary_name_to_seven_chars(name)
-                content = f"#!/bin/submit\n{name_7}\n"
+                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
             else:
                 name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
-                content = f"#!/bin/submit\n{name_7}\n"
+                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
 
             # if not os.path.exists(path_oricutron + "/sdcard/ETC/"):
             #     os.makedirs(path_oricutron + "/sdcard/ETC/", exist_ok=True)
@@ -1676,8 +1697,10 @@ def run_bin(args):
         try:
             print(f"Execute : {bin_oricutron}")
             subprocess.run([bin_oricutron], check=True)
+
         except Exception as e:
             print(f"Error : {e}")
+
         finally:
             # Revenir au répertoire initial
             os.chdir(current_pwd)
@@ -1777,8 +1800,10 @@ def main():
         if len(sys.argv) == 3:
             to_find = sys.argv[2]
         search_lib(to_find)
+
     elif action == 'update':
         update_package(sys.argv)
+
     elif action == 'package':
         if not os.path.exists(toml_file):
             print("This project is not initialized (Missing bpm.tml)")
