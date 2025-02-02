@@ -38,9 +38,11 @@ bpm run --bin "hello -y"
 
 ## Launch a command before the project program (only for bin program)
 
+```bash
 $ mkdir scripts/
 $ echo "netchk" > scripts/network.sub
 $ bpm config set project orix_run_pre_script scripts/network.sub
 $ bpm run
+```
 
 It will start scripts/network.sub and the main project binary
