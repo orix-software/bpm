@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.1.6"
+VERSION_BPM = "2025.1.7"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -676,6 +676,7 @@ def build(args):
 
     arg_include = []
     arg_ld_libs = []
+    arg_include_asm = []
 
     user_folder = os.path.expanduser('~')
     reloc_bin_path =  f"{user_folder}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
@@ -691,6 +692,8 @@ def build(args):
                 else:
                     arg_include.append("-I")
                     arg_include.append(f"orixlibs/{key}/usr/include/asm/")
+                    arg_include_asm.append("--asm-include-dir")
+                    arg_include_asm.append(f"orixlibs/{key}/usr/include/asm/")
                 arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
 
 
@@ -713,6 +716,10 @@ def build(args):
         path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
         arg_include.append("-I")
         arg_include.append(path_orixsdk)
+
+        arg_include_asm.append("--asm-include-dir")
+        arg_include_asm.append(f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/")
+
 
 
     if codetype == "rom":
@@ -768,8 +775,8 @@ def build(args):
                 bin_cl65 = ['cl65']
                 arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
-                resultat = subprocess.run(bin_cl65 + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
-                resultat = subprocess.run(bin_cl65 + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
+                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
+                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
                 nom_sans_extension = convert_binary_name_to_seven_chars(nom_sans_extension)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
@@ -783,10 +790,11 @@ def build(args):
         if os.path.exists(file_to_compile_s):
             try:
                 print(f"Build : {file_to_compile_s}")
-                arg_cl65 = ['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
-                arg_cl65_2304 = ['cl65', '-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
-                resultat = subprocess.run(arg_cl65 + arg_include, check=True, capture_output=False, text=True)
-                resultat = subprocess.run(arg_cl65_2304 + arg_include, check=True, capture_output=False, text=True)
+                bin_cl65 = ['cl65']
+                arg_cl65 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
+                arg_cl65_2304 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
+                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 , check=True, capture_output=False, text=True)
+                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 , check=True, capture_output=False, text=True)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
                 print("Built : " + "build/bin/" + nom_sans_extension)
@@ -1285,6 +1293,8 @@ def publish(filename: str, args, mode):
     cpu = conf["package"]["cpu"]
     codetype = conf["package"]["codetype"]
     description = conf["package"]["description"]
+    documentation = conf["package"]["documentation"]
+    documentation = urllib.parse.quote_plus(documentation)
 
     if publish_key is None:
         print("BPM_PUBLISH_KEY is not defined in order to publish on repo.orix.oric.org. To get one, send an email to jede[at]oric[dot]org")
@@ -1298,7 +1308,7 @@ def publish(filename: str, args, mode):
 
     if mode == "publish":
         encoded_description = urllib.parse.quote(description)
-        url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&codetype={codetype}&action={action}&description={encoded_description}&key=" + publish_key
+        url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&codetype={codetype}&action={action}&description={encoded_description}&documentation={documentation}&key=" + publish_key
         with open(filename, 'rb') as fichier:
             fichiers = {filename: fichier}  # Préparer le fichier pour l'envoi
 
