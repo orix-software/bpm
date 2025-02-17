@@ -36,6 +36,12 @@ To specify args :
 
 bpm run --bin "hello -y"
 
+## Specify extra args
+
+bpm run -- arg1 arg2
+
+
+
 ## Launch a command before the project program (only for bin program)
 
 ```bash

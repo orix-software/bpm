@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.1.7"
+VERSION_BPM = "2025.1.8"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -100,12 +100,19 @@ def read_local_config_file():
         # Lire le fichier TOML
         with open(file_path, 'r') as file:
             data = toml.load(file)
+        # Vérifier si la section "srcfolders" existe
+        if 'srcfolders' not in data:
+            # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
+            data['srcfolders'] = {}
+            with open(file_path, 'w') as file:
+                toml.dump(data, file)
         return data
 
     except FileNotFoundError:
         print(f"'{file_path}' not found")
     except toml.TomlDecodeError:
         print(f"Impossible to read d'{file_path}'.")
+
 
 def add_dependency_to_toml(file_path, dependency_str):
     """Ajoute une nouvelle dépendance dans la section 'dependency' du fichier TOML"""
@@ -286,7 +293,7 @@ def init_toml(args):
 
     if not os.path.exists(".gitignore"):
         print("Init .gitignore")
-        content = "bpmtmp/\nbuild\n"
+        content = "bpmtmp/\nbuild\norixlibs\n"
         with open(".gitignore", 'w') as file:
             file.write( content)
 
@@ -338,7 +345,7 @@ def init_toml(args):
     if codetype == 'bin':
         if not os.path.exists("src/" + last_directory + ".c"):
             print("Init " + "src/" + last_directory + ".c")
-            content = "#include <stdio.h>\nint main() {\n  printf(\"Hello word Orix\");\n  return 0;\n}\n"
+            content = "#include <stdio.h>\n\nint main() {\n    printf(\"Hello word Orix\");\n    return 0;\n}\n"
             with open("src/" + last_directory + ".c", 'w') as file:
                 file.write(content)
 
@@ -454,6 +461,27 @@ def verify_installed():
         str_init = str_init + "default_generatedoc_version = \"\"\n"
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
+
+
+def addsrc(args):
+    if len(args) == 3:
+        if args[2] == '-h':
+            print("Add a source folder\n")
+            print("Usage : bpm addsrc folder\n")
+            return
+
+    if len(args) == 3:
+        data = read_local_config_file()
+        folder = args[2]
+        if 'srcfolders' in data:
+            # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
+            data['srcfolders'][folder] = folder
+            file_path = "bpm.tml"
+            with open(file_path, 'w') as file:
+                toml.dump(data, file)
+
+
+
 
 def search_lib(search_word: str):
 
@@ -575,7 +603,46 @@ def lister_fichiers_s(repertoire):
     return fichiers_s
 
 
-def generate_lib_for_bin(name: str, arg_include):
+def compile(name, arg_include, folder):
+    print(f"Building additionnal folder : {folder}")
+    bin_ca65 = ['ca65']
+    fichier_o = ""
+    folder = folder + "/"
+    absolute_path = os.path.abspath("")
+
+    for fichier in os.listdir(folder):
+        assembly = False
+
+        # Vérifier si le fichier a l'extension .md
+        if fichier.endswith(".s") or fichier.endswith(".c") or fichier.endswith(".asm"):
+            if  os.path.exists(folder + fichier):
+                assembly = True
+                fichier_o = fichier.replace(".s", ".o")
+            else:
+                fichier_o = fichier.replace(".c", ".o")
+
+            generate = check_src_with_target_file(folder + fichier, f"{absolute_path}/bpmtmp/" + fichier_o)
+
+            if generate == True:
+                arg_ca65 = ['-ttelestrat', folder + fichier, "-o", f"{absolute_path}/bpmtmp/" + fichier_o]
+
+                if assembly == True and fichier != name + ".s":
+                    resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=False, text=True)
+                    resultat = subprocess.run(['ar65', 'r', name + ".lib", f"{absolute_path}/bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+
+                if assembly == False and fichier != name + ".c":
+                    resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
+                    resultat = subprocess.run(['ar65', 'r', name + ".lib", f"{absolute_path}/bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+
+
+
+def generate_lib_for_bin(name: str, arg_include, arg_include_asm):
+
+    data = read_local_config_file()
+    if 'srcfolders' in data:
+        # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
+        for key, value in data['srcfolders'].items():
+            compile(name, arg_include, key)
 
     for fichier in os.listdir("src/"):
         assembly = False
@@ -596,6 +663,17 @@ def generate_lib_for_bin(name: str, arg_include):
             if assembly == False and fichier != name + ".c":
                 resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+
+def check_src_with_target_file(filesrc, filebuild):
+    generate = False
+    if os.path.exists(filebuild):
+        time_filebuild = int(os.path.getmtime(filebuild))
+        time_filesrc = int(os.path.getmtime(filesrc))
+        if  time_filebuild < time_filesrc:
+            generate = True
+    else:
+        generate = True
+    return generate
 
 
 def fix_toml_file(key, value):
@@ -620,7 +698,7 @@ def build(args):
 
     # Detect orixsdk version
     orixsdk_version = "2023.3.0"
-
+    generate_all = False
     LD_FLAGS = []
 
     repertoire = 'src/'
@@ -634,6 +712,29 @@ def build(args):
     if shutil.which("ar65") is None:
         print("Error: ar65 is not installed")
         return 1
+
+    # Checking if .h or .inc are modifyed
+    # if it's modifyed, generate all files
+    val = False
+    # Parcourir l'arborescence des répertoires
+    for root, dirs, files in os.walk("src/include"):
+        for file in files:
+            # Ajouter le chemin complet du fichier à la liste
+            file_path = os.path.join(root, file)
+            if not os.path.exists(f"bpmtmp/{file_path}"):
+                dst_dir = os.path.dirname(f"bpmtmp/{file_path}")
+                os.makedirs(dst_dir, exist_ok=True)
+                shutil.copy2(file_path, f"bpmtmp/{file_path}")
+                generate_all = True
+                break
+            val = check_src_with_target_file(file_path, f"bpmtmp/{file_path}")
+            if val == True:
+                dst_dir = os.path.dirname(f"bpmtmp/{file_path}")
+                os.makedirs(dst_dir, exist_ok=True)
+                shutil.copy2(file_path, f"bpmtmp/{file_path}")
+                generate_all = True
+                break
+
 
     if not os.path.exists(bpm_tmp_folder):
         # Créer le répertoire
@@ -694,6 +795,7 @@ def build(args):
                     arg_include.append(f"orixlibs/{key}/usr/include/asm/")
                     arg_include_asm.append("--asm-include-dir")
                     arg_include_asm.append(f"orixlibs/{key}/usr/include/asm/")
+
                 arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
 
 
@@ -737,7 +839,7 @@ def build(args):
             LD_FLAGS.append('-C')
             LD_FLAGS.append(path_orixsdk)
 
-        generate_lib_for_bin(name, arg_include)
+        generate_lib_for_bin(name, arg_include, arg_include_asm)
 
         nom_sans_extension = name
         file_to_compile_s = repertoire + name + ".s"
@@ -759,6 +861,7 @@ def build(args):
         shutil.copy(bpm_tmp_folder + name + ".rom", rom_path + name + ".rom")
 
     if codetype == "bin":
+
         if not os.path.exists("build/bin/"):
             os.makedirs("build/bin/", mode=0o755, exist_ok=True)
 
@@ -766,12 +869,14 @@ def build(args):
             print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
             return 1
 
-        generate_lib_for_bin(name, arg_include)
+        generate_lib_for_bin(name, arg_include, arg_include_asm)
 
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
         if os.path.exists(file_to_compile_c):
+
             try:
+
                 bin_cl65 = ['cl65']
                 arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
@@ -788,13 +893,14 @@ def build(args):
 
         file_to_compile_s = repertoire + name + ".s"
         if os.path.exists(file_to_compile_s):
+
             try:
                 print(f"Build : {file_to_compile_s}")
                 bin_cl65 = ['cl65']
-                arg_cl65 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
-                arg_cl65_2304 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
-                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 , check=True, capture_output=False, text=True)
-                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 , check=True, capture_output=False, text=True)
+                arg_cl65 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include", f"{name}.lib"]
+                arg_cl65_2304 = ['-ttelestrat', file_to_compile_s, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include", f"{name}.lib"]
+                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
+                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
                 print("Built : " + "build/bin/" + nom_sans_extension)
@@ -804,10 +910,16 @@ def build(args):
 
         print(f"Main file not found : {file_to_compile_c} or {file_to_compile_s}")
 
-    generate_all = False
+
 
     if codetype == "lib":
         print(f"Generate {name}.lib")
+
+        data = read_local_config_file()
+        if 'srcfolders' in data:
+            # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
+            for key, value in data['srcfolders'].items():
+                compile(name, arg_include, key)
 
         # If someone erased lib; force rebuild
         if not os.path.exists(f"{name}.lib"):
@@ -820,11 +932,7 @@ def build(args):
                 fichier_source = repertoire + fichier
                 fichier_dest_o = bpm_tmp_folder + nom_sans_extension + ".o"
 
-                if os.path.exists(fichier_dest_o):
-                    if os.path.getmtime(fichier_dest_o) < os.path.getmtime(fichier_source):
-                        generate = True
-                else:
-                    generate = True
+                generate = check_src_with_target_file(fichier_source, fichier_dest_o)
 
                 if generate == True or generate_all == True:
                     print("Building " + repertoire + fichier)
@@ -899,6 +1007,7 @@ def usage():
     print("    \033[1;36mplugins     \033[0m    Manage plugins")
     print("    \033[1;36mconfig      \033[0m    Manage config")
     print("    \033[1;36mpackage     \033[0m    Manage package")
+    print("    \033[1;36maddsrc      \033[0m    Add src folder to build manifest file")
 
 def plugins_detect(mode):
     force_version_for_new_project = 0
@@ -1492,10 +1601,13 @@ def build_doc(toml_file):
 
         for fichier in os.listdir("docs"):
             # Vérifier si le fichier a l'extension .md
+            generate = False
             if fichier.endswith(".md"):
                 my_file = fichier.replace('.md', ".hlp")
-                print(f"[md2hlp] Generating {fichier} to build/usr/share/man/{my_file}")
-                resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
+                generate = check_src_with_target_file(f"docs/{fichier}", f"build/usr/share/man/{my_file}")
+                if generate == True and os.path.getsize(f"docs/{fichier}") != 0:
+                    print(f"[md2hlp] Generating {fichier} to build/usr/share/man/{my_file}")
+                    resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
 
     if generatedoc_generate:
         # if not os.path.exists("src/md2hlp.cfg"):
@@ -1512,15 +1624,17 @@ def build_doc(toml_file):
 
         for fichier in os.listdir("src"):
             # Vérifier si le fichier a l'extension .md
+            generate = False
             if fichier.endswith(".s"):
                 my_file = fichier.replace('.s', ".md")
-                print(f"[ca65tomd] Generating doc for src/{fichier} to docs/{my_file}")
-
-                #ca65todoc_c_proto.py
-                if fichier.startswith('_'):
-                    resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
-                else:
-                    resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
+                generate = check_src_with_target_file(f"src/{fichier}", f"docs/{my_file}")
+                if generate == True and os.path.getsize(f"src/{fichier}") != 0:
+                    print(f"[ca65tomd] Generating doc for src/{fichier} to docs/{my_file}")
+                    #ca65todoc_c_proto.py
+                    if fichier.startswith('_'):
+                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
+                    else:
+                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
 
 
 def update_package(args):
@@ -1554,25 +1668,32 @@ def run_bin(args):
     current_pwd = os.getcwd()
     binary_to_launch = ""
     orix_run_pre_script = ""
+    extra_arg = ""
 
-    if len(sys.argv) == 3:
-        if sys.argv[2] == '-h':
-            print("Run project\n")
-            print("Usage : bpm run [--bin MYBINARY]\n")
-            print("bla")
-            return
+    if len(sys.argv) > 2:
+        if sys.argv[2] == '--':
 
-        if sys.argv[2] == '--bin':
-            print("Missing binary")
-            print("Run project\n")
-            print("Usage : bpm run [--bin MYBINARY]\n")
-            return
+            for i in range(3, len(sys.argv)):
+                extra_arg =  extra_arg + " " + sys.argv[i]
+            print(f"Extra arg : {extra_arg}")
 
-    if len(sys.argv) == 4:
-        if sys.argv[2] == '--bin':
-            binary_to_launch = sys.argv[3]
-            print("Binary")
-            print(binary_to_launch)
+        if len(sys.argv) == 3:
+            if sys.argv[2] == '-h':
+                print("Run project\n")
+                print("Usage : bpm run [-- arg1] [--bin MYBINARY]\n")
+                return
+
+            if sys.argv[2] == '--bin':
+                print("Missing binary")
+                print("Run project\n")
+                print("Usage : bpm run [--bin MYBINARY]\n")
+                return
+
+
+        if len(sys.argv) == 4:
+            if sys.argv[2] == '--bin':
+                binary_to_launch = sys.argv[3]
+
 
     try:
         # Lire le fichier TOML
@@ -1703,13 +1824,14 @@ def run_bin(args):
 
             except FileNotFoundError:
                 print(f"File not found '{orix_run_pre_script}' ('orix_run_pre_script' defines in project config file)")
+                exit(1)
             except Exception as e:
                 print(f"error : {e}")
 
         if oricutron_replace_autoboot_run == "True":
             if binary_to_launch == "":
                 name_7 = convert_binary_name_to_seven_chars(name)
-                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
+                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}{extra_arg}\n"
             else:
                 name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
                 content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
@@ -1753,7 +1875,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'plugins', 'list', 'add', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
+    valid_commands = ['build', 'config', 'd', 'doc', 'plugins', 'list', 'add', 'addsrc', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
 
     if sys.argv[1] not in valid_commands:
         usage()
@@ -1822,6 +1944,12 @@ def main():
             print("This project is not initialized (Missing bpm.tml)")
             return 1
         install_dependency_from_toml(sys.argv)
+    elif action == 'addsrc':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
+        addsrc(sys.argv)
+
     elif action == 'search':
         if len(sys.argv) == 3:
             if sys.argv[2] == '-h':
