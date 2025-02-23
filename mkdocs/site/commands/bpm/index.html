@@ -61,6 +61,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#bpm" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -415,6 +420,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -524,6 +531,8 @@
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
+      
+        
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
@@ -1042,6 +1051,69 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    5. Bpm tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            5. Bpm tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4.1.1. bpm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1059,6 +1131,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1073,9 +1147,35 @@
                   
 
 
-  <h1>bpm</h1>
+<h1 id="bpm">bpm</h1>
+<pre><code class="language-bash">Orix build and package manager (2025.1.8)
 
+Documentation : https://orix-software.github.io/bpm/
 
+Usage : bpm [OPTIONS] [COMMAND]
+
+Options:
+    -V                     Displays version
+    --disable-check-update Disables check for new version
+    --force-update         Force bpm update
+
+Commands:
+    new             Init a new orix package
+    build           Build
+    doc             Build docs
+    run             Run
+    list            List packages
+    add             Add dependencies to a manifest file
+    remove          Remove dependencies from a manifest file
+    install         Install all dependencies from a manifest file
+    search          Search package
+    publish         Publish package
+    unpublish       Unpublish package
+    plugins         Manage plugins
+    config          Manage config
+    package         Manage package
+    addsrc          Add src folder to build manifest file
+</code></pre>
 
 
 

@@ -1113,6 +1113,69 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    5. Bpm tutorial
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            5. Bpm tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4.1.1. bpm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1204,9 +1267,10 @@
 <p>"bpm config add project binary curl tests/curl.c"</p>
 <p>In that case, "bpm run --bin curl" will launch "curl" compiled from tests/curl.c</p>
 <h2 id="add-a-pre-script-before-main-command-is-launched">Add a pre script before main command is launched</h2>
-<p>$ mkdir scripts/
-$ echo "netchk" &gt; scripts/network.sub
-$ bpm config set project orix_run_pre_script scripts/network.sub</p>
+<pre><code class="language-bash">$ mkdir scripts/
+$ echo &quot;netchk&quot; &gt; scripts/network.sub
+$ bpm config set project orix_run_pre_script scripts/network.sub
+</code></pre>
 
 
 

@@ -80,6 +80,8 @@ nav:
         - 4.4. Publishing Commands:
             - 4.4.1. bpm publish: commands/bpm_publish.md
             - 4.4.2. bpm unpublish: commands/bpm_unpublish.md
+    - 5. Bpm tutorial:
+        - 4.1.1. bpm: tutorial.md
 
 
         # - 4.5. Package Commands:
