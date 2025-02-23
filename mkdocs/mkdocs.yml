@@ -76,6 +76,7 @@ nav:
             - 4.3.4. bpm update: commands/bpm_update.md
             - 4.3.5. bpm list: commands/bpm_list.md
             - 4.3.6. bpm search: commands/bpm_search.md
+            - 4.3.7. bpm addsrc: commands/bpm_addsrc.md
         - 4.4. Publishing Commands:
             - 4.4.1. bpm publish: commands/bpm_publish.md
             - 4.4.2. bpm unpublish: commands/bpm_unpublish.md

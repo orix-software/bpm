@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../bpm_search/">
+        <link rel="prev" href="../bpm_addsrc/">
       
       
         <link rel="next" href="../bpm_unpublish/">
@@ -908,6 +908,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bpm_addsrc/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    4.3.7. bpm addsrc
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1014,6 +1035,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#bpm-publish-personnal" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm publish --personnal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-publish-alpha" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm publish --alpha
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1094,6 +1133,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#bpm-publish-personnal" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm publish --personnal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bpm-publish-alpha" class="md-nav__link">
+    <span class="md-ellipsis">
+      bpm publish --alpha
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1110,8 +1167,22 @@
 
 
 <h1 id="bpm-publish-publish-package">bpm publish - publish package</h1>
+<p>This command can publish package to repo.orix.oric.org. It requires to get have a key in environnement variable "BPM_PUBLISH_KEY"</p>
+<p>In order to have one, post an issue <a href="https://github.com/orix-software/bpm/issues">here</a>.</p>
+<ul>
+<li>For Unix-based systems</li>
+</ul>
+<p>printenv | grep BPM</p>
+<ul>
+<li>For Windows</li>
+</ul>
+<p>echo %BPM_PUBLISH_KEY%</p>
 <h2 id="bpm-publish-official">bpm publish --official</h2>
-<p>Publish package into official repo (depending of the version)</p>
+<p>Publish package into official repo (depending of the version).</p>
+<h2 id="bpm-publish-personnal">bpm publish --personnal</h2>
+<p>Publish into personnal repo</p>
+<h2 id="bpm-publish-alpha">bpm publish --alpha</h2>
+<p>Publish into alpha repo</p>
 
 
 

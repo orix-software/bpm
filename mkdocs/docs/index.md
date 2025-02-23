@@ -8,6 +8,10 @@ Bpm supports C and assembly 6502 language, generate doc from source, code templa
 
 ## Sections
 
+### [Installation](installation.md)
+
+How to install bpm.
+
 ### [Getting Started](getting_started.md)
 
 To get started with BPM, install bpm and set up your first code.
