@@ -1,6 +1,6 @@
 # bpm plugins - Manage plugins
 
-A plugin is a tool in order to manage some part of the development.
+A plugin is a tool in order to manage some part of the development. Each day, bpm will try to update plugins, and will ask if plugin must be installed
 
 ## bpm plugins
 
