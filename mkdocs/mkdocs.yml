@@ -34,7 +34,8 @@ site_name: bpm v2025.1 DOCUMENTATION
 dev_addr: '172.30.72.43:8001'
 
 theme:
-    name: material
+    #name: material
+    name: readthedocs
 #     logo: favicon.png
 #     custom_dir: overrides
 #     highlightjs: true
