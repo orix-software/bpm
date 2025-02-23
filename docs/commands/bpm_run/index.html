@@ -770,6 +770,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#specify-extra-args" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specify extra args
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#launch-a-command-before-the-project-program-only-for-bin-program" class="md-nav__link">
     <span class="md-ellipsis">
       Launch a command before the project program (only for bin program)
@@ -1122,6 +1131,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#specify-extra-args" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specify extra args
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#launch-a-command-before-the-project-program-only-for-bin-program" class="md-nav__link">
     <span class="md-ellipsis">
       Launch a command before the project program (only for bin program)
@@ -1164,11 +1182,14 @@
 <p>Specify command to launch : bpm run --bin hello</p>
 <p>To specify args :</p>
 <p>bpm run --bin "hello -y"</p>
+<h2 id="specify-extra-args">Specify extra args</h2>
+<p>bpm run -- arg1 arg2</p>
 <h2 id="launch-a-command-before-the-project-program-only-for-bin-program">Launch a command before the project program (only for bin program)</h2>
-<p>$ mkdir scripts/
-$ echo "netchk" &gt; scripts/network.sub
+<pre><code class="language-bash">$ mkdir scripts/
+$ echo &quot;netchk&quot; &gt; scripts/network.sub
 $ bpm config set project orix_run_pre_script scripts/network.sub
-$ bpm run</p>
+$ bpm run
+</code></pre>
 <p>It will start scripts/network.sub and the main project binary</p>
 
 

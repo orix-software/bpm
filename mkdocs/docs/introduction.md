@@ -5,4 +5,3 @@ wget https://github.com/orix-software/bpm/raw/refs/heads/main/src/bpm -o ~/bin/b
 ## Update
 
 One time a day, when bpm is launch, it will try to auto update itself
-

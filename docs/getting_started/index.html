@@ -57,6 +57,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#getting-started" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -1014,6 +1019,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1028,9 +1035,15 @@
                   
 
 
-  <h1>Getting started</h1>
-
-
+<h1 id="getting-started">Getting started</h1>
+<pre><code class="language-bash">mkdir ~/bin/
+curl -o ~/bin/bpm https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/src/bpm
+export PATH=$PATH:~/bin/
+chmod +x ~/bin/bpm
+curl -o /tmp/bpm.txt https://raw.githubusercontent.com/orix-software/bpm/refs/heads/main/requirements.txt
+sudo apt install python3-pip
+pip install -r /tmp/bpm.txt
+</code></pre>
 
 
 
