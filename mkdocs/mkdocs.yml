@@ -52,30 +52,29 @@ nav:
         - 1.1. Introduction: introduction.md
         - 1.2. Installation: installation.md
         - 1.3. First Steps with bpm: first_step.md
-        - 1.4. bpm: tutorial.md
+        - 1.4. Tutorial: tutorial.md
     - 2. Bpm Guide:
         - 2.1. BPM Overview: why.md
-        - 2.2. Creating a New Package: commands/bpm_new.md
-        - 2.3 Commands:
+        - 2.2 Commands:
             - 2.3.1. bpm: commands/bpm.md
-            - 4.1.2. bpm help: commands/bpm_help.md
-            - 4.1.3. bpm version: commands/bpm_version.md
-            - 4.1.3. bpm plugins: commands/bpm_plugins.md
-            - 4.1.3. bpm config: commands/bpm_config.md
-            - 4.2.1. bpm build: commands/bpm_build.md
-            - 4.2.2. bpm doc: commands/bpm_doc.md
-            - 4.2.3. bpm run: commands/bpm_run.md
-            - 4.2.4. bpm doc: commands/bpm_package.md
-            - 4.3.1. bpm add: commands/bpm_add.md
-            - 4.3.2. bpm remove: commands/bpm_remove.md
-            - 4.3.3. bpm install: commands/bpm_install.md
-            - 4.3.4. bpm update: commands/bpm_update.md
-            - 4.3.5. bpm list: commands/bpm_list.md
-            - 4.3.6. bpm search: commands/bpm_search.md
-            - 4.3.7. bpm addsrc: commands/bpm_addsrc.md
-        - 4.4. Publishing Commands:
-            - 4.4.1. bpm publish: commands/bpm_publish.md
-            - 4.4.2. bpm unpublish: commands/bpm_unpublish.md
+            - 2.3.2. bpm help: commands/bpm_help.md
+            - 2.1.3. bpm version: commands/bpm_version.md
+            - 2.1.3. bpm plugins: commands/bpm_plugins.md
+            - 2.1.3. bpm config: commands/bpm_config.md
+            - 2.2.1. bpm build: commands/bpm_build.md
+            - 2.2.2. bpm doc: commands/bpm_doc.md
+            - 2.2.3. bpm run: commands/bpm_run.md
+            - 2.2.4. bpm doc: commands/bpm_package.md
+            - 2.3.1. bpm add: commands/bpm_add.md
+            - 2.3.2. bpm remove: commands/bpm_remove.md
+            - 2.3.3. bpm install: commands/bpm_install.md
+            - 2.3.4. bpm update: commands/bpm_update.md
+            - 2.3.5. bpm list: commands/bpm_list.md
+            - 2.3.5. bpm new: commands/bpm_new.md
+            - 2.3.6. bpm search: commands/bpm_search.md
+            - 2.3.7. bpm addsrc: commands/bpm_addsrc.md
+            - 2.4.1. bpm publish: commands/bpm_publish.md
+            - 2.4.2. bpm unpublish: commands/bpm_unpublish.md
 
 
 # extra_css:
