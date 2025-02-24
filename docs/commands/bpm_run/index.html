@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>2.2.3. bpm run - bpm v2025.1 DOCUMENTATION</title>
+    <title>2.3.3. bpm run - bpm v2025.1 DOCUMENTATION</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "2.2.3. bpm run";
+        var mkdocs_page_name = "2.3.3. bpm run";
         var mkdocs_page_input_path = "commands/bpm_run.md";
         var mkdocs_page_url = null;
       </script>
@@ -54,23 +54,27 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../../why/">2.1. BPM Overview</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" >2.2 Commands</a>
+                  <li class="toctree-l1"><a class="reference internal" >2.2 General Commands</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_help/">2.2.2. bpm help</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_version/">2.2.3. bpm version</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.2.4. bpm plugins</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_config/">2.2.5. bpm config</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" >2.3 Build Commands</a>
     <ul class="current">
-                <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.3.1. bpm</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_build/">2.3.1. bpm build</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_help/">2.3.2. bpm help</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_doc/">2.3.2. bpm doc</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_version/">2.1.3. bpm version</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.1.3. bpm plugins</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_config/">2.1.3. bpm config</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_build/">2.2.1. bpm build</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_doc/">2.2.2. bpm doc</a>
-                </li>
-                <li class="toctree-l2 current"><a class="reference internal current" href="#">2.2.3. bpm run</a>
+                <li class="toctree-l2 current"><a class="reference internal current" href="#">2.3.3. bpm run</a>
     <ul class="current">
     <li class="toctree-l3"><a class="reference internal" href="#behavior-for-bpm-run">Behavior for 'bpm run'</a>
     </li>
@@ -82,27 +86,33 @@
     </li>
     </ul>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.2.4. bpm doc</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm doc</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_add/">2.3.1. bpm add</a>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >2.4 Manifest Commands</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_add/">2.4.1. bpm add</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_remove/">2.3.2. bpm remove</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_remove/">2.4.2. bpm remove</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_install/">2.3.3. bpm install</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_update/">2.4.3. bpm update</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_update/">2.3.4. bpm update</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_list/">2.4.4. bpm list</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_list/">2.3.5. bpm list</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_new/">2.4.5. bpm new</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_new/">2.3.5. bpm new</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_search/">2.4.6. bpm search</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_search/">2.3.6. bpm search</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_addsrc/">2.4.7. bpm addsrc</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_addsrc/">2.3.7. bpm addsrc</a>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >2.5 publshing commands</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_publish/">2.5.1. bpm publish</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_publish/">2.4.1. bpm publish</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_unpublish/">2.4.2. bpm unpublish</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_unpublish/">2.5.2. bpm unpublish</a>
                 </li>
     </ul>
                   </li>
@@ -122,8 +132,8 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">2. Bpm Guide</li>
-          <li class="breadcrumb-item">2.2 Commands</li>
-      <li class="breadcrumb-item active">2.2.3. bpm run</li>
+          <li class="breadcrumb-item">2.3 Build Commands</li>
+      <li class="breadcrumb-item active">2.3.3. bpm run</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -164,8 +174,8 @@ $ bpm run
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../bpm_doc/" class="btn btn-neutral float-left" title="2.2.2. bpm doc"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../bpm_package/" class="btn btn-neutral float-right" title="2.2.4. bpm doc">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../bpm_doc/" class="btn btn-neutral float-left" title="2.3.2. bpm doc"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../bpm_package/" class="btn btn-neutral float-right" title="2.3.4. bpm doc">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
