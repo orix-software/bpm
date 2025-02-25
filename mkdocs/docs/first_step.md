@@ -62,7 +62,7 @@ initialized
 ~$ cat src/myprgm.c
 #include <stdio.h>
 int main() {
-  printf("Hello word");
+  printf("Hello world");
   return 0;
 }
 ```

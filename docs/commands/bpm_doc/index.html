@@ -41,7 +41,7 @@
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption"><span class="caption-text">1. Getting Started</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../introduction/">1.1. Introduction</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../..">1.1. Introduction</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../installation/">1.2. Installation</a>
                   </li>
@@ -58,10 +58,6 @@
     <ul>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_help/">2.2.2. bpm help</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_version/">2.2.3. bpm version</a>
-                </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.2.4. bpm plugins</a>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_config/">2.2.5. bpm config</a>
@@ -75,6 +71,10 @@
                 <li class="toctree-l2 current"><a class="reference internal current" href="#">2.3.2. bpm doc</a>
     <ul class="current">
     <li class="toctree-l3"><a class="reference internal" href="#generate-docs">Generate docs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#md2hlp-plugin">md2hlp plugin</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#generatedoc-pluginn">generatedoc pluginn</a>
     </li>
     </ul>
                 </li>
@@ -137,11 +137,14 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="bpm-doc">bpm doc</h1>
+<p>bpm doc generate several docs, depending of the plugins installed.</p>
 <h2 id="generate-docs">Generate docs</h2>
+<h2 id="md2hlp-plugin">md2hlp plugin</h2>
 <p>bpm doc</p>
 <p>All docs/{name}.md will be generated into .hlp (for man orix command) and inserted in "build/usr/share/man/".
 md2hlp.cfg into project will be modifyed in order to modify title of .hlp (part Heading1, property : Head)</p>
-<p>Generate md2hlp for man pages and docs from source code see <a href="https://github.com/orix-software/generatedoc/blob/main/docs/asm.md">asm.md</a> and <a href="https://github.com/orix-software/generatedoc/blob/main/docs/c.md">c.md</a></p>
+<h2 id="generatedoc-pluginn">generatedoc pluginn</h2>
+<p>Generate docs from source code see <a href="https://github.com/orix-software/generatedoc/blob/main/docs/asm.md">asm.md</a> and <a href="https://github.com/orix-software/generatedoc/blob/main/docs/c.md">c.md</a></p>
               
             </div>
           </div><footer>

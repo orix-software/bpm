@@ -345,7 +345,7 @@ def init_toml(args):
     if codetype == 'bin':
         if not os.path.exists("src/" + last_directory + ".c"):
             print("Init " + "src/" + last_directory + ".c")
-            content = "#include <stdio.h>\n\nint main() {\n    printf(\"Hello word Orix\");\n    return 0;\n}\n"
+            content = "#include <stdio.h>\n\nint main() {\n    printf(\"Hello world Orix\");\n    return 0;\n}\n"
             with open("src/" + last_directory + ".c", 'w') as file:
                 file.write(content)
 
@@ -1204,12 +1204,12 @@ def manage_config(args):
     valid_parameters_project = ['name', 'version', 'codetype', 'oricutron_replace_autoboot_run', 'oricutron_path', 'default_rom_oricutron_for_code', 'orix_run_pre_script', 'md2hlp']
     valid_parameters_project_desc = ['                            Name of the project',
                                      '                         Version of the project',
-                                     '                        Code type of the project (lib is a library, bin a command line [lib|bin]',
+                                     '                        Code type of the project (lib is a library, bin a command line [lib|bin])',
                                      '  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed',
                                      '                  Set Oricutron path for current project',
                                      '  Default rom when code type is rom : the .rom will be inserted into this slot',
                                      '             Pre submit script : will be added before project command',
-                                     '             Activate md2hlp : enable set to yer, disabled set to no'
+                                     '                        Activate md2hlp : enable set to yer, disabled set to no'
                                      ]
 
     valid_parameters_project_verify = ['string', 'string', 'values=bin,lib' ,'boolean', 'string', 'string', 'string', 'string']

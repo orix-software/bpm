@@ -1,3 +1,0 @@
-# bpm help
-
-Print usage

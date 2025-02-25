@@ -49,7 +49,7 @@ theme:
 
 nav:
     - 1. Getting Started:
-        - 1.1. Introduction: introduction.md
+        - 1.1. Introduction: index.md
         - 1.2. Installation: installation.md
         - 1.3. First Steps with bpm: first_step.md
         - 1.4. Tutorial: tutorial.md
@@ -57,8 +57,6 @@ nav:
         - 2.1. BPM Overview: why.md
         - 2.2 General Commands:
             - 2.2.1. bpm: commands/bpm.md
-            - 2.2.2. bpm help: commands/bpm_help.md
-            - 2.2.3. bpm version: commands/bpm_version.md
             - 2.2.4. bpm plugins: commands/bpm_plugins.md
             - 2.2.5. bpm config: commands/bpm_config.md
         - 2.3 Build Commands:

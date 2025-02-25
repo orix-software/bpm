@@ -41,7 +41,7 @@
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption"><span class="caption-text">1. Getting Started</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../introduction/">1.1. Introduction</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../..">1.1. Introduction</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../installation/">1.2. Installation</a>
                   </li>
@@ -57,10 +57,6 @@
                   <li class="toctree-l1 current"><a class="reference internal current" >2.2 General Commands</a>
     <ul class="current">
                 <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_help/">2.2.2. bpm help</a>
-                </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_version/">2.2.3. bpm version</a>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.2.4. bpm plugins</a>
                 </li>
@@ -145,6 +141,23 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="bpm-config">bpm config</h1>
+<p>'bpm config' modify behavior of bpm</p>
+<p>It can modify main configuration and project configuration.</p>
+<p>Main parameters are :</p>
+<pre><code class="language-bash">    oricutron_path                  Set Oricutron path for main (general behavior), value must be path of Oricutron binary with filename binary in the path
+    oricutron_replace_autoboot_run  Set False or True. False will not modify /etc/autoboot in Oricutron
+    default_rom_oricutron_for_code  Default rom when code type is rom : the .rom will be inserted into this slot
+</code></pre>
+<p>Project parameters are :</p>
+<pre><code class="language-bash">    name                            Name of the project
+    version                         Version of the project
+    codetype                        Code type of the project (lib is a library, bin a command line [lib|bin])
+    oricutron_replace_autoboot_run  Set False or True. False will not modify /etc/autoboot in Oricutron when bpm run is executed
+    oricutron_path                  Set Oricutron path for current project
+    default_rom_oricutron_for_code  Default rom when code type is rom : the .rom will be inserted into this slot
+    orix_run_pre_script             Pre submit script : will be added before project command
+    md2hlp                          Activate md2hlp : enable set to yer, disabled set to no
+</code></pre>
 <h2 id="bpm-config-set">bpm config set</h2>
 <h2 id="bpm-config-add">bpm config add</h2>
 <h3 id="bpm-config-add-project-binary">bpm config add project binary</h3>

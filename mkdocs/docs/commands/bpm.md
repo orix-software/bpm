@@ -29,4 +29,3 @@ Commands:
     package         Manage package
     addsrc          Add src folder to build manifest file
 ```
-
