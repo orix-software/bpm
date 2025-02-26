@@ -27,13 +27,17 @@ Project parameters are :
 
 ## bpm config set
 
-## bpm config add
+"config set" can be used to set any parameter in global configuration (main) or project configuration
 
-### bpm config add project binary
+### bpm config add project binary : add a source code to build during build stage
+
+For example, we want to add curl.c into build stage with the output name called "curl"
 
 Add a "curl" binary into bin list to generate :
 
-"bpm config add project binary curl tests/curl.c"
+```bash
+bpm config add project binary curl tests/curl.c
+```
 
 In that case, "bpm run --bin curl" will launch "curl" compiled from tests/curl.c
 
@@ -44,3 +48,4 @@ $ mkdir scripts/
 $ echo "netchk" > scripts/network.sub
 $ bpm config set project orix_run_pre_script scripts/network.sub
 ```
+

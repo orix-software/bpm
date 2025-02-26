@@ -63,10 +63,8 @@
                 <li class="toctree-l2 current"><a class="reference internal current" href="#">2.2.5. bpm config</a>
     <ul class="current">
     <li class="toctree-l3"><a class="reference internal" href="#bpm-config-set">bpm config set</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#bpm-config-add">bpm config add</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#bpm-config-add-project-binary">bpm config add project binary</a>
+    <li class="toctree-l4"><a class="reference internal" href="#bpm-config-add-project-binary-add-a-source-code-to-build-during-build-stage">bpm config add project binary : add a source code to build during build stage</a>
     </li>
         </ul>
     </li>
@@ -159,10 +157,12 @@
     md2hlp                          Activate md2hlp : enable set to yer, disabled set to no
 </code></pre>
 <h2 id="bpm-config-set">bpm config set</h2>
-<h2 id="bpm-config-add">bpm config add</h2>
-<h3 id="bpm-config-add-project-binary">bpm config add project binary</h3>
+<p>"config set" can be used to set any parameter in global configuration (main) or project configuration</p>
+<h3 id="bpm-config-add-project-binary-add-a-source-code-to-build-during-build-stage">bpm config add project binary : add a source code to build during build stage</h3>
+<p>For example, we want to add curl.c into build stage with the output name called "curl"</p>
 <p>Add a "curl" binary into bin list to generate :</p>
-<p>"bpm config add project binary curl tests/curl.c"</p>
+<pre><code class="language-bash">bpm config add project binary curl tests/curl.c
+</code></pre>
 <p>In that case, "bpm run --bin curl" will launch "curl" compiled from tests/curl.c</p>
 <h2 id="add-a-pre-script-before-main-command-is-launched">Add a pre script before main command is launched</h2>
 <pre><code class="language-bash">$ mkdir scripts/

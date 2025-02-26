@@ -1227,14 +1227,16 @@ def manage_config(args):
                 i = i + 1
             return 0
 
-    if len(args) == 5:
         if args[4] == '-h' and args[2] == 'add' and args[3] == 'project':
             print("Manage config\n")
-            print("Usage : bpm config add project binary binarybin path\n")
-            print("\033[1;32mParameters\033[0m")
+            print("Usage : bpm config add project\n")
+            print("\033[1;32mCommands\033[0m")
+            print("    \033[1;36mbinary\033[0m             set a binary to build")
+            print("    \033[1;36mdynamic-lib\033[0m        set a dynamic lib to build (not done yet)")
+            #print("binary binarybin source path")
             i = 0
+            return 0
 
-    if len(args) == 5:
         if args[4] == '-h' and args[2] == 'set' and args[3] == 'project':
             print("Manage config\n")
             print("Usage : bpm config set project parameter value\n")
@@ -1255,13 +1257,31 @@ def manage_config(args):
             print("    \033[1;36mproject\033[0m          set value for 'project' config (use -h after set for 'project' help)")
             return 0
 
+        if args[3] == '-h' and args[2] == 'add':
+            print("Manage config\n")
+            print("Usage : bpm config set [command]\n")
+            print("\033[1;32mCommands:\033[0m")
+            print("    \033[1;36mproject\033[0m          set a add value for 'project'")
+            return 0
+
     if len(args) == 3:
         if args[2] == '-h' or args[2] == 'help':
             print("Manage config\n")
             print("Usage : bpm config [command]\n")
             print("\033[1;32mCommands:\033[0m")
             print("    \033[1;36mset\033[0m             set value for main config or project config (use -h after set for 'set' help)")
+            print("    \033[1;36madd\033[0m             add a binary into project file")
             return 0
+
+        if args[2] == 'add':
+            print('Missing parameter')
+            print("Manage config\n")
+            print("Usage : bpm config [command]\n")
+            print("\033[1;32mCommands:\033[0m")
+            print("    \033[1;36mset\033[0m             set value for main config or project config (use -h after set for 'set' help)")
+            print("    \033[1;36madd\033[0m             add a binary into project file")
+            return 0
+
 
     if len(args) == 5:
         if args[4] not in valid_parameters_project and args[3] == 'project':
@@ -1274,13 +1294,14 @@ def manage_config(args):
 
         if args[2] == 'set' and args[3] == 'main':
             print("Missing value for parameter '" + args[4] + "'")
-            return
+            return 1
 
         if args[2] == 'set' and args[3] == 'project':
             print("Missing value for parameter '" + args[4] + "'")
-            return
+            return 1
 
     if len(args) == 7:
+
         if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary':
             #bpm config add project binary binarybin path
             with open("bpm.tml", "r") as file:
@@ -1294,8 +1315,15 @@ def manage_config(args):
             # Enregistrer les modifications dans le fichier
             with open("bpm.tml", "w") as file:
                 toml.dump(data, file)
+            print("Binary added")
+            return 0
 
     if len(args) == 6:
+        if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary' and args[5] == '-h':
+            print("Manage config : add a binary to project\n")
+            print("Usage : bpm config add project binary [name of the binary] [path_of_the_source_code]\n")
+            return 0
+
         if args[2] == 'set' and args[3] == 'main':
             if args[4] in valid_parameters_main:
                 verify_position = valid_parameters_main.index(args[4])
