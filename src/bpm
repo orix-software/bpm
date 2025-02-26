@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.1.8"
+VERSION_BPM = "2025.1.9"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -1300,6 +1300,24 @@ def manage_config(args):
             print("Missing value for parameter '" + args[4] + "'")
             return 1
 
+    if len(args) == 8:
+        if args[2] == 'add' and args[3] == 'project' and args[4] == 'dynamic-lib':
+            #bpm config add project binary binarybin path
+            with open("bpm.tml", "r") as file:
+                data = toml.load(file)
+            # Ajouter la section [[bin]] avec les valeurs souhaitées
+            bin_section = {"name": args[5], f"targetfilename_{args[5]}": args[6], "path_"+ args[5]: args[7]}
+
+            data["dynamic-lib"] = []
+            data["dynamic-lib"].append(bin_section)
+
+            # Enregistrer les modifications dans le fichier
+            with open("bpm.tml", "w") as file:
+                toml.dump(data, file)
+            print("dynamic-lib added")
+            return 0
+
+
     if len(args) == 7:
 
         if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary':
@@ -1307,7 +1325,7 @@ def manage_config(args):
             with open("bpm.tml", "r") as file:
                 data = toml.load(file)
             # Ajouter la section [[bin]] avec les valeurs souhaitées
-            bin_section = {"name": args[5], "path": args[6]}
+            bin_section = {"name": args[5], "path_"+ args[5]: args[6]}
 
             data["bin"] = []
             data["bin"].append(bin_section)
@@ -1322,6 +1340,12 @@ def manage_config(args):
         if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary' and args[5] == '-h':
             print("Manage config : add a binary to project\n")
             print("Usage : bpm config add project binary [name of the binary] [path_of_the_source_code]\n")
+            return 0
+
+        if args[2] == 'add' and args[3] == 'project' and args[4] == 'dynamic-lib' and args[5] == '-h':
+            print("Manage config : add a dynamic-lib to project\n")
+            print("Usage : bpm config add project dynamic-lib [dynamic-lib-identifier] [targetfilename] [path_of_the_source_code]\n")
+            print("dynamic-lib-identifier is an unique string eg : 'curl'")
             return 0
 
         if args[2] == 'set' and args[3] == 'main':

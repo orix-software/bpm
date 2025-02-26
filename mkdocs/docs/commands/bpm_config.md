@@ -41,7 +41,7 @@ bpm config add project binary curl tests/curl.c
 
 In that case, "bpm run --bin curl" will launch "curl" compiled from tests/curl.c
 
-## Add a pre script before main command is launched
+## Add a 'pre' script before main command is launched
 
 ```bash
 $ mkdir scripts/
