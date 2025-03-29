@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.2
+VERSION_BPM = "2025.2"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -1005,7 +1005,7 @@ def build(args):
         ##############################################
         #  Generate lib link object (.llo)
         ##############################################
-        print("Building " + name + ".llo")
+        print("Building " + name + ".lib (for llo folder)")
         resultat = subprocess.run(['ca65', '-ttelestrat', f"src/dynamic_lib/{name}.s", "-o", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
         resultat = subprocess.run(['ar65', 'r', f"build/usr/lib/{name}/{version}/llo/{name}.lib", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
         # f"build/usr/share/{name}/{version}/" + name + ".llo"
