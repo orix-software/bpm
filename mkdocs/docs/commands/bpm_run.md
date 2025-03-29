@@ -40,6 +40,8 @@ bpm run --bin "hello -y"
 
 bpm run -- arg1 arg2
 
+
+
 ## Launch a command before the project program (only for bin program)
 
 ```bash

@@ -31,7 +31,7 @@ site_name: bpm v2025.1 DOCUMENTATION
 #  - markmap
 #  - mkdocs-video
 
-dev_addr: '172.30.72.43:8001'
+dev_addr: '172.30.72.43:8002'
 
 theme:
     #name: material

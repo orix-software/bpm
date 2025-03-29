@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.1.9"
+VERSION_BPM = "2025.2
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -73,7 +73,7 @@ user_folder = '.bpm/'
 
 def convert_binary_name_to_seven_chars(name) -> str:
     if len(name) > 7:
-        print("Warn : name is greater than 7 chars. binary name is truncated for Orix")
+        print(f"Warn : name is greater than 7 chars. binary name is truncated for Orix. Binary name will be : {name[:7]}")
     return name[:7]
 
 
@@ -152,8 +152,10 @@ def add_dependency_to_toml(file_path, dependency_str):
 
     except FileNotFoundError:
         print(f"'{file_path}' nnot found")
+
     except toml.TomlDecodeError:
         print(f"Impossible to read '{file_path}'.")
+
 
 def download_file(url, local_filename, dependency_name):
     """Télécharge un fichier depuis une URL"""
@@ -172,13 +174,13 @@ def download_file(url, local_filename, dependency_name):
 
 
 def install_dependency_from_toml(args):
+
     if len(args) == 3:
         if args[2] == "-h":
             print("Install all dependencies\n")
             print("Usage : bpm install\n")
             print("\033[1;32mCommands:\033[0m")
             print("    \033[1;36minstall\033[0m             Install all dependencies for this project")
-
             return 0
 
     try:
@@ -278,8 +280,6 @@ def init_toml(args):
             code_template = "asm_rom_tpl"
         codetype = 'rom'
 
-
-
     current_directory = os.getcwd()
     last_directory = os.path.basename(os.path.normpath(current_directory))
     now = datetime.now()
@@ -320,7 +320,8 @@ def init_toml(args):
     if not os.path.exists("bpm.tml"):
         print("Init bpm.tml")
         """Crée un fichier TOML avec des valeurs par défaut."""
-        content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + str(current_year) + "." + str(current_trimester) + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
+        version = str(current_year) + "." + str(current_trimester)
+        content = "[package]\nname = \"" + last_directory  + "\"\nversion = \"" + version + "\"\nauthors = [ \"nobody@nobody.fr\" ]\nlicense = \"MIT OR Apache-2.0\"\nedition = \"2018\"\ncpu = \"6502\"\n"
         content = content + f"readme = \"\"\nrepository = \"\"\ndocumentation = \"\"\ndescription = \"\"\nhomepage = \"\"\nbuildfolder = \"build\"\npackagetype = \"tgz\"\ncodetype = \"{codetype}\"\ntemplatecode = \"{code_template}\"\npathsrc = \"src\"\n"
         content = content + f"oricutron_replace_autoboot_run = \"{oricutron_replace_autoboot_run_for_project}\"\n"
         content = content + f"asm_bin_tpl_version = \"{default_asm_bin_tpl_version}\"\n"
@@ -331,7 +332,7 @@ def init_toml(args):
         content = content + f"orix_minimal_kernel_version = \"{default_kernel_version}\"\n"
         content = content + f"orix_run_pre_script = \"\"\n"
         content = content + f"md2hlp = \"yes\"\n"
-        content = content + "\n[dependencies]\n"
+        content = content + "\n[dependencies]\n\n[dynamiclibs]\n"
         with open("bpm.tml", 'w') as file:
             file.write(content)
 
@@ -347,6 +348,13 @@ def init_toml(args):
             print("Init " + "src/" + last_directory + ".c")
             content = "#include <stdio.h>\n\nint main() {\n    printf(\"Hello world Orix\");\n    return 0;\n}\n"
             with open("src/" + last_directory + ".c", 'w') as file:
+                file.write(content)
+
+    if codetype == 'lib':
+        if not os.path.exists("src/dynamic_lib/"):
+            os.makedirs("src/dynamic_lib/", mode=0o755, exist_ok=True)
+            content = f"{last_directory}_mapping_dynlib:\n.asciiz \"dynlib_{last_directory}]\"\n; Include version\n.asciiz \"{version}\"\n.byt 0 ; Module version\n.byt 0 ; ROM RAM ?\n.addr {last_directory}_startup_dynlib ; {last_directory}_startup_dynlib Init will be always 0\n.proc {last_directory}_startup_dynlib\nrts\n.endproc"
+            with open("src/dynamic_lib/" + last_directory + ".s", 'w') as file:
                 file.write(content)
 
     if not os.path.exists("VERSION"):
@@ -479,8 +487,6 @@ def addsrc(args):
             file_path = "bpm.tml"
             with open(file_path, 'w') as file:
                 toml.dump(data, file)
-
-
 
 
 def search_lib(search_word: str):
@@ -627,13 +633,15 @@ def compile(name, arg_include, folder):
                 arg_ca65 = ['-ttelestrat', folder + fichier, "-o", f"{absolute_path}/bpmtmp/" + fichier_o]
 
                 if assembly == True and fichier != name + ".s":
+                    print(f"File : {folder + fichier}")
                     resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=False, text=True)
                     resultat = subprocess.run(['ar65', 'r', name + ".lib", f"{absolute_path}/bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
 
                 if assembly == False and fichier != name + ".c":
                     resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
                     resultat = subprocess.run(['ar65', 'r', name + ".lib", f"{absolute_path}/bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
-
+            else:
+                print(f"[INFO] {fichier} not built")
 
 
 def generate_lib_for_bin(name: str, arg_include, arg_include_asm):
@@ -664,12 +672,15 @@ def generate_lib_for_bin(name: str, arg_include, arg_include_asm):
                 resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
 
-def check_src_with_target_file(filesrc, filebuild):
+
+def check_src_with_target_file(filesrc: str, filebuild:str) -> bool:
     generate = False
+
     if os.path.exists(filebuild):
         time_filebuild = int(os.path.getmtime(filebuild))
         time_filesrc = int(os.path.getmtime(filesrc))
-        if  time_filebuild < time_filesrc:
+        #print(f"compare {filesrc} {filebuild} {time_filesrc} {time_filebuild}")
+        if  time_filesrc > time_filebuild:
             generate = True
     else:
         generate = True
@@ -695,6 +706,7 @@ def build(args):
     if not os.path.exists(toml_file):
         print("This project is not initialized (Missing bpm.tml)")
         return 1
+
 
     # Detect orixsdk version
     orixsdk_version = "2023.3.0"
@@ -735,7 +747,6 @@ def build(args):
                 generate_all = True
                 break
 
-
     if not os.path.exists(bpm_tmp_folder):
         # Créer le répertoire
         os.makedirs(bpm_tmp_folder, mode=0o755, exist_ok=True)
@@ -745,11 +756,15 @@ def build(args):
 
     data = read_local_config_file()
 
+    dynamic_lib_name_module = ""
     codetype = ""
     if "package" in data:
         codetype = data["package"]["codetype"]
         name = data["package"]["name"]
         version = data["package"]["version"]
+        if "dynamic-lib-name-module" in data.get("package", {}):
+            dynamic_lib_name_module = data["package"]["dynamic-lib-name-module"]
+
         if "package" not in data or "templatecode" not in data["package"]:
             fix_toml_file("templatecode", "")
             print("Missing 'templatecode' property in bpm.tml... Fixed")
@@ -775,6 +790,13 @@ def build(args):
                 print("Error : 'orixsdk_version' plugin is not installed available into package section of bpm.tml, it's required to produce reloc binary, set it to version installed (see bpm plugins)")
                 return 1
 
+    else:
+        print("Missing package section in bpm.tml")
+        exit(1)
+
+    if not os.path.exists(f"build/usr/share/{name}/{version}"):
+        os.makedirs(f"build/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
+
     arg_include = []
     arg_ld_libs = []
     arg_include_asm = []
@@ -795,21 +817,26 @@ def build(args):
                     arg_include.append(f"orixlibs/{key}/usr/include/asm/")
                     arg_include_asm.append("--asm-include-dir")
                     arg_include_asm.append(f"orixlibs/{key}/usr/include/asm/")
+                llo_detected = False
+                #if data["dynamiclibs"] and "dynamiclibs" in data and  key in data["dynamiclibs"]:
+                if "dynamiclibs" in data:
+                    # orixlibs/curl/usr/share/curl/2025.1/
+                    if data["dynamiclibs"] and key in data["dynamiclibs"]:
+                        arg_ld_libs.append(f"orixlibs/{key}/usr/lib/{key}/{value}/llo/{key}.lib")
+                        llo_detected = True
 
-                arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
+                if llo_detected == False:
+                    arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
 
 
-    if not os.path.exists(f"build/etc/bpm/{version}"):
+    path_etc_bpm = "build/etc/bpm"
+
+    if not os.path.exists(f"{path_etc_bpm}/{version}"):
         #build/etc/bpm/file/2024.4/
-        print(f"Creating build/etc/bpm/{name}/{version}")
-        os.makedirs(f"build/etc/bpm/{name}/{version}", mode=0o755, exist_ok=True)
+        print(f"Creating {path_etc_bpm}/{name}/{version}")
+        os.makedirs(f"{path_etc_bpm}/{name}/{version}", mode=0o755, exist_ok=True)
 
-    shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tml")
-
-
-    # if not os.path.exists(f"src/include"):
-    #     # Créer le répertoire
-    #     os.makedirs(f"build/usr/include", mode=0o755, exist_ok=True)
+    shutil.copy("bpm.tml", f"{path_etc_bpm}/{name}/{version}/bpm.tml")
 
 
     plugins_detect("no_display")
@@ -821,8 +848,6 @@ def build(args):
 
         arg_include_asm.append("--asm-include-dir")
         arg_include_asm.append(f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/")
-
-
 
     if codetype == "rom":
         rom_path = f"build/usr/share/{name}/{version}/"
@@ -876,7 +901,6 @@ def build(args):
         if os.path.exists(file_to_compile_c):
 
             try:
-
                 bin_cl65 = ['cl65']
                 arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
@@ -910,12 +934,14 @@ def build(args):
 
         print(f"Main file not found : {file_to_compile_c} or {file_to_compile_s}")
 
-
+    #########################################################
+    # Building lib
+    #########################################################
 
     if codetype == "lib":
         print(f"Generate {name}.lib")
+        rebuild_so = False
 
-        data = read_local_config_file()
         if 'srcfolders' in data:
             # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
             for key, value in data['srcfolders'].items():
@@ -924,6 +950,27 @@ def build(args):
         # If someone erased lib; force rebuild
         if not os.path.exists(f"{name}.lib"):
             generate_all = True
+
+        if not os.path.exists(f"build/usr/lib/{name}/{version}/llo/"):
+            os.makedirs(f"build/usr/lib/{name}/{version}/llo/", mode=0o755, exist_ok=True)
+
+        # Do we manage dynamic lib ?
+        if not os.path.exists(f"build/usr/share/{name}/{version}/" + dynamic_lib_name_module):
+            generate_all = True
+
+        if not os.path.exists(f"build/usr/lib/{name}/{version}/llo/" + name + ".lib"):
+            generate_all = True
+
+
+        if not os.path.exists(f"bpmtmp/{name}.a"):
+            generate_all = True
+
+        if not os.path.exists(f"src/dynamic_lib/{name}_so.s"):
+            generate_all = True
+            rebuild_so = True
+            # Create an empty file
+            with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
+                file.write("; stub")
 
         for fichier in fichiers_s:
             nom_sans_extension = os.path.splitext(fichier)[0]
@@ -939,6 +986,9 @@ def build(args):
                     bin_ca65 = ['ca65']
                     arg_ca65 = ['-ttelestrat', fichier_source, "-o", fichier_dest_o, "--include-dir", "src/include"]
                     resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=True, text=True)
+                    rebuild_so = True
+
+
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                 return 1
@@ -946,9 +996,114 @@ def build(args):
             if generate == True or generate_all == True:
                 print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
+
+                if fichier.startswith('_'):
+                    # Add C proto into "llo"
+                    print("[Dynamic-lib] Adding " + bpm_tmp_folder + nom_sans_extension + ".o to llo/" + name + ".lib")
+                    resultat = subprocess.run(['ar65', 'r', f"build/usr/lib/{name}/{version}/llo/" + name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
+
+        ##############################################
+        #  Generate lib link object (.llo)
+        ##############################################
+        print("Building " + name + ".llo")
+        resultat = subprocess.run(['ca65', '-ttelestrat', f"src/dynamic_lib/{name}.s", "-o", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
+        resultat = subprocess.run(['ar65', 'r', f"build/usr/lib/{name}/{version}/llo/{name}.lib", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
+        # f"build/usr/share/{name}/{version}/" + name + ".llo"
+        ##############################################
+        #  Generate dynamic lib (.so)
+        ##############################################
+        if rebuild_so == True:
+            try:
+                # Supprimer le fichier
+                os.remove(f"src/dynamic_lib/{name}_so.s")
+                with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
+                    file.write("; stub")
+            except Exception as e:
+                print(f"Error : {e}")
+            for fichier in fichiers_s:
+                if not fichier.startswith('_'):
+                    with open(f"src/dynamic_lib/{name}_so.s", 'a') as fichier_so:
+                        parties = fichier.rsplit('.', 1)
+                        proc = parties[0]
+                        fichier_so.write(f".import {proc}\n jmp {proc}\n")
+
+            resultat = subprocess.run(['cl65', '-tnone', f"src/dynamic_lib/{name}_so.s", name + ".lib" , "-o", f"bpmtmp/" + name + "_2048.lso", '--start-addr',  '2048'], check=True, capture_output=False, text=True)
+            resultat = subprocess.run(['cl65', '-tnone', f"src/dynamic_lib/{name}_so.s", name + ".lib" , "-o", f"bpmtmp/" + name + "_2304.lso", '--start-addr',  '2304'], check=True, capture_output=False, text=True)
+
+            # VErsion header 128 equal to so lib
+            header = bytearray([0x01, 0x00, ord('o'), ord('r'), ord('i'), # Signature
+                            128 + 0x00,                # header version : Version header b7=1 is  so (dynamic lib)
+                            0x00,                      # CPU
+                            0x00, 0x00,                # SIZE_BITFIELD
+                            0x00,                      # Reserved
+                            0x00,                      # Reserved
+                            0x00,                      # Reserved
+                            0x00, 0x00,                # OFFSET_BITFIELD
+                            0x00, 0x00,                # start_adress
+                            0x00, 0x00,                # endofmemory
+                            0x00, 0x00,                # start_adress
+                            ])
+
+            # Add header for first file
+            # Compute startaddr and loading address
+            byte_low = 2048 & 0xFF
+            byte_high = (2048 >> 8) & 0xFF
+
+            header[14] = byte_low
+            header[15] = byte_high
+
+            header[18] = byte_low
+            header[19] = byte_high
+
+            # Lire le contenu existant du fichier
+            with open(f"bpmtmp/" + name + "_2048.lso", 'rb') as fichier:
+                contenu_existant = fichier.read()
+            val = len(contenu_existant)
+            val = val + 2048 - 1
+            # Get size
+            size_byte_low = val & 0xFF
+            size_byte_high = (val >> 8) & 0xFF
+            # Store size
+            header[16] = size_byte_low
+            header[17] = size_byte_high
+
+            # Écrire l'en-tête suivi du contenu existant dans le fichier
+            with open(f"bpmtmp/" + name + "_2048.so", 'wb') as fichier:
+                fichier.write(header + contenu_existant)
+
+            # Manage second file
+
+            byte_low = 2304 & 0xFF
+            byte_high = (2304 >> 8) & 0xFF
+
+            header[14] = byte_low
+            header[15] = byte_high
+
+            header[18] = byte_low
+            header[19] = byte_high
+
+            # Lire le contenu existant du fichier
+            with open(f"bpmtmp/" + name + "_2304.lso", 'rb') as fichier:
+                contenu_existant = fichier.read()
+            val = len(contenu_existant)
+            val = val + 2304 - 1
+            size_byte_low = val & 0xFF
+            size_byte_high = (val >> 8) & 0xFF
+
+            header[16] = size_byte_low
+            header[17] = size_byte_high
+
+            # Écrire l'en-tête suivi du contenu existant dans le fichier
+            with open(f"bpmtmp/" + name + "_2304.so", 'wb') as fichier:
+                fichier.write(header + contenu_existant)
+
+            # Generate final .so
+            resultat = subprocess.run(["python3" , reloc_bin_path, "--verbose",  "-o", f"build/usr/share/{name}/{version}/" + dynamic_lib_name_module, '-2' ,f"bpmtmp/" + name + "_2048.so", f"bpmtmp/" + name + "_2304.so"], check=True, capture_output=False, text=True)
+
         path_file_lib = f"build/usr/share/{name}/{version}"
         if not os.path.exists(path_file_lib):
             os.makedirs(path_file_lib, mode=0o755, exist_ok=True)
+
         if os.path.exists(name + ".lib"):
             shutil.copy(name + ".lib", f"{path_file_lib}/{name}.lib")
             print("Build completed")
@@ -999,6 +1154,7 @@ def usage():
     print("    \033[1;36mrun\033[0m             Run")
     print("    \033[1;36mlist\033[0m            List packages")
     print("    \033[1;36madd         \033[0m    Add dependencies to a manifest file")
+    print("    \033[1;36mdynamiclib  \033[0m    Define a dynamic lib from dependency list")
     print("    \033[1;36mremove      \033[0m    Remove dependencies from a manifest file")
     print("    \033[1;36minstall     \033[0m    Install all dependencies from a manifest file")
     print("    \033[1;36msearch      \033[0m    Search package")
@@ -1300,16 +1456,20 @@ def manage_config(args):
             print("Missing value for parameter '" + args[4] + "'")
             return 1
 
-    if len(args) == 8:
+        if args[2] == 'add' and args[3] == 'project' and args[4] == 'dynamic-lib' and args[5] == '-h':
+            print("Manage config : add a dynamic-lib to project\n")
+            print("Usage : bpm config add project dynamic-lib [targetfilename]\n")
+            print("targetfilename is for example 'libcurl.so'")
+            return 0
+
+    if len(args) == 6:
         if args[2] == 'add' and args[3] == 'project' and args[4] == 'dynamic-lib':
             #bpm config add project binary binarybin path
             with open("bpm.tml", "r") as file:
                 data = toml.load(file)
-            # Ajouter la section [[bin]] avec les valeurs souhaitées
-            bin_section = {"name": args[5], f"targetfilename_{args[5]}": args[6], "path_"+ args[5]: args[7]}
 
-            data["dynamic-lib"] = []
-            data["dynamic-lib"].append(bin_section)
+            data["package"]["dynamic-lib-src-path-module"] = args[7]
+            data["package"]["dynamic-lib-name-module"] = args[8]
 
             # Enregistrer les modifications dans le fichier
             with open("bpm.tml", "w") as file:
@@ -1337,15 +1497,10 @@ def manage_config(args):
             return 0
 
     if len(args) == 6:
+
         if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary' and args[5] == '-h':
             print("Manage config : add a binary to project\n")
             print("Usage : bpm config add project binary [name of the binary] [path_of_the_source_code]\n")
-            return 0
-
-        if args[2] == 'add' and args[3] == 'project' and args[4] == 'dynamic-lib' and args[5] == '-h':
-            print("Manage config : add a dynamic-lib to project\n")
-            print("Usage : bpm config add project dynamic-lib [dynamic-lib-identifier] [targetfilename] [path_of_the_source_code]\n")
-            print("dynamic-lib-identifier is an unique string eg : 'curl'")
             return 0
 
         if args[2] == 'set' and args[3] == 'main':
@@ -1917,6 +2072,33 @@ def run_bin(args):
     if codetype == 'lib':
         print("lib is not managed yet with 'bpm run' command")
 
+def dynamic_lib(args):
+
+    if len(sys.argv) == 2:
+        print("add        add dynamic lib, lib requires to be in dependencies")
+        print("remove     Remove dynamic lib, (revert into static lib)")
+
+    if (len(sys.argv) == 3 and args[2] == 'add') or (len(sys.argv) == 3 and args[2] == 'remove'):
+        print("missing arg for add or remove")
+
+    if (len(sys.argv) == 4 and args[2] == 'add') or (len(sys.argv) == 4 and args[2] == 'remove'):
+        data = read_local_config_file()
+
+        if "dependencies" in data:
+            for chaine in data["dependencies"]:
+                if args[3] in chaine:
+                    print("Found")
+                    if args[3] not in data["dynamiclibs"]:
+                        data["dynamiclibs"][args[3]] = ""
+                        with open("bpm.tml", 'w') as file:
+                            toml.dump(data, file)
+                    else:
+                        print(f"{args[3]} already in dynamiclibs")
+                    return 0
+            print(f"Error : dependency '{args[3]}' not found in dependencies")
+        else:
+            print("'dependencies' section not found in bpm.tml")
+
 
 def main():
     verify_installed()
@@ -1927,7 +2109,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'plugins', 'list', 'add', 'addsrc', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
+    valid_commands = ['build', 'config', 'd', 'doc', 'dynamiclib', 'plugins', 'list', 'add', 'addsrc', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
 
     if sys.argv[1] not in valid_commands:
         usage()
@@ -1982,6 +2164,11 @@ def main():
         else:
             print("Missing parameter")
             print("Type 'bpm add --help'")
+    elif action == 'dynamiclib':
+        if not os.path.exists(toml_file):
+            print("This project is not initialized (Missing bpm.tml)")
+            return 1
+        dynamic_lib(sys.argv)
     elif action == 'remove':
         if not os.path.exists(toml_file):
             print("This project is not initialized (Missing bpm.tml)")
