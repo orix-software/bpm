@@ -20,23 +20,7 @@ To get started with BPM, install bpm and set up your first code.
 
 The guide will give you all you need to know about how to use BPM to develop Orix packages.
 
-### bpm Reference
-
-The reference covers the details of various areas of bpm.
-
-### Bpm Commands
-
-The commands will let you interact with bpm using its command-line interface.
-
-### Frequently Asked Questions
-
-## Appendices
-
-- Glossary
-
 ## Other Documentation
 
-- Changelog — Detailed notes about changes in bpm in each release.
 - cc65 website — Links to official cc65 documentation and tools.
 - Oricutron website
-

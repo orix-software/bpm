@@ -1,5 +1,5 @@
 
-# Installation Guide for bpmorix
+# Installation Guide for bpm
 
 bpm does not install Oricutron and cc65, bit are needed for bpm.
 
@@ -15,3 +15,4 @@ sudo apt install python3-pip
 pip install -r /tmp/bpm.txt
 rm -f /tmp/bpm.txt
 ```
+g

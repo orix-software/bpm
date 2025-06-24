@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.2"
+VERSION_BPM = "2025.3"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -70,6 +70,26 @@ plugins_main_property_name = {
 
 toml_file = "bpm.tml"
 user_folder = '.bpm/'
+
+
+def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name):
+    arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
+    try:
+        resultat = subprocess.run(arg_cc65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+        exit(1)
+
+    arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304.s',  name + ".lib"]
+    resultat = subprocess.run(arg_cc65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
+    arg_ca65 = ['ca65', "--include-dir", "src/include", '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
+    resultat = subprocess.run(arg_ca65 + arg_include , check=True, capture_output=False, text=True)
+    arg_ca65 = ['ca65', "--include-dir", "src/include", '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
+    resultat = subprocess.run(arg_ca65 + arg_include , check=True, capture_output=False, text=True)
+    arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2048.o', "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  name + ".lib", "telestrat.lib"]
+    resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
+    arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2304.o', "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304', name + ".lib", "telestrat.lib"]
+    resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
 
 def convert_binary_name_to_seven_chars(name) -> str:
     if len(name) > 7:
@@ -707,7 +727,6 @@ def build(args):
         print("This project is not initialized (Missing bpm.tml)")
         return 1
 
-
     # Detect orixsdk version
     orixsdk_version = "2023.3.0"
     generate_all = False
@@ -764,6 +783,7 @@ def build(args):
         version = data["package"]["version"]
         if "dynamic-lib-name-module" in data.get("package", {}):
             dynamic_lib_name_module = data["package"]["dynamic-lib-name-module"]
+
 
         if "package" not in data or "templatecode" not in data["package"]:
             fix_toml_file("templatecode", "")
@@ -901,11 +921,11 @@ def build(args):
         if os.path.exists(file_to_compile_c):
 
             try:
-                bin_cl65 = ['cl65']
-                arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
-                arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
-                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
-                resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
+                build_without_cl65_c_files(arg_include + arg_include_asm + arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name)
+                # arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
+                # arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
+                # resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
+                # resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
                 nom_sans_extension = convert_binary_name_to_seven_chars(nom_sans_extension)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                 shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
@@ -961,7 +981,6 @@ def build(args):
         if not os.path.exists(f"build/usr/lib/{name}/{version}/llo/" + name + ".lib"):
             generate_all = True
 
-
         if not os.path.exists(f"bpmtmp/{name}.a"):
             generate_all = True
 
@@ -970,7 +989,7 @@ def build(args):
             rebuild_so = True
             # Create an empty file
             with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
-                file.write("; stub")
+                file.write("; stub\n")
 
         for fichier in fichiers_s:
             nom_sans_extension = os.path.splitext(fichier)[0]
@@ -987,7 +1006,6 @@ def build(args):
                     arg_ca65 = ['-ttelestrat', fichier_source, "-o", fichier_dest_o, "--include-dir", "src/include"]
                     resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=True, text=True)
                     rebuild_so = True
-
 
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
@@ -1017,7 +1035,7 @@ def build(args):
                 # Supprimer le fichier
                 os.remove(f"src/dynamic_lib/{name}_so.s")
                 with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
-                    file.write("; stub")
+                    file.write("; stub\n")
             except Exception as e:
                 print(f"Error : {e}")
             for fichier in fichiers_s:
@@ -1098,7 +1116,8 @@ def build(args):
                 fichier.write(header + contenu_existant)
 
             # Generate final .so
-            resultat = subprocess.run(["python3" , reloc_bin_path, "--verbose",  "-o", f"build/usr/share/{name}/{version}/" + dynamic_lib_name_module, '-2' ,f"bpmtmp/" + name + "_2048.so", f"bpmtmp/" + name + "_2304.so"], check=True, capture_output=False, text=True)
+            if dynamic_lib_name_module != "":
+                resultat = subprocess.run(["python3" , reloc_bin_path, "--verbose",  "-o", f"build/usr/share/{name}/{version}/" + dynamic_lib_name_module, '-2' ,f"bpmtmp/" + name + "_2048.so", f"bpmtmp/" + name + "_2304.so"], check=True, capture_output=False, text=True)
 
         path_file_lib = f"build/usr/share/{name}/{version}"
         if not os.path.exists(path_file_lib):
@@ -1107,6 +1126,7 @@ def build(args):
         if os.path.exists(name + ".lib"):
             shutil.copy(name + ".lib", f"{path_file_lib}/{name}.lib")
             print("Build completed")
+
         else:
             print("No build done")
 
@@ -1119,21 +1139,26 @@ def build(args):
     if "bin" in data:
         if not os.path.exists("build/bin/"):
             os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+
         for bin_entry in data["bin"]:
             if "name" in bin_entry:
-                file_to_compile_c = bin_entry["path"]
+                print(f"Building binary : {bin_entry['name']}")
+                binname = bin_entry["name"]
+                key = f"path_{binname}"
+                file_to_compile_c = bin_entry[key]
+                print(file_to_compile_c)
                 if os.path.exists(file_to_compile_c):
                     try:
-                        arg_cl65 = ['cl65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048', name + ".lib"]
-                        arg_cl65_2304 = ['cl65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304', name + ".lib"]
-                        resultat = subprocess.run(arg_cl65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
-                        resultat = subprocess.run(arg_cl65_2304 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
-                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-                        shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + bin_entry["name"])
+                        build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name)
+                        # Perform reloc_bin
+                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + binname, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
+                        shutil.copy(bpm_tmp_folder + binname, "build/bin/" + bin_entry["name"])
                         print("Built : " + "build/bin/" + bin_entry["name"])
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                     return 0
+                else:
+                    print(f"{file_to_compile_c} not found, can not build {binname} binary")
 
 def usage():
     print(f"Orix build and package manager ({VERSION_BPM})\n")
@@ -1403,8 +1428,9 @@ def manage_config(args):
                 i = i + 1
             return 0
 
-    # bpm set -h
+
     if len(args) == 4:
+        # bpm set -h
         if args[3] == '-h' and args[2] == 'set':
             print("Manage config\n")
             print("Usage : bpm config set [command]\n")
@@ -1413,6 +1439,7 @@ def manage_config(args):
             print("    \033[1;36mproject\033[0m          set value for 'project' config (use -h after set for 'project' help)")
             return 0
 
+        # bpm add -h
         if args[3] == '-h' and args[2] == 'add':
             print("Manage config\n")
             print("Usage : bpm config set [command]\n")
@@ -1440,6 +1467,8 @@ def manage_config(args):
 
 
     if len(args) == 5:
+
+        #bpm config add project binary curl tests/curl.c arg1
         if args[4] not in valid_parameters_project and args[3] == 'project':
             print("'" + args[4] + "' is not a parameter allowed for '" + args[3] + "'")
             return 1
@@ -1478,14 +1507,17 @@ def manage_config(args):
             return 0
 
 
-    if len(args) == 7:
-
+    if len(args) > 6:
+        # bpm config add project binary curl tests/curl.c arg1
         if args[2] == 'add' and args[3] == 'project' and args[4] == 'binary':
             #bpm config add project binary binarybin path
             with open("bpm.tml", "r") as file:
                 data = toml.load(file)
             # Ajouter la section [[bin]] avec les valeurs souhaitées
-            bin_section = {"name": args[5], "path_"+ args[5]: args[6]}
+            if len(args) == 8:
+                bin_section = {"name": args[5], "path_"+ args[5]: args[6], "extra_args_"+ args[5]: args[7]}
+            else:
+                bin_section = {"name": args[5], "path_"+ args[5]: args[6]}
 
             data["bin"] = []
             data["bin"].append(bin_section)
@@ -1868,6 +1900,54 @@ def read_main_config_file():
     except FileNotFoundError:
         print(f"'{toml_file}' not found")
 
+def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_arg):
+    autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
+    full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
+    orix_run_pre_script_content = ""
+    if orix_run_pre_script != "":
+        try:
+            # Ouverture et lecture du fichier
+            with open(orix_run_pre_script, 'r') as fichier:
+                orix_run_pre_script_content = fichier.read()
+        except FileNotFoundError:
+            print(f"File not found '{orix_run_pre_script}' ('orix_run_pre_script' defines in project config file)")
+            exit(1)
+        except Exception as e:
+            print(f"error : {e}")
+    if oricutron_replace_autoboot_run == "True":
+        if binary_to_launch == "":
+            all_names = ""
+            for name in names:
+                if extra_arg[name] != "":
+                    extra_arg_param = extra_arg[name]
+                else:
+                    extra_arg_param = ""
+                name_7 = convert_binary_name_to_seven_chars(name)
+                all_names = all_names + name_7 + "\n"
+
+            content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{all_names}{extra_arg_param}\n"
+        else:
+            name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
+            content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
+
+        if os.path.exists(full_autoboot_oricutron_folder):
+            shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + "AUTOBOOT_OLD")
+            old_autoboot_exists = True
+        with open(full_autoboot_oricutron_folder, 'w') as file:
+            file.write(content)
+    os.chdir(path_oricutron)
+    try:
+        print(f"Execute : {bin_oricutron}")
+        subprocess.run([bin_oricutron], check=True)
+    except Exception as e:
+        print(f"Error : {e}")
+    finally:
+        # Revenir au répertoire initial
+        os.chdir(current_pwd)
+        if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
+            print("Restore old autoboot")
+            shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", full_autoboot_oricutron_folder)
+
 
 def run_bin(args):
     bpm_tmp_folder = "bpmtmp/"
@@ -1900,7 +1980,6 @@ def run_bin(args):
         if len(sys.argv) == 4:
             if sys.argv[2] == '--bin':
                 binary_to_launch = sys.argv[3]
-
 
     try:
         # Lire le fichier TOML
@@ -2018,59 +2097,81 @@ def run_bin(args):
 
     # Generate submit file
     if codetype == "bin":
-        autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
-        full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
+        execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args)
+ 
+        # autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
+        # full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
 
-        orix_run_pre_script_content = ""
-        if orix_run_pre_script != "":
-            try:
+        # orix_run_pre_script_content = ""
+        # if orix_run_pre_script != "":
+        #     try:
 
-                # Ouverture et lecture du fichier
-                with open(orix_run_pre_script, 'r') as fichier:
-                    orix_run_pre_script_content = fichier.read()
+        #         # Ouverture et lecture du fichier
+        #         with open(orix_run_pre_script, 'r') as fichier:
+        #             orix_run_pre_script_content = fichier.read()
 
-            except FileNotFoundError:
-                print(f"File not found '{orix_run_pre_script}' ('orix_run_pre_script' defines in project config file)")
-                exit(1)
-            except Exception as e:
-                print(f"error : {e}")
+        #     except FileNotFoundError:
+        #         print(f"File not found '{orix_run_pre_script}' ('orix_run_pre_script' defines in project config file)")
+        #         exit(1)
+        #     except Exception as e:
+        #         print(f"error : {e}")
 
-        if oricutron_replace_autoboot_run == "True":
-            if binary_to_launch == "":
-                name_7 = convert_binary_name_to_seven_chars(name)
-                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}{extra_arg}\n"
-            else:
-                name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
-                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
+        # if oricutron_replace_autoboot_run == "True":
+        #     if binary_to_launch == "":
+        #         name_7 = convert_binary_name_to_seven_chars(name)
+        #         content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}{extra_arg}\n"
+        #     else:
+        #         name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
+        #         content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7}\n"
 
-            # if not os.path.exists(path_oricutron + "/sdcard/ETC/"):
-            #     os.makedirs(path_oricutron + "/sdcard/ETC/", exist_ok=True)
-            #     open(full_autoboot_oricutron_folder, 'a').close()
+        #     # if not os.path.exists(path_oricutron + "/sdcard/ETC/"):
+        #     #     os.makedirs(path_oricutron + "/sdcard/ETC/", exist_ok=True)
+        #     #     open(full_autoboot_oricutron_folder, 'a').close()
 
-            if os.path.exists(full_autoboot_oricutron_folder):
-                shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + "AUTOBOOT_OLD")
-                old_autoboot_exists = True
+        #     if os.path.exists(full_autoboot_oricutron_folder):
+        #         shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + "AUTOBOOT_OLD")
+        #         old_autoboot_exists = True
 
-            with open(full_autoboot_oricutron_folder, 'w') as file:
-                file.write(content)
+        #     with open(full_autoboot_oricutron_folder, 'w') as file:
+        #         file.write(content)
 
-        os.chdir(path_oricutron)
-        try:
-            print(f"Execute : {bin_oricutron}")
-            subprocess.run([bin_oricutron], check=True)
+        # os.chdir(path_oricutron)
+        # try:
+        #     print(f"Execute : {bin_oricutron}")
+        #     subprocess.run([bin_oricutron], check=True)
 
-        except Exception as e:
-            print(f"Error : {e}")
+        # except Exception as e:
+        #     print(f"Error : {e}")
 
-        finally:
-            # Revenir au répertoire initial
-            os.chdir(current_pwd)
-            if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
-                print("Restore old autoboot")
-                shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", full_autoboot_oricutron_folder)
+        # finally:
+        #     # Revenir au répertoire initial
+        #     os.chdir(current_pwd)
+        #     if oricutron_replace_autoboot_run == "True" and old_autoboot_exists:
+        #         print("Restore old autoboot")
+        #         shutil.copy(bpm_tmp_folder + "AUTOBOOT_OLD", full_autoboot_oricutron_folder)
 
     if codetype == 'lib':
-        print("lib is not managed yet with 'bpm run' command")
+    # Afficher tous les noms dans [[bin]]
+        print("################## bla")
+        if "bin" in data:
+            if not os.path.exists("build/bin/"):
+                os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+            names = {}
+            extra_args = {}
+            for bin_entry in data["bin"]:
+                if "name" in bin_entry:
+                    binname = bin_entry["name"]
+                    key = f"path_{binname}"
+                    file_to_compile_c = bin_entry[key]
+                    names[bin_entry["name"]] = file_to_compile_c
+                    key = f"extra_args_{name}"
+                    if key in bin_entry:
+                        extra_args[binname] = bin_entry[key]
+                    else:
+                        extra_args[binname] = ""
+            execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args)
+        else:
+            print("lib is not managed yet with 'bpm run' command")
 
 def dynamic_lib(args):
 
@@ -2145,6 +2246,9 @@ def main():
         ret = build(sys.argv)
         if ret == 0:
             run_bin(sys.argv)
+        else:
+            print("Error during build, cannot run")
+            return 1
     elif action == '-V':
         print(VERSION_BPM)
     elif action == 'doc' or action == 'd':

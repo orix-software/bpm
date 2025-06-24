@@ -92,9 +92,17 @@ No build done
 
 ```
 
+Add a binary to test a library :
+
+This commands add "curl" binary name with "tests/curl.c" path and "arg1 arg2" which will be passed into Orix path
+
+```bash
+bpm config add project binary curl tests/curl.c "arg1 arg2"
+```
+
 ## Publish
 
-If this command, return an empty line : 
+If this command, return an empty line :
 
 
 ```bash
@@ -103,7 +111,6 @@ BPM_PUBLISH_KEY=yourKey
 ```
 
 Set a key for publishing
-
 
 ```bash
 ~$ vi ~/.bashrc
@@ -114,5 +121,47 @@ add :
 export BPM_PUBLISH_KEY=yourKey
 
 ```bash
-bpm publish
+$ bpm publish
 ```
+
+## Add a library (ex : netdb)
+
+```bash
+$ bpm search
+orixsdk 2023.3 -   Orix Software Toolkit
+netdb 2024.4 -  Network database operations
+ksocket 2025.1 -  Only use this package in Kernel source code (socket management part)
+ch395 2024.4 -  ch395 low hardware routine. Use socket lib for socket management under Orix
+kch395 2025.1 -  Only for orix kernel
+inet 2025.1 -  Provide inet_aton
+socket 2025.2 -  Socket management https://orix-software.github.io/socketlib/api/
+curl 2025.1 -  Curl lib for Orix https://orix-software.github.io/curllib/api/
+
+$bpm add netdb@2024.4
+```
+
+## Use orixsdk macro
+
+Verify if orixsdk plugins is installed (installed flag):
+
+bpm plugins
+Use 'bpm plugins -h' for 'plugins' help
+md2hlp: Build markdown into hlp file (text mode) [Installed]
+orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)  (Available versions : ['2023.3.0']) *[Installed]*
+asm_bin_tpl: Assembly binary template for Orix  (Available versions : ['2024.4']) [Installed]
+asm_rom_tpl: Assembly rom template for Orix  (Available versions : ['2024.4']) [Installed]
+github_action: Template for github action  (Available versions : ['2024.4']) [Installed]
+generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1']) [Installed]
+
+if the plugins is activated, macro can be loaded like :
+
+.include "SDK_memory.mac"
+
+## Add a 'pre' script before main command is launched
+
+```bash
+~$ mkdir scripts/
+~$ echo "netchk" > scripts/network.sub
+~$ bpm config set project orix_run_pre_script scripts/network.sub
+```
+
