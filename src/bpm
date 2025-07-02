@@ -313,7 +313,7 @@ def init_toml(args):
 
     if not os.path.exists(".gitignore"):
         print("Init .gitignore")
-        content = "bpmtmp/\nbuild\norixlibs\n"
+        content = f"bpmtmp/\nbuild\norixlibs\n{last_directory}.lib\n"
         with open(".gitignore", 'w') as file:
             file.write( content)
 
