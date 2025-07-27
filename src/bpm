@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3"
+VERSION_BPM = "2025.3.1"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -1026,7 +1026,7 @@ def build(args):
         print("Building " + name + ".lib (for llo folder)")
         resultat = subprocess.run(['ca65', '-ttelestrat', f"src/dynamic_lib/{name}.s", "-o", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
         resultat = subprocess.run(['ar65', 'r', f"build/usr/lib/{name}/{version}/llo/{name}.lib", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
-        # f"build/usr/share/{name}/{version}/" + name + ".llo"
+
         ##############################################
         #  Generate dynamic lib (.so)
         ##############################################
@@ -1036,8 +1036,10 @@ def build(args):
                 os.remove(f"src/dynamic_lib/{name}_so.s")
                 with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
                     file.write("; stub\n")
+
             except Exception as e:
                 print(f"Error : {e}")
+
             for fichier in fichiers_s:
                 if not fichier.startswith('_'):
                     with open(f"src/dynamic_lib/{name}_so.s", 'a') as fichier_so:
@@ -1169,6 +1171,8 @@ def usage():
     print("    \033[1;36m-V\033[0m                     Displays version")
     print("    \033[1;36m--disable-check-update\033[0m Disables check for new version")
     print("    \033[1;36m--force-update\033[0m         Force bpm update")
+    print("    \033[1;36m--replace-for-new-project\033[0m         available with --force-update option, it will install plugin for new project")
+
 
     print("")
     print("\033[1;32mCommands:\033[0m")
@@ -2210,7 +2214,7 @@ def main():
         usage()
         sys.exit(1)
 
-    valid_commands = ['build', 'config', 'd', 'doc', 'dynamiclib', 'plugins', 'list', 'add', 'addsrc', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', 'run', 'update','unpublish']
+    valid_commands = ['build', 'config', 'd', 'doc', 'dynamiclib', 'plugins', 'list', 'add', 'addsrc', 'run', 'remove', 'new', 'install', '-V', 'search', '--force-update', '--disable-check-update', 'package', 'publish', '--replace-for-new-project', 'run', 'update','unpublish']
 
     if sys.argv[1] not in valid_commands:
         usage()
@@ -2220,7 +2224,7 @@ def main():
 
     if action == '--force-update':
         sys.argv.remove("--force-update")
-        if len(sys.argv) !=1:
+        if len(sys.argv) != 1:
             action = sys.argv[1]
         check_update_bpm(True)
         update_and_force_new_version_for_next_project = 0
