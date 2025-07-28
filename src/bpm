@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.1"
+VERSION_BPM = "2025.3.2"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -1885,6 +1885,11 @@ def update_package(args):
         print("This project is not initialized (Missing bpm.tml)")
         return 1
 
+    folder = "orixlibs"
+
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
     data = read_local_config_file()
     if "dependencies" in data and len(data["dependencies"]) != 0:
         dependencies = data["dependencies"]
@@ -1905,9 +1910,11 @@ def read_main_config_file():
         print(f"'{toml_file}' not found")
 
 def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_arg):
+
     autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
     full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
     orix_run_pre_script_content = ""
+
     if orix_run_pre_script != "":
         try:
             # Ouverture et lecture du fichier
@@ -1918,6 +1925,7 @@ def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_auto
             exit(1)
         except Exception as e:
             print(f"error : {e}")
+
     if oricutron_replace_autoboot_run == "True":
         if binary_to_launch == "":
             all_names = ""
