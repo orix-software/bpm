@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.2"
+VERSION_BPM = "2025.3.3"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -261,7 +261,8 @@ def remove_dependency_from_toml(dependency_name):
     if "dependencies" in data and dependency_name in data["dependencies"]:
         del data["dependencies"][dependency_name]
         print(f"{dependency_name} uninstalled")
-        shutil.rmtree("orixlibs/" + dependency_name)
+        if os.path.isfile("orixlibs/" + dependency_name):
+            shutil.rmtree("orixlibs/" + dependency_name)
         # Écrire les modifications dans le fichier TOML
         with open(toml_file, 'w') as file:
             toml.dump(data, file)
