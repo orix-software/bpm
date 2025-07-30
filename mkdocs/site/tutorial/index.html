@@ -49,7 +49,17 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">1.4. Tutorial</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#binary-command-c-language">binary command (C language)</a>
+    <li class="toctree-l2"><a class="reference internal" href="#binary-command-c-language">Binary command (C language)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#library-assembly-language-only">Library (Assembly language only)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#publish">Publish</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-a-library-ex-netdb">Add a library (ex : netdb)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#use-orixsdk-macro">Use orixsdk macro</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-a-pre-script-before-main-command-is-launched">Add a 'pre' script before main command is launched</a>
     </li>
     </ul>
                   </li>
@@ -60,7 +70,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" >2.2 General Commands</a>
     <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../commands/bpm/">2.2.1. bpm</a>
+                <li class="toctree-l2"><a class="" href="../commands/bpm.md">2.2.1. bpm</a>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../commands/bpm_plugins/">2.2.2. bpm plugins</a>
                 </li>
@@ -132,7 +142,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="tutorial">Tutorial</h1>
-<h2 id="binary-command-c-language">binary command (C language)</h2>
+<h2 id="binary-command-c-language">Binary command (C language)</h2>
 <pre><code class="language-bash">$ mkdir pong
 $ cd pong
 $ bpm new
@@ -154,6 +164,110 @@ initialized
 <pre><code class="language-bash">~$ bpm run
 </code></pre>
 <p><img alt="alt text" src="../images/helloworld.png" /></p>
+<h2 id="library-assembly-language-only">Library (Assembly language only)</h2>
+<pre><code class="language-bash">~$ mkdir gizmo &amp;&amp; cd gizmo
+~$ bpm new
+This project is :
+1) A binary program
+2) A library
+3) A rom
+answer ?2
+Init .gitignore
+Init bpm.tml
+Init src folder
+Init VERSION file
+Add github action main.yml into project: y/N ?N
+initialized
+~$ tree
+.
+├── bpm.tml
+├── docs
+├── src
+│   └── dynamic_lib
+│       └── gizmo.s
+└── VERSION
+
+~$ bpm build
+Creating build/etc/bpm/gizmo/2025.1
+Generate gizmo.lib
+Building gizmo.llo
+No build done
+
+~$ tree
+.
+├── bpm.tml
+├── bpmtmp
+│   └── gizmo.o
+├── build
+│   ├── etc
+│   │   └── bpm
+│   │       └── gizmo
+│   │           └── 2025.1
+│   │               └── bpm.tml
+│   └── usr
+│       ├── lib
+│       │   └── gizmo
+│       │       └── 2025.1
+│       │           └── llo
+│       │               └── gizmo.lib
+│       └── share
+│           └── gizmo
+│               └── 2025.1
+├── docs
+├── src
+│   └── dynamic_lib
+│       ├── gizmo.s
+│       ├── gizmo_so.o
+│       └── gizmo_so.s
+└── VERSION
+
+</code></pre>
+<p>Add a binary to test a library :</p>
+<p>This commands add "curl" binary name with "tests/curl.c" path and "arg1 arg2" which will be passed into Orix path</p>
+<pre><code class="language-bash">bpm config add project binary curl tests/curl.c &quot;arg1 arg2&quot;
+</code></pre>
+<h2 id="publish">Publish</h2>
+<p>If this command, return an empty line :</p>
+<pre><code class="language-bash">set | grep BPM
+BPM_PUBLISH_KEY=yourKey
+</code></pre>
+<p>Set a key for publishing</p>
+<pre><code class="language-bash">~$ vi ~/.bashrc
+</code></pre>
+<p>add :</p>
+<p>export BPM_PUBLISH_KEY=yourKey</p>
+<pre><code class="language-bash">$ bpm publish
+</code></pre>
+<h2 id="add-a-library-ex-netdb">Add a library (ex : netdb)</h2>
+<pre><code class="language-bash">$ bpm search
+orixsdk 2023.3 -   Orix Software Toolkit
+netdb 2024.4 -  Network database operations
+ksocket 2025.1 -  Only use this package in Kernel source code (socket management part)
+ch395 2024.4 -  ch395 low hardware routine. Use socket lib for socket management under Orix
+kch395 2025.1 -  Only for orix kernel
+inet 2025.1 -  Provide inet_aton
+socket 2025.2 -  Socket management https://orix-software.github.io/socketlib/api/
+curl 2025.1 -  Curl lib for Orix https://orix-software.github.io/curllib/api/
+
+$bpm add netdb@2024.4
+</code></pre>
+<h2 id="use-orixsdk-macro">Use orixsdk macro</h2>
+<p>Verify if orixsdk plugins is installed (installed flag):</p>
+<p>bpm plugins
+Use 'bpm plugins -h' for 'plugins' help
+md2hlp: Build markdown into hlp file (text mode) [Installed]
+orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)  (Available versions : ['2023.3.0']) <em>[Installed]</em>
+asm_bin_tpl: Assembly binary template for Orix  (Available versions : ['2024.4']) [Installed]
+asm_rom_tpl: Assembly rom template for Orix  (Available versions : ['2024.4']) [Installed]
+github_action: Template for github action  (Available versions : ['2024.4']) [Installed]
+generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1']) [Installed]</p>
+<p>if the plugins is activated, macro can be loaded like :</p>
+<p>.include "SDK_memory.mac"</p>
+<h2 id="add-a-pre-script-before-main-command-is-launched">Add a 'pre' script before main command is launched</h2>
+<pre><code class="language-bash">~$ mkdir scripts/
+~$ echo &quot;netchk&quot; &gt; scripts/network.sub
+~$ bpm config set project orix_run_pre_script scripts/network.sub
+</code></pre>
               
             </div>
           </div><footer>

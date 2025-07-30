@@ -56,7 +56,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" >2.2 General Commands</a>
     <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
+                <li class="toctree-l2"><a class="" href="../bpm.md">2.2.1. bpm</a>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.2.2. bpm plugins</a>
                 </li>
@@ -132,8 +132,10 @@
               
                 <h1 id="addsrc">addsrc</h1>
 <p>addsrc command can add a folder into build process.</p>
-<p>In that case, bpm will build src/* and folder in addsrc section.</p>
-<p>bpm addsrc src/plugins</p>
+<p>In that case, bpm will build src/* and folder in addsrc section. It's not used to have a test program. </p>
+<p>It's a folder to add and which will be link with main project.</p>
+<pre><code class="language-bash">bpm addsrc src/plugins
+</code></pre>
               
             </div>
           </div><footer>

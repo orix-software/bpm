@@ -27,7 +27,6 @@ bpm plugins install asm_bin_tpl
 
 bpm plugins
 
-
 Create an empty folder with the name of the program ex : "hello"
 
 In this folder : 

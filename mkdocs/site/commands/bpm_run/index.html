@@ -56,7 +56,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" >2.2 General Commands</a>
     <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
+                <li class="toctree-l2"><a class="" href="../bpm.md">2.2.1. bpm</a>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.2.2. bpm plugins</a>
                 </li>
@@ -156,9 +156,11 @@
 <p>Orix kernel must be greater than 2023.3</p>
 <p>Specify command to launch : bpm run --bin hello</p>
 <p>To specify args :</p>
-<p>bpm run --bin "hello -y"</p>
+<pre><code class="language-bash">bpm run --bin &quot;hello -y&quot;
+</code></pre>
 <h2 id="specify-extra-args">Specify extra args</h2>
-<p>bpm run -- arg1 arg2</p>
+<pre><code class="language-bash">bpm run -- arg1 arg2
+</code></pre>
 <h2 id="launch-a-command-before-the-project-program-only-for-bin-program">Launch a command before the project program (only for bin program)</h2>
 <pre><code class="language-bash">$ mkdir scripts/
 $ echo &quot;netchk&quot; &gt; scripts/network.sub
