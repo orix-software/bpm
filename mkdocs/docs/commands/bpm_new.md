@@ -19,4 +19,3 @@ Init VERSION file
 Add github action main.yml into project: y/N ?N
 initialized
 ```
-

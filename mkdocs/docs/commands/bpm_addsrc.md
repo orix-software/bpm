@@ -9,4 +9,3 @@ It's a folder to add and which will be link with main project.
 ```bash
 bpm addsrc src/plugins
 ```
-

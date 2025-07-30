@@ -54,4 +54,3 @@ In that case, "bpm run --bin curl" will launch "curl" compiled from tests/curl.c
 ~$ echo "netchk" > scripts/network.sub
 ~$ bpm config set project orix_run_pre_script scripts/network.sub
 ```
-

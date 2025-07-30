@@ -16,6 +16,10 @@ echo %BPM_PUBLISH_KEY%
 
 Publish package into official repo (depending of the version).
 
+```bash
+bpm publish --official
+```
+
 ## bpm publish --personnal
 
 Publish into personnal repo

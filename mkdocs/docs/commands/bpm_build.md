@@ -8,6 +8,10 @@ bpm build [options]
 
 Compile local packages and all of their dependencies.
 
+```bash
+bpm build
+```
+
 ## OPTIONS
 
 ## EXIT STATUS

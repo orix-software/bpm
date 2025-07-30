@@ -34,13 +34,15 @@ Specify command to launch : bpm run --bin hello
 
 To specify args :
 
+```bash
 bpm run --bin "hello -y"
+```
 
 ## Specify extra args
 
+```bash
 bpm run -- arg1 arg2
-
-
+```
 
 ## Launch a command before the project program (only for bin program)
 
