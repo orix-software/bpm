@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.4"
+VERSION_BPM = "2025.3.5"
 
 build_folder = "build"
 
@@ -74,9 +74,10 @@ toml_file = "bpm.tml"
 user_folder = '.bpm/'
 
 
-def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name) -> int:
-
-    generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + '2048.o')
+def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build) -> int:
+    generate = False
+    if force_build == False:
+        generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + '2048.o')
     if generate == False:
         return
     arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
@@ -591,7 +592,7 @@ def build_package(source_dir, output_filename, name, version):
 
     if os.path.exists(f"src/include/"):
         source_dir = "src/include/"
-        destination_dir = "{build_folder}/usr/include/asm"
+        destination_dir = f"{build_folder}/usr/include/asm"
 
         # Récupère tous les fichiers .inc dans le répertoire source
         for file_path in glob.glob(os.path.join(source_dir, "*.inc")):
@@ -604,7 +605,7 @@ def build_package(source_dir, output_filename, name, version):
 
     if os.path.exists(f"src/include/"):
         source_dir = "src/include/"
-        destination_dir = "{build_folder}/usr/include/"
+        destination_dir = f"{build_folder}/usr/include/"
 
         for root, _, files in os.walk(source_dir):
             for file in files:
@@ -947,7 +948,7 @@ def build(args):
         if os.path.exists(file_to_compile_c):
 
             try:
-                build_without_cl65_c_files(arg_include + arg_include_asm + arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name)
+                build_without_cl65_c_files(arg_include + arg_include_asm + arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, False)
                 # arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 # arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 # resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
@@ -987,6 +988,7 @@ def build(args):
     if codetype == "lib":
         print(f"Generate {name}.lib")
         rebuild_so = False
+        generate_bin_files_section = False # If we modify lib, we need to build binary files from bin section in bpm.tml
 
         if 'srcfolders' in data:
             # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
@@ -1039,7 +1041,7 @@ def build(args):
             if generate == True or generate_all == True:
                 print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
-
+                generate_bin_files_section = True
                 # if fichier.startswith('_'):
                 #     # Add C proto into "llo"
                 #     print("[Dynamic-lib] Adding " + bpm_tmp_folder + nom_sans_extension + ".o to llo/" + name + ".lib")
@@ -1173,10 +1175,10 @@ def build(args):
                 binname = bin_entry["name"]
                 key = f"path_{binname}"
                 file_to_compile_c = bin_entry[key]
-                print(file_to_compile_c)
+                #print(file_to_compile_c)
                 if os.path.exists(file_to_compile_c):
                     try:
-                        build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name)
+                        build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, generate_bin_files_section)
                         # Perform reloc_bin
                         resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + binname, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                         shutil.copy(bpm_tmp_folder + binname, f"{build_folder}/bin/" + bin_entry["name"])
