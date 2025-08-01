@@ -16,7 +16,9 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.3"
+VERSION_BPM = "2025.3.4"
+
+build_folder = "build"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -72,8 +74,13 @@ toml_file = "bpm.tml"
 user_folder = '.bpm/'
 
 
-def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name):
+def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name) -> int:
+
+    generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + '2048.o')
+    if generate == False:
+        return
     arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
+
     try:
         resultat = subprocess.run(arg_cc65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
@@ -86,8 +93,13 @@ def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_
     resultat = subprocess.run(arg_ca65 + arg_include , check=True, capture_output=False, text=True)
     arg_ca65 = ['ca65', "--include-dir", "src/include", '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
     resultat = subprocess.run(arg_ca65 + arg_include , check=True, capture_output=False, text=True)
-    arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2048.o', "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  name + ".lib", "telestrat.lib"]
-    resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
+    try:
+        arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2048.o', "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  name + ".lib", "telestrat.lib"]
+        resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+        exit(1)
+
     arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2304.o', "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304', name + ".lib", "telestrat.lib"]
     resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
 
@@ -253,9 +265,9 @@ def remove_dependency_from_toml(dependency_name):
     try:
         data = read_local_config_file()
     except FileNotFoundError:
-        print(f"'{bpm.tml}' not found")
+        print("'bpm.tml' not found")
     except toml.TomlDecodeError:
-        print(f"Impossible to read '{bpm.tml}'.")
+        print("Impossible to read 'bpm.tml'.")
 
     # Vérifier si la section "dependency" existe
     if "dependencies" in data and dependency_name in data["dependencies"]:
@@ -314,7 +326,7 @@ def init_toml(args):
 
     if not os.path.exists(".gitignore"):
         print("Init .gitignore")
-        content = f"bpmtmp/\nbuild\norixlibs\n{last_directory}.lib\n"
+        content = f"bpmtmp/\n{build_folder}\norixlibs\n{last_directory}.lib\n"
         with open(".gitignore", 'w') as file:
             file.write( content)
 
@@ -559,27 +571,27 @@ def build_package(source_dir, output_filename, name, version):
         print("This project is not initialized (Missing bpm.tml)")
         return 1
 
-    build_bpm_etc_path = f"build/etc/bpm/{name}/{version}"
+    build_bpm_etc_path = f"{build_folder}/etc/bpm/{name}/{version}"
 
     if not os.path.exists(build_bpm_etc_path):
         # Créer le répertoire
         os.makedirs(build_bpm_etc_path, mode=0o755, exist_ok=True)
 
-    if not os.path.exists(f"build/usr/share/{name}/{version}"):
+    if not os.path.exists(f"{build_folder}/usr/share/{name}/{version}"):
         # Créer le répertoire
-        os.makedirs(f"build/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
+        os.makedirs(f"{build_folder}/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
 
     if not os.path.exists(f"src/include"):
         # Créer le répertoire
-        os.makedirs(f"build/usr/include", mode=0o755, exist_ok=True)
+        os.makedirs(f"{build_folder}/usr/include", mode=0o755, exist_ok=True)
 
-    if not os.path.exists(f"build/usr/include/asm"):
+    if not os.path.exists(f"{build_folder}/usr/include/asm"):
         # Créer le répertoire
-        os.makedirs(f"build/usr/include/asm", mode=0o755, exist_ok=True)
+        os.makedirs(f"{build_folder}/usr/include/asm", mode=0o755, exist_ok=True)
 
     if os.path.exists(f"src/include/"):
         source_dir = "src/include/"
-        destination_dir = "build/usr/include/asm"
+        destination_dir = "{build_folder}/usr/include/asm"
 
         # Récupère tous les fichiers .inc dans le répertoire source
         for file_path in glob.glob(os.path.join(source_dir, "*.inc")):
@@ -592,7 +604,7 @@ def build_package(source_dir, output_filename, name, version):
 
     if os.path.exists(f"src/include/"):
         source_dir = "src/include/"
-        destination_dir = "build/usr/include/"
+        destination_dir = "{build_folder}/usr/include/"
 
         for root, _, files in os.walk(source_dir):
             for file in files:
@@ -613,14 +625,14 @@ def build_package(source_dir, output_filename, name, version):
             # shutil.copy(file_path, destination_dir)
 
     if os.path.exists("README.md"):
-        shutil.copy("README.md", f"build/usr/share/{name}/{version}/README.md")
+        shutil.copy("README.md", f"{build_folder}/usr/share/{name}/{version}/README.md")
 
-    shutil.copy("bpm.tml", f"build/etc/bpm/{name}/{version}/bpm.tpl")
+    shutil.copy("bpm.tml", f"{build_folder}/etc/bpm/{name}/{version}/bpm.tpl")
     # with tarfile.open(output_filename, "w:gz") as tar:
     #     tar.add(source_dir, arcname=os.path.basename(source_dir))
     with tarfile.open(output_filename, "w:gz") as tar:
-        for item in os.listdir("build"):
-            item_path = os.path.join("build", item)
+        for item in os.listdir(f"{build_folder}"):
+            item_path = os.path.join(f"{build_folder}", item)
             # Ajoute chaque fichier ou sous-répertoire sans inclure le répertoire racine `build`
             tar.add(item_path, arcname=item)
 
@@ -694,13 +706,25 @@ def generate_lib_for_bin(name: str, arg_include, arg_include_asm):
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
 
 
-def check_src_with_target_file(filesrc: str, filebuild:str) -> bool:
+def check_src_with_target_file(filesrc: str, object_file:str) -> bool:
     generate = False
 
-    if os.path.exists(filebuild):
-        time_filebuild = int(os.path.getmtime(filebuild))
+    if os.path.exists(object_file):
+
+
+        time_filebuild = int(os.path.getmtime(object_file))
         time_filesrc = int(os.path.getmtime(filesrc))
-        #print(f"compare {filesrc} {filebuild} {time_filesrc} {time_filebuild}")
+        # time_filesrc_date = datetime.fromtimestamp(time_filesrc)
+
+        # # Affichage de la date et de l'heure
+        # time_filesrc_date = time_filesrc_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        # time_filebuild_date = datetime.fromtimestamp(time_filebuild)
+
+        # # Affichage de la date et de l'heure
+        # time_filebuild_date = time_filebuild_date.strftime("%Y-%m-%d %H:%M:%S")
+
+        #print(f"compare {filesrc} {object_file} {time_filesrc_date} {time_filebuild_date}")
         if  time_filesrc > time_filebuild:
             generate = True
     else:
@@ -760,6 +784,7 @@ def build(args):
                 generate_all = True
                 break
             val = check_src_with_target_file(file_path, f"bpmtmp/{file_path}")
+
             if val == True:
                 dst_dir = os.path.dirname(f"bpmtmp/{file_path}")
                 os.makedirs(dst_dir, exist_ok=True)
@@ -771,8 +796,8 @@ def build(args):
         # Créer le répertoire
         os.makedirs(bpm_tmp_folder, mode=0o755, exist_ok=True)
 
-    if not os.path.exists("build"):
-        os.makedirs("build", mode=0o755, exist_ok=True)
+    if not os.path.exists(f"{build_folder}"):
+        os.makedirs(f"{build_folder}", mode=0o755, exist_ok=True)
 
     data = read_local_config_file()
 
@@ -815,8 +840,8 @@ def build(args):
         print("Missing package section in bpm.tml")
         exit(1)
 
-    if not os.path.exists(f"build/usr/share/{name}/{version}"):
-        os.makedirs(f"build/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
+    if not os.path.exists(f"{build_folder}/usr/share/{name}/{version}"):
+        os.makedirs(f"{build_folder}/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
 
     arg_include = []
     arg_ld_libs = []
@@ -850,7 +875,7 @@ def build(args):
                     arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
 
 
-    path_etc_bpm = "build/etc/bpm"
+    path_etc_bpm = "{build_folder}/etc/bpm"
 
     if not os.path.exists(f"{path_etc_bpm}/{version}"):
         #build/etc/bpm/file/2024.4/
@@ -871,7 +896,7 @@ def build(args):
         arg_include_asm.append(f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/")
 
     if codetype == "rom":
-        rom_path = f"build/usr/share/{name}/{version}/"
+        rom_path = f"{build_folder}/usr/share/{name}/{version}/"
         if not os.path.exists(rom_path):
             os.makedirs(rom_path, mode=0o755, exist_ok=True)
         if templatecode == "asm_rom_tpl":
@@ -908,8 +933,8 @@ def build(args):
 
     if codetype == "bin":
 
-        if not os.path.exists("build/bin/"):
-            os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+        if not os.path.exists(f"{build_folder}/bin/"):
+            os.makedirs(f"{build_folder}/bin/", mode=0o755, exist_ok=True)
 
         if not os.path.exists(reloc_bin_path):
             print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
@@ -929,8 +954,8 @@ def build(args):
                 # resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
                 nom_sans_extension = convert_binary_name_to_seven_chars(nom_sans_extension)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-                shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
-                print("Built : " + "build/bin/" + nom_sans_extension)
+                shutil.copy(bpm_tmp_folder + nom_sans_extension, f"{build_folder}/bin/" + nom_sans_extension)
+                print("Built : " + f"{build_folder}/bin/" + nom_sans_extension)
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                 return 1
@@ -947,8 +972,8 @@ def build(args):
                 resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
                 resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-                shutil.copy(bpm_tmp_folder + nom_sans_extension, "build/bin/" + nom_sans_extension)
-                print("Built : " + "build/bin/" + nom_sans_extension)
+                shutil.copy(bpm_tmp_folder + nom_sans_extension, f"{build_folder}/bin/" + nom_sans_extension)
+                print("Built : " + f"{build_folder}/bin/" + nom_sans_extension)
                 return 0
             except subprocess.CalledProcessError as e:
                 print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
@@ -972,25 +997,25 @@ def build(args):
         if not os.path.exists(f"{name}.lib"):
             generate_all = True
 
-        if not os.path.exists(f"build/usr/lib/{name}/{version}/llo/"):
-            os.makedirs(f"build/usr/lib/{name}/{version}/llo/", mode=0o755, exist_ok=True)
+        # if not os.path.exists(f"{build_folder}/usr/lib/{name}/{version}/llo/"):
+        #     os.makedirs(f"{build_folder}/usr/lib/{name}/{version}/llo/", mode=0o755, exist_ok=True)
 
-        # Do we manage dynamic lib ?
-        if not os.path.exists(f"build/usr/share/{name}/{version}/" + dynamic_lib_name_module):
-            generate_all = True
+        # # Do we manage dynamic lib ?
+        # if not os.path.exists(f"{build_folder}/usr/share/{name}/{version}/" + dynamic_lib_name_module):
+        #     generate_all = True
 
-        if not os.path.exists(f"build/usr/lib/{name}/{version}/llo/" + name + ".lib"):
-            generate_all = True
+        # if not os.path.exists(f"{build_folder}/usr/lib/{name}/{version}/llo/" + name + ".lib"):
+        #     generate_all = True
 
-        if not os.path.exists(f"bpmtmp/{name}.a"):
-            generate_all = True
+        # if not os.path.exists(f"bpmtmp/{name}.a"):
+        #     generate_all = True
 
-        if not os.path.exists(f"src/dynamic_lib/{name}_so.s"):
-            generate_all = True
-            rebuild_so = True
-            # Create an empty file
-            with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
-                file.write("; stub\n")
+        # if not os.path.exists(f"src/dynamic_lib/{name}_so.s"):
+        #     generate_all = True
+        #     rebuild_so = True
+        #     # Create an empty file
+        #     with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
+        #         file.write("; stub\n")
 
         for fichier in fichiers_s:
             nom_sans_extension = os.path.splitext(fichier)[0]
@@ -1000,7 +1025,6 @@ def build(args):
                 fichier_dest_o = bpm_tmp_folder + nom_sans_extension + ".o"
 
                 generate = check_src_with_target_file(fichier_source, fichier_dest_o)
-
                 if generate == True or generate_all == True:
                     print("Building " + repertoire + fichier)
                     bin_ca65 = ['ca65']
@@ -1016,113 +1040,113 @@ def build(args):
                 print("Adding " + bpm_tmp_folder + nom_sans_extension + ".o to " + name + ".lib")
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
 
-                if fichier.startswith('_'):
-                    # Add C proto into "llo"
-                    print("[Dynamic-lib] Adding " + bpm_tmp_folder + nom_sans_extension + ".o to llo/" + name + ".lib")
-                    resultat = subprocess.run(['ar65', 'r', f"build/usr/lib/{name}/{version}/llo/" + name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
+                # if fichier.startswith('_'):
+                #     # Add C proto into "llo"
+                #     print("[Dynamic-lib] Adding " + bpm_tmp_folder + nom_sans_extension + ".o to llo/" + name + ".lib")
+                #     resultat = subprocess.run(['ar65', 'r', f"{build_folder}/usr/lib/{name}/{version}/llo/" + name + ".lib", fichier_dest_o], check=True, capture_output=False, text=True)
 
         ##############################################
         #  Generate lib link object (.llo)
         ##############################################
-        print("Building " + name + ".lib (for llo folder)")
-        resultat = subprocess.run(['ca65', '-ttelestrat', f"src/dynamic_lib/{name}.s", "-o", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
-        resultat = subprocess.run(['ar65', 'r', f"build/usr/lib/{name}/{version}/llo/{name}.lib", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
+        # print("Building " + name + ".lib (for llo folder)")
+        # resultat = subprocess.run(['ca65', '-ttelestrat', f"src/dynamic_lib/{name}.s", "-o", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
+        # resultat = subprocess.run(['ar65', 'r', f"{build_folder}/usr/lib/{name}/{version}/llo/{name}.lib", f"bpmtmp/{name}.o"], check=True, capture_output=False, text=True)
 
         ##############################################
         #  Generate dynamic lib (.so)
         ##############################################
-        if rebuild_so == True:
-            try:
-                # Supprimer le fichier
-                os.remove(f"src/dynamic_lib/{name}_so.s")
-                with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
-                    file.write("; stub\n")
+        # if rebuild_so == True:
+        #     try:
+        #         # Supprimer le fichier
+        #         os.remove(f"src/dynamic_lib/{name}_so.s")
+        #         with open(f"src/dynamic_lib/{name}_so.s", 'w') as file:
+        #             file.write("; stub\n")
 
-            except Exception as e:
-                print(f"Error : {e}")
+        #     except Exception as e:
+        #         print(f"Error : {e}")
 
-            for fichier in fichiers_s:
-                if not fichier.startswith('_'):
-                    with open(f"src/dynamic_lib/{name}_so.s", 'a') as fichier_so:
-                        parties = fichier.rsplit('.', 1)
-                        proc = parties[0]
-                        fichier_so.write(f".import {proc}\n jmp {proc}\n")
+        #     for fichier in fichiers_s:
+        #         if not fichier.startswith('_'):
+        #             with open(f"src/dynamic_lib/{name}_so.s", 'a') as fichier_so:
+        #                 parties = fichier.rsplit('.', 1)
+        #                 proc = parties[0]
+        #                 fichier_so.write(f".import {proc}\n jmp {proc}\n")
 
-            resultat = subprocess.run(['cl65', '-tnone', f"src/dynamic_lib/{name}_so.s", name + ".lib" , "-o", f"bpmtmp/" + name + "_2048.lso", '--start-addr',  '2048'], check=True, capture_output=False, text=True)
-            resultat = subprocess.run(['cl65', '-tnone', f"src/dynamic_lib/{name}_so.s", name + ".lib" , "-o", f"bpmtmp/" + name + "_2304.lso", '--start-addr',  '2304'], check=True, capture_output=False, text=True)
+        #     resultat = subprocess.run(['cl65', '-tnone', f"src/dynamic_lib/{name}_so.s", name + ".lib" , "-o", f"bpmtmp/" + name + "_2048.lso", '--start-addr',  '2048'], check=True, capture_output=False, text=True)
+        #     resultat = subprocess.run(['cl65', '-tnone', f"src/dynamic_lib/{name}_so.s", name + ".lib" , "-o", f"bpmtmp/" + name + "_2304.lso", '--start-addr',  '2304'], check=True, capture_output=False, text=True)
 
-            # VErsion header 128 equal to so lib
-            header = bytearray([0x01, 0x00, ord('o'), ord('r'), ord('i'), # Signature
-                            128 + 0x00,                # header version : Version header b7=1 is  so (dynamic lib)
-                            0x00,                      # CPU
-                            0x00, 0x00,                # SIZE_BITFIELD
-                            0x00,                      # Reserved
-                            0x00,                      # Reserved
-                            0x00,                      # Reserved
-                            0x00, 0x00,                # OFFSET_BITFIELD
-                            0x00, 0x00,                # start_adress
-                            0x00, 0x00,                # endofmemory
-                            0x00, 0x00,                # start_adress
-                            ])
+        #     # VErsion header 128 equal to so lib
+        #     header = bytearray([0x01, 0x00, ord('o'), ord('r'), ord('i'), # Signature
+        #                     128 + 0x00,                # header version : Version header b7=1 is  so (dynamic lib)
+        #                     0x00,                      # CPU
+        #                     0x00, 0x00,                # SIZE_BITFIELD
+        #                     0x00,                      # Reserved
+        #                     0x00,                      # Reserved
+        #                     0x00,                      # Reserved
+        #                     0x00, 0x00,                # OFFSET_BITFIELD
+        #                     0x00, 0x00,                # start_adress
+        #                     0x00, 0x00,                # endofmemory
+        #                     0x00, 0x00,                # start_adress
+        #                     ])
 
             # Add header for first file
             # Compute startaddr and loading address
-            byte_low = 2048 & 0xFF
-            byte_high = (2048 >> 8) & 0xFF
+            # byte_low = 2048 & 0xFF
+            # byte_high = (2048 >> 8) & 0xFF
 
-            header[14] = byte_low
-            header[15] = byte_high
+            # header[14] = byte_low
+            # header[15] = byte_high
 
-            header[18] = byte_low
-            header[19] = byte_high
+            # header[18] = byte_low
+            # header[19] = byte_high
 
-            # Lire le contenu existant du fichier
-            with open(f"bpmtmp/" + name + "_2048.lso", 'rb') as fichier:
-                contenu_existant = fichier.read()
-            val = len(contenu_existant)
-            val = val + 2048 - 1
-            # Get size
-            size_byte_low = val & 0xFF
-            size_byte_high = (val >> 8) & 0xFF
-            # Store size
-            header[16] = size_byte_low
-            header[17] = size_byte_high
+            # # Lire le contenu existant du fichier
+            # with open(f"bpmtmp/" + name + "_2048.lso", 'rb') as fichier:
+            #     contenu_existant = fichier.read()
+            # val = len(contenu_existant)
+            # val = val + 2048 - 1
+            # # Get size
+            # size_byte_low = val & 0xFF
+            # size_byte_high = (val >> 8) & 0xFF
+            # # Store size
+            # header[16] = size_byte_low
+            # header[17] = size_byte_high
 
-            # Écrire l'en-tête suivi du contenu existant dans le fichier
-            with open(f"bpmtmp/" + name + "_2048.so", 'wb') as fichier:
-                fichier.write(header + contenu_existant)
+            # # Écrire l'en-tête suivi du contenu existant dans le fichier
+            # with open(f"bpmtmp/" + name + "_2048.so", 'wb') as fichier:
+            #     fichier.write(header + contenu_existant)
 
-            # Manage second file
+            # # Manage second file
 
-            byte_low = 2304 & 0xFF
-            byte_high = (2304 >> 8) & 0xFF
+            # byte_low = 2304 & 0xFF
+            # byte_high = (2304 >> 8) & 0xFF
 
-            header[14] = byte_low
-            header[15] = byte_high
+            # header[14] = byte_low
+            # header[15] = byte_high
 
-            header[18] = byte_low
-            header[19] = byte_high
+            # header[18] = byte_low
+            # header[19] = byte_high
 
-            # Lire le contenu existant du fichier
-            with open(f"bpmtmp/" + name + "_2304.lso", 'rb') as fichier:
-                contenu_existant = fichier.read()
-            val = len(contenu_existant)
-            val = val + 2304 - 1
-            size_byte_low = val & 0xFF
-            size_byte_high = (val >> 8) & 0xFF
+            # # Lire le contenu existant du fichier
+            # with open(f"bpmtmp/" + name + "_2304.lso", 'rb') as fichier:
+            #     contenu_existant = fichier.read()
+            # val = len(contenu_existant)
+            # val = val + 2304 - 1
+            # size_byte_low = val & 0xFF
+            # size_byte_high = (val >> 8) & 0xFF
 
-            header[16] = size_byte_low
-            header[17] = size_byte_high
+            # header[16] = size_byte_low
+            # header[17] = size_byte_high
 
-            # Écrire l'en-tête suivi du contenu existant dans le fichier
-            with open(f"bpmtmp/" + name + "_2304.so", 'wb') as fichier:
-                fichier.write(header + contenu_existant)
+            # # Écrire l'en-tête suivi du contenu existant dans le fichier
+            # with open(f"bpmtmp/" + name + "_2304.so", 'wb') as fichier:
+            #     fichier.write(header + contenu_existant)
 
-            # Generate final .so
-            if dynamic_lib_name_module != "":
-                resultat = subprocess.run(["python3" , reloc_bin_path, "--verbose",  "-o", f"build/usr/share/{name}/{version}/" + dynamic_lib_name_module, '-2' ,f"bpmtmp/" + name + "_2048.so", f"bpmtmp/" + name + "_2304.so"], check=True, capture_output=False, text=True)
+            # # Generate final .so
+            # if dynamic_lib_name_module != "":
+            #     resultat = subprocess.run(["python3" , reloc_bin_path, "--verbose",  "-o", f"{build_folder}/usr/share/{name}/{version}/" + dynamic_lib_name_module, '-2' ,f"bpmtmp/" + name + "_2048.so", f"bpmtmp/" + name + "_2304.so"], check=True, capture_output=False, text=True)
 
-        path_file_lib = f"build/usr/share/{name}/{version}"
+        path_file_lib = f"{build_folder}/usr/share/{name}/{version}"
         if not os.path.exists(path_file_lib):
             os.makedirs(path_file_lib, mode=0o755, exist_ok=True)
 
@@ -1140,8 +1164,8 @@ def build(args):
 
     # Afficher tous les noms dans [[bin]]
     if "bin" in data:
-        if not os.path.exists("build/bin/"):
-            os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+        if not os.path.exists(f"{build_folder}/bin/"):
+            os.makedirs(f"{build_folder}/bin/", mode=0o755, exist_ok=True)
 
         for bin_entry in data["bin"]:
             if "name" in bin_entry:
@@ -1155,8 +1179,8 @@ def build(args):
                         build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name)
                         # Perform reloc_bin
                         resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + binname, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-                        shutil.copy(bpm_tmp_folder + binname, "build/bin/" + bin_entry["name"])
-                        print("Built : " + "build/bin/" + bin_entry["name"])
+                        shutil.copy(bpm_tmp_folder + binname, f"{build_folder}/bin/" + bin_entry["name"])
+                        print("Built : " + f"{build_folder}/bin/" + bin_entry["name"])
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                     return 0
@@ -1837,8 +1861,8 @@ def build_doc(toml_file):
             directory_path = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.cfg"
             shutil.copy(directory_path, "docs/")
 
-        if not os.path.exists("build/usr/share/man/"):
-            os.makedirs("build/usr/share/man/", exist_ok=True)
+        if not os.path.exists(f"{build_folder}/usr/share/man/"):
+            os.makedirs(f"{build_folder}/usr/share/man/", exist_ok=True)
 
         home_directory = os.path.expanduser('~')
         md2hlp_cmd = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.py3"
@@ -1848,10 +1872,10 @@ def build_doc(toml_file):
             generate = False
             if fichier.endswith(".md"):
                 my_file = fichier.replace('.md', ".hlp")
-                generate = check_src_with_target_file(f"docs/{fichier}", f"build/usr/share/man/{my_file}")
+                generate = check_src_with_target_file(f"docs/{fichier}", f"{build_folder}/usr/share/man/{my_file}")
                 if generate == True and os.path.getsize(f"docs/{fichier}") != 0:
-                    print(f"[md2hlp] Generating {fichier} to build/usr/share/man/{my_file}")
-                    resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"build/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
+                    print(f"[md2hlp] Generating {fichier} to {build_folder}/usr/share/man/{my_file}")
+                    resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"{build_folder}/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
 
     if generatedoc_generate:
         # if not os.path.exists("src/md2hlp.cfg"):
@@ -2048,10 +2072,10 @@ def run_bin(args):
 
 
     #shutil.copy("build/bin/" + name, path_oricutron + "/sdcard/BIN/" + name.upper())
-    if os.path.exists("build/bin"):
-        build_bin = "build/bin/"
+    if os.path.exists(f"{build_folder}/bin"):
+        build_bin = f"{build_folder}/bin/"
         dest_oricutron_bin = path_oricutron + "/sdcard/BIN/"
-        # Copier tout le contenu de build/bin
+        # Copier tout le contenu de {build_folder}/bin
         for item in os.listdir(build_bin):
             source_path = os.path.join(build_bin, item)
             destination_path = os.path.join(dest_oricutron_bin, item.lower())
@@ -2068,7 +2092,7 @@ def run_bin(args):
         if not os.path.exists(path_oricutron + '/' + path_to_oricutron_rom):
             os.makedirs(path_oricutron + '/' + path_to_oricutron_rom, exist_ok=True)
 
-        shutil.copy(f"build/usr/share/{name}/{version}/{name}.rom", path_oricutron + '/' + path_to_oricutron_rom)
+        shutil.copy(f"{build_folder}/usr/share/{name}/{version}/{name}.rom", path_oricutron + '/' + path_to_oricutron_rom)
 
 
         path_twilighte_board_cfg_plugin = path_oricutron + "/plugins/twilighte_board/twilighte.cfg"
@@ -2167,8 +2191,8 @@ def run_bin(args):
     # Afficher tous les noms dans [[bin]]
         print("################## bla")
         if "bin" in data:
-            if not os.path.exists("build/bin/"):
-                os.makedirs("build/bin/", mode=0o755, exist_ok=True)
+            if not os.path.exists(f"{build_folder}/bin/"):
+                os.makedirs(f"{build_folder}/bin/", mode=0o755, exist_ok=True)
             names = {}
             extra_args = {}
             for bin_entry in data["bin"]:
