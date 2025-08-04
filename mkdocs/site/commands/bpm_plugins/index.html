@@ -62,7 +62,11 @@
     <ul class="current">
     <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins">bpm plugins</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#bpm-install">bpm install</a>
+    <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins-install">bpm plugins install</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins-update">bpm plugins update</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins-h">bpm plugins -h</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#displays-installed-plugins">Displays installed plugins</a>
     </li>
@@ -140,8 +144,15 @@
 <p>A plugin is a tool in order to manage some part of the development. Each day, bpm will try to update plugins, and will ask if plugin must be installed</p>
 <h2 id="bpm-plugins">bpm plugins</h2>
 <p>Usage : bpm plugins</p>
-<h2 id="bpm-install">bpm install</h2>
-<p>Usage : bpm plugins install [plugin_name]</p>
+<h2 id="bpm-plugins-install">bpm plugins install</h2>
+<p>Usage : bpm plugins install [plugin_name] [--replace-for-new-project]</p>
+<p>--replace-for-new-project option will set this plugin version for next project but it does not update it for current project (it needs to be changed in bpm.tml of the project)</p>
+<h2 id="bpm-plugins-update">bpm plugins update</h2>
+<p>Update all plugins :</p>
+<pre><code class="language-bash">bpm plugins update
+</code></pre>
+<h2 id="bpm-plugins-h">bpm plugins -h</h2>
+<p>Usage : bpm plugins install -h</p>
 <h2 id="displays-installed-plugins">Displays installed plugins</h2>
 <pre><code class="language-bash">~$ bpm plugins
 Use 'bpm plugins -h' for 'plugins' help

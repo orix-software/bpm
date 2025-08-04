@@ -6,9 +6,24 @@ A plugin is a tool in order to manage some part of the development. Each day, bp
 
 Usage : bpm plugins
 
-## bpm install
+## bpm plugins install
 
-Usage : bpm plugins install [plugin_name]
+Usage : bpm plugins install [plugin_name] [--replace-for-new-project]
+
+--replace-for-new-project option will set this plugin version for next project but it does not update it for current project (it needs to be changed in bpm.tml of the project)
+
+## bpm plugins update
+
+Update all plugins :
+
+```bash
+bpm plugins update
+```
+
+## bpm plugins -h
+
+Usage : bpm plugins install -h
+
 
 ## Displays installed plugins
 

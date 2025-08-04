@@ -16,9 +16,10 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.5"
+VERSION_BPM = "2025.3.6"
 
 build_folder = "build"
+docs_folder = "docs"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
@@ -374,8 +375,8 @@ def init_toml(args):
         print("Init src folder")
         os.makedirs("src", mode=0o755, exist_ok=True)
 
-    if not os.path.exists("docs"):
-        os.makedirs("docs", mode=0o755, exist_ok=True)
+    if not os.path.exists(f"{docs_folder}"):
+        os.makedirs(f"{docs_folder}", mode=0o755, exist_ok=True)
 
     if codetype == 'bin':
         if not os.path.exists("src/" + last_directory + ".c"):
@@ -1369,6 +1370,17 @@ def plugins(args):
                     print("Unknown plugin")
             else:
                 print("Missing parameter")
+        elif sys.argv[2] == "update":
+            if len(sys.argv) == 5:
+                if sys.argv[4] == "--replace-for-new-project":
+                    replace_for_new_project = 1
+
+            install_tpl_from_github('orixsdk', replace_for_new_project)
+            install_tpl_from_github('asm_bin_tpl', replace_for_new_project)
+            install_md2hlp()
+            install_tpl_from_github('asm_rom_tpl', replace_for_new_project)
+            install_tpl_from_github('github_action', replace_for_new_project)
+            install_tpl_from_github('generatedoc', replace_for_new_project)
         else:
             print("Unknown parameter")
 
@@ -1841,6 +1853,9 @@ def build_doc(toml_file):
             else:
                 md2hlp_generate = True
 
+        if "docsfolder" in package:
+            docs_folder = package["docsfolder"]
+
         if "default_generatedoc_version" in package:
             default_generatedoc_version = package["default_generatedoc_version"]
         else:
@@ -1861,7 +1876,7 @@ def build_doc(toml_file):
         if not os.path.exists("src/md2hlp.cfg"):
             home_directory = os.path.expanduser('~')
             directory_path = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.cfg"
-            shutil.copy(directory_path, "docs/")
+            shutil.copy(directory_path, f"{docs_folder}/")
 
         if not os.path.exists(f"{build_folder}/usr/share/man/"):
             os.makedirs(f"{build_folder}/usr/share/man/", exist_ok=True)
@@ -1869,15 +1884,15 @@ def build_doc(toml_file):
         home_directory = os.path.expanduser('~')
         md2hlp_cmd = home_directory + "/.bpm/md2hlp/md2hlp-master/src/md2hlp.py3"
 
-        for fichier in os.listdir("docs"):
+        for fichier in os.listdir(f"{docs_folder}"):
             # Vérifier si le fichier a l'extension .md
             generate = False
             if fichier.endswith(".md"):
                 my_file = fichier.replace('.md', ".hlp")
-                generate = check_src_with_target_file(f"docs/{fichier}", f"{build_folder}/usr/share/man/{my_file}")
-                if generate == True and os.path.getsize(f"docs/{fichier}") != 0:
+                generate = check_src_with_target_file(f"{docs_folder}/{fichier}", f"{build_folder}/usr/share/man/{my_file}")
+                if generate == True and os.path.getsize(f"{docs_folder}{fichier}") != 0:
                     print(f"[md2hlp] Generating {fichier} to {build_folder}/usr/share/man/{my_file}")
-                    resultat = subprocess.run(['python3', md2hlp_cmd, '--config', 'docs/md2hlp.cfg',  '--file', f"docs/{fichier}", "--output", f"{build_folder}/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
+                    resultat = subprocess.run(['python3', md2hlp_cmd, '--config', f'{docs_folder}/md2hlp.cfg',  '--file', f"{docs_folder}/{fichier}", "--output", f"{build_folder}/usr/share/man/{my_file}"] , check=True, capture_output=False, text=True)
 
     if generatedoc_generate:
         # if not os.path.exists("src/md2hlp.cfg"):
@@ -1897,14 +1912,14 @@ def build_doc(toml_file):
             generate = False
             if fichier.endswith(".s"):
                 my_file = fichier.replace('.s', ".md")
-                generate = check_src_with_target_file(f"src/{fichier}", f"docs/{my_file}")
+                generate = check_src_with_target_file(f"src/{fichier}", f"{docs_folder}/{my_file}")
                 if generate == True and os.path.getsize(f"src/{fichier}") != 0:
-                    print(f"[ca65tomd] Generating doc for src/{fichier} to docs/{my_file}")
+                    print(f"[ca65tomd] Generating doc for src/{fichier} to {docs_folder}/{my_file}")
                     #ca65todoc_c_proto.py
                     if fichier.startswith('_'):
-                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
+                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"{docs_folder}/{my_file}"], check=True, capture_output=True, text=True)
                     else:
-                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"docs/{my_file}"], check=True, capture_output=True, text=True)
+                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"{docs_folder}/{my_file}"], check=True, capture_output=True, text=True)
 
 
 def update_package(args):

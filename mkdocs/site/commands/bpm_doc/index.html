@@ -74,7 +74,9 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#md2hlp-plugin">md2hlp plugin</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#generatedoc-pluginn">generatedoc pluginn</a>
+    <li class="toctree-l3"><a class="reference internal" href="#generatedoc-plugin">generatedoc plugin</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#change-docs-target-folder">Change docs target folder</a>
     </li>
     </ul>
                 </li>
@@ -144,8 +146,16 @@
 <h2 id="md2hlp-plugin">md2hlp plugin</h2>
 <p>All docs/{name}.md will be generated into .hlp (for man orix command) and inserted in "build/usr/share/man/".
 md2hlp.cfg into project will be modifyed in order to modify title of .hlp (part Heading1, property : Head)</p>
-<h2 id="generatedoc-pluginn">generatedoc pluginn</h2>
+<h2 id="generatedoc-plugin">generatedoc plugin</h2>
 <p>Generate docs from source code see <a href="https://github.com/orix-software/generatedoc/blob/main/docs/asm.md">asm.md</a> and <a href="https://github.com/orix-software/generatedoc/blob/main/docs/c.md">c.md</a></p>
+<h2 id="change-docs-target-folder">Change docs target folder</h2>
+<p>use docsfolder param in package section.</p>
+<p>ex:</p>
+<pre><code class="language-bash">[package]
+...
+docsfolder = &quot;mkdocs/docs/&quot;
+...
+</code></pre>
               
             </div>
           </div><footer>
