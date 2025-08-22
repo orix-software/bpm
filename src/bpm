@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.7"
+VERSION_BPM = "2025.3.8"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -1073,7 +1073,8 @@ def build(args):
                     print("Building " + repertoire + fichier)
                     bin_ca65 = ['ca65']
                     arg_ca65 = ['-ttelestrat', fichier_source, "-o", fichier_dest_o, "--include-dir", "src/include"]
-                    resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=True, text=True)
+                    arg_include_ca65 = [arg_include]
+                    resultat = subprocess.run(bin_ca65 + arg_include_ca65 + arg_ca65, check=True, capture_output=True, text=True)
                     rebuild_so = True
 
             except subprocess.CalledProcessError as e:
