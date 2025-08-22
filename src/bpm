@@ -75,35 +75,55 @@ toml_file = "bpm.tml"
 user_folder = '.bpm/'
 
 
-def build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build) -> int:
+def build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build) -> int:
     generate = False
+
     if force_build == False:
         generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + '2048.o')
+
     if generate == False:
         return
-    arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
+
+    arg_cc65 = ['cc65', arg_include, "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
 
     try:
-        resultat = subprocess.run(arg_cc65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
+        resultat = subprocess.run(arg_cc65, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
         exit(1)
 
-    arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304.s',  name + ".lib"]
-    resultat = subprocess.run(arg_cc65 + arg_include + arg_ld_libs, check=True, capture_output=False, text=True)
-    arg_ca65 = ['ca65', "--include-dir", "src/include", '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
-    resultat = subprocess.run(arg_ca65 + arg_include , check=True, capture_output=False, text=True)
-    arg_ca65 = ['ca65', "--include-dir", "src/include", '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
-    resultat = subprocess.run(arg_ca65 + arg_include , check=True, capture_output=False, text=True)
+    arg_cc65 = ['cc65', arg_include, "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304.s',  name + ".lib"]
+    resultat = subprocess.run(arg_cc65, check=True, capture_output=False, text=True)
+ 
+    arg_ca65 = ['ca65', "--include-dir", "src/include", arg_include_asm, '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
+    resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
+    arg_ca65 = ['ca65', "--include-dir", "src/include", arg_include_asm, '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
+    resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
+
+    ld65_command_line_list_lib = []
+
+    if os.path.exists(name + ".lib"):
+        ld65_command_line_list_lib.append(name + ".lib")
+
+    ld65_command_line = []
+
+    if arg_ld_libs != "":
+        ld65_command_line.append(arg_ld_libs)
+
+
+    ld65_command_line_list_lib.append("telestrat.lib")
+
+    arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2048.o', "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048']
+
+
     try:
-        arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2048.o', "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  name + ".lib", "telestrat.lib"]
-        resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
+        resultat = subprocess.run(arg_ld65 + ld65_command_line + ld65_command_line_list_lib, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
         exit(1)
 
-    arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2304.o', "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304', name + ".lib", "telestrat.lib"]
-    resultat = subprocess.run(arg_ld65 + arg_ld_libs, check=True, capture_output=False, text=True)
+    arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + '2304.o', "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304']
+    resultat = subprocess.run(arg_ld65 + ld65_command_line + ld65_command_line_list_lib, check=True, capture_output=False, text=True)
 
 def convert_binary_name_to_seven_chars(name) -> str:
     if len(name) > 7:
@@ -679,17 +699,27 @@ def compile(name, arg_include, folder):
                 print(f"[INFO] {fichier} not built")
 
 
-def generate_lib_for_bin(name: str, arg_include, arg_include_asm):
+def generate_lib_for_bin(name: str, arg_include, arg_include_asm: str):
 
+    bin_ca65 = ['ca65']
     data = read_local_config_file()
     if 'srcfolders' in data:
         # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
         for key, value in data['srcfolders'].items():
             compile(name, arg_include, key)
 
+    nb_of_files = 0
+    arg_include_asm_for_ca65 = []
+
+    if arg_include_asm != "":
+        arg_include_asm_for_ca65 = [arg_include_asm]
+
     for fichier in os.listdir("src/"):
         assembly = False
         # Vérifier si le fichier a l'extension .md
+
+
+
         if fichier.endswith(".s") or fichier.endswith(".c") or fichier.endswith(".asm"):
             if  os.path.exists("src/" + name + ".s"):
                 assembly = True
@@ -697,16 +727,27 @@ def generate_lib_for_bin(name: str, arg_include, arg_include_asm):
             else:
                 fichier_o = fichier.replace(".c", ".o")
 
+            arg_ca65 = ['-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o]
+
             if assembly == True and fichier != name + ".s":
-                bin_ca65 = ['ca65']
-                arg_ca65 = ['-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o]
-                resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=False, text=True)
+                try:
+                    resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65+ arg_ca65, check=True, capture_output=False, text=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                    return 1
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                nb_of_files = nb_of_files + 1
 
             if assembly == False and fichier != name + ".c":
-                resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
+                try:
+                    resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65 + arg_ca65, check=True, capture_output=False, text=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                    return 1
                 resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                nb_of_files = nb_of_files + 1
 
+    return nb_of_files
 
 def check_src_with_target_file(filesrc: str, object_file:str) -> bool:
     generate = False
@@ -845,9 +886,9 @@ def build(args):
     if not os.path.exists(f"{build_folder}/usr/share/{name}/{version}"):
         os.makedirs(f"{build_folder}/usr/share/{name}/{version}", mode=0o755, exist_ok=True)
 
-    arg_include = []
-    arg_ld_libs = []
-    arg_include_asm = []
+    arg_include = ""
+    arg_ld_libs = ""
+    arg_include_asm = ""
 
     user_folder = os.path.expanduser('~')
     reloc_bin_path =  f"{user_folder}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/bin/relocbin.py3"
@@ -858,26 +899,26 @@ def build(args):
             for key, value in dependencies.items():
                 file_to_compile_c = repertoire + name + ".c"
                 if os.path.exists(file_to_compile_c):
-                    arg_include.append("-I")
-                    arg_include.append(f"orixlibs/{key}/usr/include/")
+                    arg_include = arg_include + "-I"
+                    arg_include = arg_include + f"orixlibs/{key}/usr/include/"
                 else:
-                    arg_include.append("-I")
-                    arg_include.append(f"orixlibs/{key}/usr/include/asm/")
-                    arg_include_asm.append("--asm-include-dir")
-                    arg_include_asm.append(f"orixlibs/{key}/usr/include/asm/")
-                llo_detected = False
+                    arg_include = arg_include + "-I"
+                    arg_include = arg_include + f"orixlibs/{key}/usr/include/asm/"
+                   #arg_include_asm.append("--asm-include-dir")
+                    arg_include_asm = arg_include_asm + f"-I orixlibs/{key}/usr/include/asm/"
+#                llo_detected = False
                 #if data["dynamiclibs"] and "dynamiclibs" in data and  key in data["dynamiclibs"]:
-                if "dynamiclibs" in data:
-                    # orixlibs/curl/usr/share/curl/2025.1/
-                    if data["dynamiclibs"] and key in data["dynamiclibs"]:
-                        arg_ld_libs.append(f"orixlibs/{key}/usr/lib/{key}/{value}/llo/{key}.lib")
-                        llo_detected = True
+                # if "dynamiclibs" in data:
+                #     # orixlibs/curl/usr/share/curl/2025.1/
+                #     if data["dynamiclibs"] and key in data["dynamiclibs"]:
+                #         arg_ld_libs.append(f"orixlibs/{key}/usr/lib/{key}/{value}/llo/{key}.lib")
+#                        llo_detected = True
 
-                if llo_detected == False:
-                    arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
+                # if llo_detected == False:
+                #     arg_ld_libs.append(f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib")
 
 
-    path_etc_bpm = "{build_folder}/etc/bpm"
+    path_etc_bpm = f"{build_folder}/etc/bpm"
 
     if not os.path.exists(f"{path_etc_bpm}/{version}"):
         #build/etc/bpm/file/2024.4/
@@ -891,11 +932,11 @@ def build(args):
     if plugins_installed['orixsdk']:
         home_directory = os.path.expanduser('~')
         path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
-        arg_include.append("-I")
-        arg_include.append(path_orixsdk)
+        arg_include = arg_include + "-I"
+        arg_include = arg_include + path_orixsdk
 
-        arg_include_asm.append("--asm-include-dir")
-        arg_include_asm.append(f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/")
+        #arg_include_asm.append("--asm-include-dir")
+        arg_include_asm = arg_include_asm + f"-I {home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
 
     if codetype == "rom":
         rom_path = f"{build_folder}/usr/share/{name}/{version}/"
@@ -904,15 +945,15 @@ def build(args):
         if templatecode == "asm_rom_tpl":
 
             if  os.path.exists(f"macros"):
-                arg_include.append("-I")
-                arg_include.append(f".")
+                arg_include = arg_include + "-I"
+                arg_include = arg_include + f"."
 
             home_directory = os.path.expanduser('~')
             path_orixsdk = f"{home_directory}/.bpm/plugins/asm_rom_tpl/{asm_rom_tpl_version}/orix-cart-master/cfg/rom.cfg"
             LD_FLAGS.append('-C')
             LD_FLAGS.append(path_orixsdk)
 
-        generate_lib_for_bin(name, arg_include, arg_include_asm)
+        nb__files_for_lib = generate_lib_for_bin(name, arg_include, arg_include_asm)
 
         nom_sans_extension = name
         file_to_compile_s = repertoire + name + ".s"
@@ -942,14 +983,14 @@ def build(args):
             print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
             return 1
 
-        generate_lib_for_bin(name, arg_include, arg_include_asm)
+        nb__files_for_lib = generate_lib_for_bin(name, arg_include, arg_include_asm)
 
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
         if os.path.exists(file_to_compile_c):
 
             try:
-                build_without_cl65_c_files(arg_include + arg_include_asm + arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, False)
+                build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, False)
                 # arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 # arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 # resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
@@ -1179,7 +1220,7 @@ def build(args):
                 #print(file_to_compile_c)
                 if os.path.exists(file_to_compile_c):
                     try:
-                        build_without_cl65_c_files(arg_include, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, generate_bin_files_section)
+                        build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, generate_bin_files_section)
                         # Perform reloc_bin
                         resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + binname, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
                         shutil.copy(bpm_tmp_folder + binname, f"{build_folder}/bin/" + bin_entry["name"])
@@ -1797,9 +1838,9 @@ def install_md2hlp():
 
     # Créer le dossier s'il n'existe pas
     if not os.path.exists(folder_path_md2hlp):
-        os.makedirs(folder_path_md2hlp )
+        os.makedirs(folder_path_md2hlp)
 
-        # Télécharger l'archive depuis GitHub
+    # Télécharger l'archive depuis GitHub
     url = "https://github.com/assinie/md2hlp/archive/refs/heads/master.zip"
     response = requests.get(url)
 
@@ -1846,6 +1887,7 @@ def build_doc(toml_file):
 
     if "package" in data:
         package = data["package"]
+        version =  data["package"]["version"]
 
         if "md2hlp" in package:
             if package["md2hlp"] == 'no':
@@ -1907,19 +1949,22 @@ def build_doc(toml_file):
         generatedoc_cmd_assembly = home_directory + f"/.bpm/plugins/generatedoc/{default_generatedoc_version}/generatedoc-main/src/ca65todoc.py"
         generatedoc_cmd_c = home_directory + f"/.bpm/plugins/generatedoc/{default_generatedoc_version}/generatedoc-main/src/ca65todoc_c_proto.py"
 
+        if not os.path.exists(f"{docs_folder}/{version}/"):
+            os.makedirs(f"{docs_folder}/{version}/")
+
         for fichier in os.listdir("src"):
             # Vérifier si le fichier a l'extension .md
             generate = False
             if fichier.endswith(".s"):
                 my_file = fichier.replace('.s', ".md")
-                generate = check_src_with_target_file(f"src/{fichier}", f"{docs_folder}/{my_file}")
+                generate = check_src_with_target_file(f"src/{fichier}", f"{docs_folder}/{version}/{my_file}")
                 if generate == True and os.path.getsize(f"src/{fichier}") != 0:
-                    print(f"[ca65tomd] Generating doc for src/{fichier} to {docs_folder}/{my_file}")
+                    print(f"[ca65tomd] Generating doc for src/{fichier} to {docs_folder}/{version}/{my_file}")
                     #ca65todoc_c_proto.py
                     if fichier.startswith('_'):
-                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"{docs_folder}/{my_file}"], check=True, capture_output=True, text=True)
+                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"{docs_folder}/{version}/{my_file}"], check=True, capture_output=True, text=True)
                     else:
-                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"{docs_folder}/{my_file}"], check=True, capture_output=True, text=True)
+                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"{docs_folder}/{version}/{my_file}"], check=True, capture_output=True, text=True)
 
 
 def update_package(args):
@@ -1952,7 +1997,7 @@ def read_main_config_file():
         print(f"'{toml_file}' not found")
 
 def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_arg):
-
+    # names : all binaries to name to build
     autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
     full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
     orix_run_pre_script_content = ""
@@ -1968,14 +2013,14 @@ def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_auto
         except Exception as e:
             print(f"error : {e}")
 
+    extra_arg_param = ""
     if oricutron_replace_autoboot_run == "True":
         if binary_to_launch == "":
             all_names = ""
             for name in names:
                 if extra_arg[name] != "":
                     extra_arg_param = extra_arg[name]
-                else:
-                    extra_arg_param = ""
+
                 name_7 = convert_binary_name_to_seven_chars(name)
                 all_names = all_names + name_7 + "\n"
 
@@ -2081,7 +2126,7 @@ def run_bin(args):
                 path_oricutron = path_oricutron_project
             oricutron_replace_autoboot_run =  data["package"]["oricutron_replace_autoboot_run"]
     else:
-        print("Error bpm.tml does not contains 'package' property")
+        print("Error 'bpm.tml' does not contains 'package' section")
         return 1
 
     bin_oricutron = path_oricutron
@@ -2151,6 +2196,9 @@ def run_bin(args):
 
     # Generate submit file
     if codetype == "bin":
+        names = { f"{name}" }
+        extra_args = {}
+        extra_args[name] = ""
         execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args)
  
         # autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
