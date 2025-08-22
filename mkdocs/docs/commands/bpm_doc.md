@@ -21,6 +21,8 @@ Generate docs from source code see [asm.md](https://github.com/orix-software/gen
 
 use docsfolder param in package section.
 
+Default : docs/
+
 ex:
 
 ```bash
@@ -29,3 +31,11 @@ ex:
 docsfolder = "mkdocs/docs/"
 ...
 ```
+
+## Folder
+
+Docsfolder is always formatted with version of the program like 
+
+docs/2025.2/
+
+
