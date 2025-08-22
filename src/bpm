@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.6"
+VERSION_BPM = "2025.3.7"
 
 build_folder = "build"
 docs_folder = "docs"

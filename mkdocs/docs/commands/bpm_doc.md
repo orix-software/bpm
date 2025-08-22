@@ -34,7 +34,7 @@ docsfolder = "mkdocs/docs/"
 
 ## Folder
 
-Docsfolder is always formatted with version of the program like 
+Docsfolder is always formatted with version of the program like : 
 
 docs/2025.2/
 
