@@ -15,4 +15,3 @@ sudo apt install python3-pip
 pip install -r /tmp/bpm.txt
 rm -f /tmp/bpm.txt
 ```
-g

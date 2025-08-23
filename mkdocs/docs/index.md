@@ -1,6 +1,6 @@
 # Introduction
 
-Bpm is the orix package manager. Bpm downloads your Orix package’s dependencies, compiles your packages, makes distributable packages, and uploads them to 'repo.orix.oric.org', the Orix package registry.
+Bpm is the orix package manager for Linux. Bpm downloads your Orix package’s dependencies, compiles your packages, makes distributable packages, and uploads them to 'repo.orix.oric.org', the Orix package registry.
 
 This tool is heavily inpired from cargo tools from Rust Langage.
 

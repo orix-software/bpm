@@ -1258,7 +1258,7 @@ def usage():
     print("    \033[1;36mrun\033[0m             Run")
     print("    \033[1;36mlist\033[0m            List packages")
     print("    \033[1;36madd         \033[0m    Add dependencies to a manifest file")
-    print("    \033[1;36mdynamiclib  \033[0m    Define a dynamic lib from dependency list")
+    #print("    \033[1;36mdynamiclib  \033[0m    Define a dynamic lib from dependency list")
     print("    \033[1;36mremove      \033[0m    Remove dependencies from a manifest file")
     print("    \033[1;36minstall     \033[0m    Install all dependencies from a manifest file")
     print("    \033[1;36msearch      \033[0m    Search package")
