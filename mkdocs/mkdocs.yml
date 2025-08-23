@@ -63,7 +63,7 @@ nav:
             - 2.3.1. bpm build: commands/bpm_build.md
             - 2.3.2. bpm doc: commands/bpm_doc.md
             - 2.3.3. bpm run: commands/bpm_run.md
-            - 2.3.4. bpm doc: commands/bpm_package.md
+            - 2.3.4. bpm package: commands/bpm_package.md
         - 2.4 Manifest Commands:
             - 2.4.1. bpm add: commands/bpm_add.md
             - 2.4.2. bpm remove: commands/bpm_remove.md

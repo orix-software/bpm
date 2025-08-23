@@ -388,6 +388,9 @@ def init_toml(args):
         content = content + f"orix_run_pre_script = \"\"\n"
         content = content + f"md2hlp = \"yes\"\n"
         content = content + "\n[dependencies]\n\n[dynamiclibs]\n"
+
+        # Srcfolders section
+        content = content + "[srcfolders]\n"
         with open("bpm.tml", 'w') as file:
             file.write(content)
 
@@ -522,6 +525,8 @@ def verify_installed():
         str_init = str_init + "default_github_action_version = \"\"\n"
         str_init = str_init + "default_kernel_version = \"2024.1\"\n"
         str_init = str_init + "default_generatedoc_version = \"\"\n"
+
+
         with open(directory_path + "/bpm", 'w') as fichier:
             fichier.write(str_init)  # Crée un fichier vide
 

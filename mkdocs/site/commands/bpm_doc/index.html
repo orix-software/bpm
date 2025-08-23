@@ -78,11 +78,13 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#change-docs-target-folder">Change docs target folder</a>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#folder">Folder</a>
+    </li>
     </ul>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_run/">2.3.3. bpm run</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm doc</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm package</a>
                 </li>
     </ul>
                   </li>
@@ -150,12 +152,16 @@ md2hlp.cfg into project will be modifyed in order to modify title of .hlp (part 
 <p>Generate docs from source code see <a href="https://github.com/orix-software/generatedoc/blob/main/docs/asm.md">asm.md</a> and <a href="https://github.com/orix-software/generatedoc/blob/main/docs/c.md">c.md</a></p>
 <h2 id="change-docs-target-folder">Change docs target folder</h2>
 <p>use docsfolder param in package section.</p>
+<p>Default : docs/</p>
 <p>ex:</p>
 <pre><code class="language-bash">[package]
 ...
 docsfolder = &quot;mkdocs/docs/&quot;
 ...
 </code></pre>
+<h2 id="folder">Folder</h2>
+<p>Docsfolder is always formatted with version of the program like : </p>
+<p>docs/2025.2/</p>
               
             </div>
           </div><footer>
