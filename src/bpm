@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.8"
+VERSION_BPM = "2025.3.9"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -84,7 +84,7 @@ def build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_t
     if generate == False:
         return
 
-    arg_cc65 = ['cc65', arg_include, "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
+    arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
 
     try:
         resultat = subprocess.run(arg_cc65, check=True, capture_output=False, text=True)
@@ -92,12 +92,22 @@ def build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_t
         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
         exit(1)
 
-    arg_cc65 = ['cc65', arg_include, "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304.s',  name + ".lib"]
+    arg_cc65 = ['cc65', "-I", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304.s',  name + ".lib"]
     resultat = subprocess.run(arg_cc65, check=True, capture_output=False, text=True)
- 
-    arg_ca65 = ['ca65', "--include-dir", "src/include", arg_include_asm, '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
-    resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
-    arg_ca65 = ['ca65', "--include-dir", "src/include", arg_include_asm, '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
+
+    arg_include_asm_tab = arg_include_asm.split('-I')
+    arg_ca65_array = []
+    for i in len(arg_include_asm_tab):
+        arg_ca65_array[0] = '-I ' + arg_include_asm_tab[i]
+
+    try:
+        arg_ca65 = ['ca65', "-I", "src/include", arg_ca65_array, '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
+        resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+        exit(1)
+
+    arg_ca65 = ['ca65', "-I", "src/include", arg_ca65_array, '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
     resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
 
     ld65_command_line_list_lib = []
@@ -904,11 +914,11 @@ def build(args):
             for key, value in dependencies.items():
                 file_to_compile_c = repertoire + name + ".c"
                 if os.path.exists(file_to_compile_c):
-                    arg_include = arg_include + "-I"
-                    arg_include = arg_include + f"orixlibs/{key}/usr/include/"
+                    arg_include = arg_include + "-I "
+                    arg_include = arg_include + f" orixlibs/{key}/usr/include/"
                 else:
-                    arg_include = arg_include + "-I"
-                    arg_include = arg_include + f"orixlibs/{key}/usr/include/asm/"
+                    arg_include = arg_include + "-I "
+                    arg_include = arg_include + f" orixlibs/{key}/usr/include/asm/"
                    #arg_include_asm.append("--asm-include-dir")
                     arg_include_asm = arg_include_asm + f"-I orixlibs/{key}/usr/include/asm/"
 #                llo_detected = False
@@ -937,7 +947,7 @@ def build(args):
     if plugins_installed['orixsdk']:
         home_directory = os.path.expanduser('~')
         path_orixsdk = f"{home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
-        arg_include = arg_include + "-I"
+        arg_include = arg_include + "-I "
         arg_include = arg_include + path_orixsdk
 
         #arg_include_asm.append("--asm-include-dir")
@@ -951,7 +961,7 @@ def build(args):
 
             if  os.path.exists(f"macros"):
                 arg_include = arg_include + "-I"
-                arg_include = arg_include + f"."
+                arg_include = arg_include + f" ."
 
             home_directory = os.path.expanduser('~')
             path_orixsdk = f"{home_directory}/.bpm/plugins/asm_rom_tpl/{asm_rom_tpl_version}/orix-cart-master/cfg/rom.cfg"
