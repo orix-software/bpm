@@ -16,13 +16,15 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.9"
+VERSION_BPM = "2025.3.10"
 
 build_folder = "build"
 docs_folder = "docs"
 
 main_config_path = os.path.expanduser("~/.bpm/bpm")
 folder_path_md2hlp = os.path.expanduser("~/.bpm/md2hlp/")
+
+bin_ca65 = ['ca65']
 
 symbs = [u'\u255a', u'\u2554', u'\u2569', u'\u2566', u'\u2560', u'\u2550', u'\u256c', u'\u2557', u'\u2551', u'\u255a', u'\u255d']
 
@@ -95,20 +97,20 @@ def build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_t
     arg_cc65 = ['cc65', "-I", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304.s',  name + ".lib"]
     resultat = subprocess.run(arg_cc65, check=True, capture_output=False, text=True)
 
-    arg_include_asm_tab = arg_include_asm.split('-I')
+    arg_include_asm_tab = arg_include_asm.strip().split(' ')
     arg_ca65_array = []
-    for i in len(arg_include_asm_tab):
-        arg_ca65_array[0] = '-I ' + arg_include_asm_tab[i]
+    for index, valeur in enumerate(arg_include_asm_tab):
+        arg_ca65_array.append('-I ' + arg_include_asm_tab[index])
 
     try:
-        arg_ca65 = ['ca65', "-I", "src/include", arg_ca65_array, '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
-        resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
+        arg_ca65 = ["-I", "src/include", '-ttelestrat', bpm_tmp_folder + '2048.s', "-o", bpm_tmp_folder + '2048.o' ]
+        resultat = subprocess.run(bin_ca65 + arg_ca65_array + arg_ca65, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
         exit(1)
 
-    arg_ca65 = ['ca65', "-I", "src/include", arg_ca65_array, '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
-    resultat = subprocess.run(arg_ca65, check=True, capture_output=False, text=True)
+    arg_ca65 = ["-I", "src/include",  '-ttelestrat', bpm_tmp_folder + '2304.s', "-o", bpm_tmp_folder + '2304.o' ]
+    resultat = subprocess.run(bin_ca65 + arg_ca65_array + arg_ca65, check=True, capture_output=False, text=True)
 
     ld65_command_line_list_lib = []
 
@@ -917,10 +919,11 @@ def build(args):
                     arg_include = arg_include + "-I "
                     arg_include = arg_include + f" orixlibs/{key}/usr/include/"
                 else:
-                    arg_include = arg_include + "-I "
-                    arg_include = arg_include + f" orixlibs/{key}/usr/include/asm/"
+                    # Assembly file
+                    #arg_include = arg_include + "-I "
+                    #arg_include = arg_include + f" orixlibs/{key}/usr/include/asm/"
                    #arg_include_asm.append("--asm-include-dir")
-                    arg_include_asm = arg_include_asm + f"-I orixlibs/{key}/usr/include/asm/"
+                    arg_include_asm = arg_include_asm + f" orixlibs/{key}/usr/include/asm/"
 #                llo_detected = False
                 #if data["dynamiclibs"] and "dynamiclibs" in data and  key in data["dynamiclibs"]:
                 # if "dynamiclibs" in data:
@@ -951,7 +954,7 @@ def build(args):
         arg_include = arg_include + path_orixsdk
 
         #arg_include_asm.append("--asm-include-dir")
-        arg_include_asm = arg_include_asm + f"-I {home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
+        arg_include_asm = arg_include_asm + f" {home_directory}/.bpm/plugins/orixsdk/{orixsdk_version}/orix-sdk-master/macros/"
 
     if codetype == "rom":
         rom_path = f"{build_folder}/usr/share/{name}/{version}/"
