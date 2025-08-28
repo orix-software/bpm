@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.10"
+VERSION_BPM = "2025.3.11"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -717,52 +717,56 @@ def compile(name, arg_include, folder):
 
 
 def generate_lib_for_bin(name: str, arg_include, arg_include_asm: str):
-
+    print("Generate lib for binary ...")
     bin_ca65 = ['ca65']
     data = read_local_config_file()
     if 'srcfolders' in data:
         # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
         for key, value in data['srcfolders'].items():
+            print("compile")
             compile(name, arg_include, key)
 
     nb_of_files = 0
     arg_include_asm_for_ca65 = []
 
     if arg_include_asm != "":
-        arg_include_asm_for_ca65 = [arg_include_asm]
+        arg_include_asm_for_ca65.append("-I " + arg_include_asm)
 
     for fichier in os.listdir("src/"):
         assembly = False
         # Vérifier si le fichier a l'extension .md
+        if fichier != name + ".c":
+            if fichier.endswith(".s") or fichier.endswith(".c") or fichier.endswith(".asm"):
+                if fichier.endswith(".s"):
+                    assembly = True
+                    fichier_o = fichier.replace(".s", ".o")
+                    print(f"Build src/{fichier} to {build_folder}/{fichier_o}")
+                else:
+                    fichier_o = fichier.replace(".c", ".o")
+
+                arg_ca65 = ['-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o]
 
 
+                if assembly == True:
+                    try:
 
-        if fichier.endswith(".s") or fichier.endswith(".c") or fichier.endswith(".asm"):
-            if  os.path.exists("src/" + name + ".s"):
-                assembly = True
-                fichier_o = fichier.replace(".s", ".o")
-            else:
-                fichier_o = fichier.replace(".c", ".o")
+                        resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65 + arg_ca65, check=True, capture_output=False, text=True)
+                    except subprocess.CalledProcessError as e:
+                        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
 
-            arg_ca65 = ['-ttelestrat', "src/" + fichier, "-o", "bpmtmp/" + fichier_o]
+                        return 1
 
-            if assembly == True and fichier != name + ".s":
-                try:
-                    resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65+ arg_ca65, check=True, capture_output=False, text=True)
-                except subprocess.CalledProcessError as e:
-                    print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
-                    return 1
-                resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
-                nb_of_files = nb_of_files + 1
+                    resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                    nb_of_files = nb_of_files + 1
 
-            if assembly == False and fichier != name + ".c":
-                try:
-                    resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65 + arg_ca65, check=True, capture_output=False, text=True)
-                except subprocess.CalledProcessError as e:
-                    print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
-                    return 1
-                resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
-                nb_of_files = nb_of_files + 1
+                if assembly == False:
+                    try:
+                        resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65 + arg_ca65, check=True, capture_output=False, text=True)
+                    except subprocess.CalledProcessError as e:
+                        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                        return 1
+                    resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
+                    nb_of_files = nb_of_files + 1
 
     return nb_of_files
 
