@@ -165,3 +165,15 @@ if the plugins is activated, macro can be loaded like :
 ~$ bpm config set project orix_run_pre_script scripts/network.sub
 ```
 
+## Add a md2hlp file
+
+Create a file with "name" of the binary and build man page in markdown format. 
+Launch "bpm doc" to generate .hlp for orix
+
+Example with "myprogram" :
+
+```bash
+~$ vi docs/myprogram.md
+
+
+```

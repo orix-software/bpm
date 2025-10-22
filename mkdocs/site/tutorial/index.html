@@ -61,6 +61,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#add-a-pre-script-before-main-command-is-launched">Add a 'pre' script before main command is launched</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-a-md2hlp-file">Add a md2hlp file</a>
+    </li>
     </ul>
                   </li>
               </ul>
@@ -267,6 +269,14 @@ generatedoc: Tool to comment source code and generate markdown  (Available versi
 <pre><code class="language-bash">~$ mkdir scripts/
 ~$ echo &quot;netchk&quot; &gt; scripts/network.sub
 ~$ bpm config set project orix_run_pre_script scripts/network.sub
+</code></pre>
+<h2 id="add-a-md2hlp-file">Add a md2hlp file</h2>
+<p>Create a file with "name" of the binary and build man page in markdown format. 
+Launch "bpm doc" to generate .hlp for orix</p>
+<p>Example with "myprogram" :</p>
+<pre><code class="language-bash">~$ vi docs/myprogram.md
+
+
 </code></pre>
               
             </div>

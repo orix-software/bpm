@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.3.11"
+VERSION_BPM = "2025.4"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -78,17 +78,20 @@ user_folder = '.bpm/'
 
 
 def build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build) -> int:
-    generate = False
 
     if force_build == False:
-        generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + '2048.o')
+        generate = False
 
-    if generate == False:
-        return
+        if force_build == False:
+            generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + '2048.o')
+
+        if generate == False:
+            return
 
     arg_cc65 = ['cc65', "--include-dir", "src/include", '-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048.s',  name + ".lib"]
-
+    #
     try:
+        print("Compiling xxx " + file_to_compile_c)
         resultat = subprocess.run(arg_cc65, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
@@ -749,12 +752,10 @@ def generate_lib_for_bin(name: str, arg_include, arg_include_asm: str):
 
                 if assembly == True:
                     try:
-
                         resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65 + arg_ca65, check=True, capture_output=False, text=True)
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
-
-                        return 1
+                        return -1
 
                     resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
                     nb_of_files = nb_of_files + 1
@@ -764,9 +765,11 @@ def generate_lib_for_bin(name: str, arg_include, arg_include_asm: str):
                         resultat = subprocess.run(bin_ca65 + arg_include_asm_for_ca65 + arg_ca65, check=True, capture_output=False, text=True)
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
-                        return 1
+                        return -1
                     resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
                     nb_of_files = nb_of_files + 1
+
+
 
     return nb_of_files
 
@@ -975,7 +978,11 @@ def build(args):
             LD_FLAGS.append('-C')
             LD_FLAGS.append(path_orixsdk)
 
-        nb__files_for_lib = generate_lib_for_bin(name, arg_include, arg_include_asm)
+        err = generate_lib_for_bin(name, arg_include, arg_include_asm)
+
+        if err == -1:
+            print("Error during lib generation")
+            return 1
 
         nom_sans_extension = name
         file_to_compile_s = repertoire + name + ".s"
@@ -1005,14 +1012,22 @@ def build(args):
             print("Error. Can not build without Orix sdk. Orix sdk not installed. orix sdk plugins is required to build binaries (see 'bpm plugins')")
             return 1
 
-        nb__files_for_lib = generate_lib_for_bin(name, arg_include, arg_include_asm)
+        err = generate_lib_for_bin(name, arg_include, arg_include_asm)
+        if err == -1:
+            print("Error during lib generation")
+            return 1
+
+        force_build = False
+        # Many files are compile, we need to build binary
+        if err > 0:
+            force_build = True
 
         nom_sans_extension = name
         file_to_compile_c = repertoire + name + ".c"
         if os.path.exists(file_to_compile_c):
 
             try:
-                build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, False)
+                build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build)
                 # arg_cl65 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2048', '--start-addr',  '2048',  "--include-dir", "src/include"]
                 # arg_cl65_2304 = ['-ttelestrat', file_to_compile_c, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include"]
                 # resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
@@ -1881,6 +1896,8 @@ def install_md2hlp():
 def build_doc(toml_file):
     md2hlp_generate = False
     generatedoc_generate = False
+    docs_folder = "docs/"
+
 
     if not os.path.exists(toml_file):
         print("This project is not initialized (Missing bpm.tml)")
