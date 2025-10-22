@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>2.3.2. bpm doc - bpm v2025.1 DOCUMENTATION</title>
+    <title>2.3.2. bpm doc - bpm v2025.4 DOCUMENTATION</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href="../.." class="icon icon-home"> bpm v2025.1 DOCUMENTATION
+          <a href="../.." class="icon icon-home"> bpm v2025.4 DOCUMENTATION
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -56,8 +56,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" >2.2 General Commands</a>
     <ul>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
-                </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_plugins/">2.2.2. bpm plugins</a>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_config/">2.2.3. bpm config</a>
@@ -74,13 +72,17 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#md2hlp-plugin">md2hlp plugin</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#generatedoc-pluginn">generatedoc pluginn</a>
+    <li class="toctree-l3"><a class="reference internal" href="#generatedoc-plugin">generatedoc plugin</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#change-docs-target-folder">Change docs target folder</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#folder">Folder</a>
     </li>
     </ul>
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_run/">2.3.3. bpm run</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm doc</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm package</a>
                 </li>
     </ul>
                   </li>
@@ -100,6 +102,8 @@
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_addsrc/">2.4.7. bpm addsrc</a>
                 </li>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_install/">2.4.8. bpm install</a>
+                </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" >2.5 publishing commands</a>
@@ -118,7 +122,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../..">bpm v2025.1 DOCUMENTATION</a>
+          <a href="../..">bpm v2025.4 DOCUMENTATION</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -139,11 +143,25 @@
                 <h1 id="bpm-doc">bpm doc</h1>
 <p>'bpm doc' generate several docs, depending of the plugins installed.</p>
 <h2 id="generate-docs">Generate docs</h2>
+<pre><code class="language-bash">bpm doc
+</code></pre>
 <h2 id="md2hlp-plugin">md2hlp plugin</h2>
 <p>All docs/{name}.md will be generated into .hlp (for man orix command) and inserted in "build/usr/share/man/".
 md2hlp.cfg into project will be modifyed in order to modify title of .hlp (part Heading1, property : Head)</p>
-<h2 id="generatedoc-pluginn">generatedoc pluginn</h2>
+<h2 id="generatedoc-plugin">generatedoc plugin</h2>
 <p>Generate docs from source code see <a href="https://github.com/orix-software/generatedoc/blob/main/docs/asm.md">asm.md</a> and <a href="https://github.com/orix-software/generatedoc/blob/main/docs/c.md">c.md</a></p>
+<h2 id="change-docs-target-folder">Change docs target folder</h2>
+<p>use docsfolder param in package section.</p>
+<p>Default : docs/</p>
+<p>ex:</p>
+<pre><code class="language-bash">[package]
+...
+docsfolder = &quot;mkdocs/docs/&quot;
+...
+</code></pre>
+<h2 id="folder">Folder</h2>
+<p>Docsfolder is always formatted with version of the program like : </p>
+<p>docs/2025.2/</p>
               
             </div>
           </div><footer>

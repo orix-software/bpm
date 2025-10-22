@@ -1,6 +1,4 @@
-# Build and package manager for Orix
-
-## First install
+# Getting started
 
 ```bash
 mkdir ~/bin/
@@ -11,15 +9,3 @@ curl -o /tmp/bpm.txt https://raw.githubusercontent.com/orix-software/bpm/refs/he
 sudo apt install python3-pip
 pip install -r /tmp/bpm.txt
 ```
-
-pip install -r requirements.txt
-
-## Generate bpm doc
-
-cd mkdocs
-mkdocs build
-cp site/* ../docs/ -adpR
-
-
-
-

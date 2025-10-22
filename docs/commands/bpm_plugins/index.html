@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>2.2.2. bpm plugins - bpm v2025.1 DOCUMENTATION</title>
+    <title>2.2.2. bpm plugins - bpm v2025.4 DOCUMENTATION</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href="../.." class="icon icon-home"> bpm v2025.1 DOCUMENTATION
+          <a href="../.." class="icon icon-home"> bpm v2025.4 DOCUMENTATION
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -56,13 +56,15 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" >2.2 General Commands</a>
     <ul class="current">
-                <li class="toctree-l2"><a class="reference internal" href="../bpm/">2.2.1. bpm</a>
-                </li>
                 <li class="toctree-l2 current"><a class="reference internal current" href="#">2.2.2. bpm plugins</a>
     <ul class="current">
     <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins">bpm plugins</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#bpm-install">bpm install</a>
+    <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins-install">bpm plugins install</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins-update">bpm plugins update</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#bpm-plugins-h">bpm plugins -h</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#displays-installed-plugins">Displays installed plugins</a>
     </li>
@@ -80,7 +82,7 @@
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_run/">2.3.3. bpm run</a>
                 </li>
-                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm doc</a>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_package/">2.3.4. bpm package</a>
                 </li>
     </ul>
                   </li>
@@ -100,6 +102,8 @@
                 </li>
                 <li class="toctree-l2"><a class="reference internal" href="../bpm_addsrc/">2.4.7. bpm addsrc</a>
                 </li>
+                <li class="toctree-l2"><a class="reference internal" href="../bpm_install/">2.4.8. bpm install</a>
+                </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" >2.5 publishing commands</a>
@@ -118,7 +122,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../..">bpm v2025.1 DOCUMENTATION</a>
+          <a href="../..">bpm v2025.4 DOCUMENTATION</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -140,8 +144,15 @@
 <p>A plugin is a tool in order to manage some part of the development. Each day, bpm will try to update plugins, and will ask if plugin must be installed</p>
 <h2 id="bpm-plugins">bpm plugins</h2>
 <p>Usage : bpm plugins</p>
-<h2 id="bpm-install">bpm install</h2>
-<p>Usage : bpm plugins install [plugin_name]</p>
+<h2 id="bpm-plugins-install">bpm plugins install</h2>
+<p>Usage : bpm plugins install [plugin_name] [--replace-for-new-project]</p>
+<p>--replace-for-new-project option will set this plugin version for next project but it does not update it for current project (it needs to be changed in bpm.tml of the project)</p>
+<h2 id="bpm-plugins-update">bpm plugins update</h2>
+<p>Update all plugins :</p>
+<pre><code class="language-bash">bpm plugins update
+</code></pre>
+<h2 id="bpm-plugins-h">bpm plugins -h</h2>
+<p>Usage : bpm plugins install -h</p>
 <h2 id="displays-installed-plugins">Displays installed plugins</h2>
 <pre><code class="language-bash">~$ bpm plugins
 Use 'bpm plugins -h' for 'plugins' help
@@ -156,7 +167,7 @@ generatedoc: Tool to comment source code and generate markdown  (Available versi
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../bpm/" class="btn btn-neutral float-left" title="2.2.1. bpm"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../why/" class="btn btn-neutral float-left" title="2.1. BPM Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../bpm_config/" class="btn btn-neutral float-right" title="2.2.3. bpm config">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -180,7 +191,7 @@ generatedoc: Tool to comment source code and generate markdown  (Available versi
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../bpm/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../../why/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../bpm_config/" style="color: #fcfcfc">Next &raquo;</a></span>
