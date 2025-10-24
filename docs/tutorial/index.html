@@ -53,15 +53,23 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#library-assembly-language-only">Library (Assembly language only)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#publish">Publish</a>
+    <li class="toctree-l2"><a class="reference internal" href="#publish-to-bpm-repository">Publish to bpm repository</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#check-publish-key">Check publish key</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#add-a-library-ex-netdb">Add a library (ex : netdb)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#get-a-package-from-repository-library-for-current-project">Get a package from repository library for current project</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#use-orixsdk-macro">Use orixsdk macro</a>
+        </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#add-a-pre-script-before-main-command-is-launched">Add a 'pre' script before main command is launched</a>
+    <li class="toctree-l2"><a class="reference internal" href="#use-orixsdk-macro-in-project">Use orixsdk macro in project</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#add-a-md2hlp-file">Add a md2hlp file</a>
+    <li class="toctree-l2"><a class="reference internal" href="#add-a-pre-script-before-the-project-command-is-launched">Add a 'pre' script before the project command is launched</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-a-md2hlp-file-to-project">Add a md2hlp file to project</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#manage-2-differents-binaries-with-two-differents-source-code-in-src-folder">Manage 2 differents binaries with two differents source code in src/ folder</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#launch-a-binary">Launch a binary</a>
     </li>
     </ul>
                   </li>
@@ -228,19 +236,22 @@ No build done
 <p>This commands add "curl" binary name with "tests/curl.c" path and "arg1 arg2" which will be passed into Orix path</p>
 <pre><code class="language-bash">bpm config add project binary curl tests/curl.c &quot;arg1 arg2&quot;
 </code></pre>
-<h2 id="publish">Publish</h2>
-<p>If this command, return an empty line :</p>
+<h2 id="publish-to-bpm-repository">Publish to bpm repository</h2>
+<h3 id="check-publish-key">Check publish key</h3>
+<p>If this command returns an empty line :</p>
 <pre><code class="language-bash">set | grep BPM
 BPM_PUBLISH_KEY=yourKey
 </code></pre>
-<p>Set a key for publishing</p>
+<p>The publish key is not available. Ask one to jede[at]oric[dot]org and set key for publishing</p>
 <pre><code class="language-bash">~$ vi ~/.bashrc
 </code></pre>
 <p>add :</p>
 <p>export BPM_PUBLISH_KEY=yourKey</p>
-<pre><code class="language-bash">$ bpm publish
+<pre><code class="language-bash">. ~/.bashrc
+$ bpm publish
 </code></pre>
-<h2 id="add-a-library-ex-netdb">Add a library (ex : netdb)</h2>
+<h3 id="get-a-package-from-repository-library-for-current-project">Get a package from repository library for current project</h3>
+<p>'bpm search' list all available package.</p>
 <pre><code class="language-bash">$ bpm search
 orixsdk 2023.3 -   Orix Software Toolkit
 netdb 2024.4 -  Network database operations
@@ -250,33 +261,43 @@ kch395 2025.1 -  Only for orix kernel
 inet 2025.1 -  Provide inet_aton
 socket 2025.2 -  Socket management https://orix-software.github.io/socketlib/api/
 curl 2025.1 -  Curl lib for Orix https://orix-software.github.io/curllib/api/
-
-$bpm add netdb@2024.4
 </code></pre>
-<h2 id="use-orixsdk-macro">Use orixsdk macro</h2>
-<p>Verify if orixsdk plugins is installed (installed flag):</p>
-<p>bpm plugins
+<pre><code class="language-bash">$bpm add netdb@2024.4
+</code></pre>
+<p>it will be added in "bpm.tml" manifest</p>
+<h2 id="use-orixsdk-macro-in-project">Use orixsdk macro in project</h2>
+<p>Verify if orixsdk plugins is installed (<em>installed</em> flag):</p>
+<pre><code class="language-bash">bpm plugins
 Use 'bpm plugins -h' for 'plugins' help
 md2hlp: Build markdown into hlp file (text mode) [Installed]
-orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)  (Available versions : ['2023.3.0']) <em>[Installed]</em>
+orixsdk: Useful ca65 macro for Orix and reloc binary (Mandatory for Orix projects)  (Available versions : ['2023.3.0']) *[Installed]*
 asm_bin_tpl: Assembly binary template for Orix  (Available versions : ['2024.4']) [Installed]
 asm_rom_tpl: Assembly rom template for Orix  (Available versions : ['2024.4']) [Installed]
 github_action: Template for github action  (Available versions : ['2024.4']) [Installed]
-generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1']) [Installed]</p>
-<p>if the plugins is activated, macro can be loaded like :</p>
+generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1']) [Installed]
+</code></pre>
+<p>if the plugins is activated, macro in the project assembly code can be loaded like :</p>
 <p>.include "SDK_memory.mac"</p>
-<h2 id="add-a-pre-script-before-main-command-is-launched">Add a 'pre' script before main command is launched</h2>
+<h2 id="add-a-pre-script-before-the-project-command-is-launched">Add a 'pre' script before the project command is launched</h2>
 <pre><code class="language-bash">~$ mkdir scripts/
 ~$ echo &quot;netchk&quot; &gt; scripts/network.sub
 ~$ bpm config set project orix_run_pre_script scripts/network.sub
 </code></pre>
-<h2 id="add-a-md2hlp-file">Add a md2hlp file</h2>
-<p>Create a file with "name" of the binary and build man page in markdown format. 
+<p>In that case, scripts/network.sub will be executed before the binary project when 'bpm run' is launched.</p>
+<h2 id="add-a-md2hlp-file-to-project">Add a md2hlp file to project</h2>
+<p>This is done with 'bpm doc' which will try to find in 'docs' folder ${name}.md and will be used by bpm to generate md2hlp file.</p>
+<p>Create a file with "name" of the binary and build man page in markdown format.
 Launch "bpm doc" to generate .hlp for orix</p>
 <p>Example with "myprogram" :</p>
 <pre><code class="language-bash">~$ vi docs/myprogram.md
-
-
+~$ bpm doc
+</code></pre>
+<h2 id="manage-2-differents-binaries-with-two-differents-source-code-in-src-folder">Manage 2 differents binaries with two differents source code in src/ folder</h2>
+<p>Add a new binary (see 'bpm config'):</p>
+<pre><code class="language-bash">bpm config add project binary curl tests/curl.c
+</code></pre>
+<h2 id="launch-a-binary">Launch a binary</h2>
+<pre><code class="language-bash">bpm run --bin zx02cat
 </code></pre>
               
             </div>
