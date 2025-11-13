@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.2"
+VERSION_BPM = "2025.4.3"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -1906,6 +1906,11 @@ def publish(filename: str, args, mode):
 
     if mode == "unpublish":
         action = "delete"
+
+    # adding etc bpm.tml build/etc/bpm/
+    if not os.path.exists(f'build/etc/{name}/{version}'):
+        os.makedirs(f'build/etc/{name}/{version}', mode=0o755, exist_ok=True)
+    shutil.copy('bpm.tml', f'build/etc/{name}/{version}')
 
     if mode == "publish":
         encoded_description = urllib.parse.quote(description)
