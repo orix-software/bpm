@@ -166,7 +166,9 @@ generatedoc: Tool to comment source code and generate markdown  (Available versi
 
 if the plugins is activated, macro in the project assembly code can be loaded like :
 
+```c
 .include "SDK_memory.mac"
+```
 
 ## Add a 'pre' script before the project command is launched
 
@@ -180,7 +182,7 @@ In that case, scripts/network.sub will be executed before the binary project whe
 
 ## Add a md2hlp file to project
 
-This is done with 'bpm doc' which will try to find in 'docs' folder ${name}.md and will be used by bpm to generate md2hlp file.
+This is done with 'bpm doc' which will try to find in *docs* folder ${name}.md and will be used by bpm to generate md2hlp file.
 
 Create a file with "name" of the binary and build man page in markdown format.
 Launch "bpm doc" to generate .hlp for orix
@@ -200,8 +202,14 @@ Add a new binary (see 'bpm config'):
 bpm config add project binary curl tests/curl.c
 ```
 
-## Launch a binary
+## Launch a specific project binary
 
 ```bash
 bpm run --bin zx02cat
+```
+
+with args (ex with 2 args: bpm1.zx2 bpm.tml)
+
+```bash
+bpm run -- bpm1.zx2 bpm.tml  --bin dzx02
 ```
