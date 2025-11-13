@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.3"
+VERSION_BPM = "2025.4.4"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -711,7 +711,7 @@ def build_package(source_dir, output_filename, name, version):
     if os.path.exists("README.md"):
         shutil.copy("README.md", f"{build_folder}/usr/share/{name}/{version}/README.md")
 
-    shutil.copy("bpm.tml", f"{build_folder}/etc/bpm/{name}/{version}/bpm.tpl")
+    shutil.copy("bpm.tml", f"{build_folder}/etc/bpm/{name}/{version}/bpm.tml")
     # with tarfile.open(output_filename, "w:gz") as tar:
     #     tar.add(source_dir, arcname=os.path.basename(source_dir))
     print("Building package tgz ...")
@@ -1907,10 +1907,10 @@ def publish(filename: str, args, mode):
     if mode == "unpublish":
         action = "delete"
 
-    # adding etc bpm.tml build/etc/bpm/
-    if not os.path.exists(f'build/etc/{name}/{version}'):
-        os.makedirs(f'build/etc/{name}/{version}', mode=0o755, exist_ok=True)
-    shutil.copy('bpm.tml', f'build/etc/{name}/{version}')
+    # # adding etc bpm.tml build/etc/bpm/
+    # if not os.path.exists(f'build/etc/{name}/{version}'):
+    #     os.makedirs(f'build/etc/{name}/{version}', mode=0o755, exist_ok=True)
+    # shutil.copy('bpm.tml', destination_dir)
 
     if mode == "publish":
         encoded_description = urllib.parse.quote(description)
