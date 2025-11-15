@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.4"
+VERSION_BPM = "2025.4.5"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -2518,6 +2518,8 @@ def verify_tml():
     return conf
 
 def main():
+
+    enable_build = True
     verify_installed()
 
     if len(sys.argv) == 1:
