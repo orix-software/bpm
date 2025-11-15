@@ -53,6 +53,7 @@ nav:
         - 1.2. Installation: installation.md
         - 1.3. First Steps with bpm: first_step.md
         - 1.4. Tutorial: tutorial.md
+        - 1.5. bpm.tml explanations: bpm_tml.md
     - 2. Bpm Guide:
         - 2.1. BPM Overview: why.md
         - 2.2 General Commands:

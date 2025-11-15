@@ -69,9 +69,11 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#manage-2-differents-binaries-with-two-differents-source-code-in-src-folder">Manage 2 differents binaries with two differents source code in src/ folder</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#launch-a-binary">Launch a binary</a>
+    <li class="toctree-l2"><a class="reference internal" href="#launch-a-specific-project-binary">Launch a specific project binary</a>
     </li>
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bpm_tml/">1.5. bpm.tml explanations</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">2. Bpm Guide</span></p>
@@ -277,7 +279,8 @@ github_action: Template for github action  (Available versions : ['2024.4']) [In
 generatedoc: Tool to comment source code and generate markdown  (Available versions : ['2025.1']) [Installed]
 </code></pre>
 <p>if the plugins is activated, macro in the project assembly code can be loaded like :</p>
-<p>.include "SDK_memory.mac"</p>
+<pre><code class="language-c">.include &quot;SDK_memory.mac&quot;
+</code></pre>
 <h2 id="add-a-pre-script-before-the-project-command-is-launched">Add a 'pre' script before the project command is launched</h2>
 <pre><code class="language-bash">~$ mkdir scripts/
 ~$ echo &quot;netchk&quot; &gt; scripts/network.sub
@@ -285,7 +288,7 @@ generatedoc: Tool to comment source code and generate markdown  (Available versi
 </code></pre>
 <p>In that case, scripts/network.sub will be executed before the binary project when 'bpm run' is launched.</p>
 <h2 id="add-a-md2hlp-file-to-project">Add a md2hlp file to project</h2>
-<p>This is done with 'bpm doc' which will try to find in 'docs' folder ${name}.md and will be used by bpm to generate md2hlp file.</p>
+<p>This is done with 'bpm doc' which will try to find in <em>docs</em> folder ${name}.md and will be used by bpm to generate md2hlp file.</p>
 <p>Create a file with "name" of the binary and build man page in markdown format.
 Launch "bpm doc" to generate .hlp for orix</p>
 <p>Example with "myprogram" :</p>
@@ -296,15 +299,18 @@ Launch "bpm doc" to generate .hlp for orix</p>
 <p>Add a new binary (see 'bpm config'):</p>
 <pre><code class="language-bash">bpm config add project binary curl tests/curl.c
 </code></pre>
-<h2 id="launch-a-binary">Launch a binary</h2>
+<h2 id="launch-a-specific-project-binary">Launch a specific project binary</h2>
 <pre><code class="language-bash">bpm run --bin zx02cat
+</code></pre>
+<p>with args (ex with 2 args: bpm1.zx2 bpm.tml)</p>
+<pre><code class="language-bash">bpm run -- bpm1.zx2 bpm.tml  --bin dzx02
 </code></pre>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../first_step/" class="btn btn-neutral float-left" title="1.3. First Steps with bpm"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../why/" class="btn btn-neutral float-right" title="2.1. BPM Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../bpm_tml/" class="btn btn-neutral float-right" title="1.5. bpm.tml explanations">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -330,7 +336,7 @@ Launch "bpm doc" to generate .hlp for orix</p>
       <span><a href="../first_step/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../why/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../bpm_tml/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

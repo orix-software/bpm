@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.6"
+VERSION_BPM = "2025.4.8"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -95,17 +95,14 @@ def check_binary(binary_name):
     return 0
 
 def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build, binname_to_build) -> int:
-    print("ici")
     if force_build == False:
         generate = False
-
 
         if not os.path.exists (bpm_tmp_folder + f'{binname_to_build}_2048.o'):
             generate = True
             force_build == True
 
         if force_build == False:
-
             generate = check_src_with_target_file(file_to_compile_c,  bpm_tmp_folder + f'{binname_to_build}_2048.o')
 
 
@@ -141,7 +138,7 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
     for index, valeur in enumerate(arg_include_asm_tab):
         arg_ca65_array.append('-I ' + arg_include_asm_tab[index])
 
-    print(" Assembling ...")
+    print("Assembling ...")
 
     try:
         arg_ca65 = ["-I", "src/include", '-ttelestrat', bpm_tmp_folder + f'{binname_to_build}_2048.s', "-o", bpm_tmp_folder + f'{binname_to_build}_2048.o' ]
@@ -153,29 +150,29 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
     arg_ca65 = ["-I", "src/include",  '-ttelestrat', bpm_tmp_folder + f'{binname_to_build}_2304.s', "-o", bpm_tmp_folder + f'{binname_to_build}_2304.o' ]
     resultat = subprocess.run(bin_ca65 + arg_ca65_array + arg_ca65, check=True, capture_output=False, text=True)
 
-    ld65_command_line_list_lib = []
+    arg_ld_libs_tab = []
 
     if os.path.exists(name + ".lib"):
-        ld65_command_line_list_lib.append(name + ".lib")
-
-    ld65_command_line = []
-
-    arg_ld_libs_tab = []
+        arg_ld_libs_tab.append(name + ".lib")
 
 
     arg_ld_libs_split = arg_ld_libs.strip().split(' ')
     for index, valeur in enumerate(arg_ld_libs_split):
-        arg_ld_libs_tab.append(valeur)
+        if valeur != '':
+            arg_ld_libs_tab.append(valeur)
 
     arg_ld_libs_tab.append("telestrat.lib")
     print("Linking ...")
 
     arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + f'{binname_to_build}_2048.o', "-o", bpm_tmp_folder + f'{binname_to_build}_2048', '--start-addr',  f'2048']
 
+
     if not arg_ld_libs_tab:
-        ld65_command_line_list_lib = ld65_command_line
+        ld65_command_line_list_lib = arg_ld65
     else:
-        ld65_command_line_list_lib = ld65_command_line + arg_ld_libs_tab
+        ld65_command_line_list_lib = arg_ld65 + arg_ld_libs_tab
+
+    print(arg_ld_libs_tab)
     try:
         resultat = subprocess.run(ld65_command_line_list_lib, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
@@ -183,6 +180,10 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
         exit(1)
 
     arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + f'{binname_to_build}_2304.o', "-o", bpm_tmp_folder + f'{binname_to_build}_2304', '--start-addr', f'2304']
+    if not arg_ld_libs_tab:
+        ld65_command_line_list_lib = arg_ld65
+    else:
+        ld65_command_line_list_lib = arg_ld65 + arg_ld_libs_tab
     resultat = subprocess.run(ld65_command_line_list_lib, check=True, capture_output=False, text=True)
 
 def convert_binary_name_to_seven_chars(name) -> str:
@@ -1158,11 +1159,12 @@ def build(args):
                         build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, src_file, bpm_tmp_folder, name, force_build, binname_to_build)
                         nom_sans_extension = convert_binary_name_to_seven_chars(nom_sans_extension)
                         resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2', bpm_tmp_folder + f'{binname_to_build}_2048', bpm_tmp_folder + f'{binname_to_build}_2304'], check=True, capture_output=False, text=True)
-                        shutil.copy(bpm_tmp_folder + nom_sans_extension, f"{build_folder}/bin/" + nom_sans_extension)
-                        print("Built : " + f"{build_folder}/bin/" + nom_sans_extension)
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
                         return 1
+
+                    shutil.copy(bpm_tmp_folder + nom_sans_extension, f"{build_folder}/bin/" + nom_sans_extension)
+                    print("Built : " + f"{build_folder}/bin/" + nom_sans_extension)
 
 
                 if src_file.endswith(".s"):
@@ -1173,12 +1175,18 @@ def build(args):
                         arg_cl65_2304 = ['-ttelestrat', src_file, "-o", bpm_tmp_folder + '2304', '--start-addr',  '2304',  "--include-dir", "src/include", f"{name}.lib"]
                         resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65 + arg_ld_libs, check=True, capture_output=False, text=True)
                         resultat = subprocess.run(bin_cl65 + arg_include_asm + arg_include + arg_cl65_2304 + arg_ld_libs, check=True, capture_output=False, text=True)
-                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2', bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-                        shutil.copy(bpm_tmp_folder + nom_sans_extension, f"{build_folder}/bin/" + nom_sans_extension)
-                        print("Built : " + f"{build_folder}/bin/" + nom_sans_extension)
-                        return 0
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                    try:
+                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + nom_sans_extension, '-2', bpm_tmp_folder + f'/{nom_sans_extension}_2048', bpm_tmp_folder + f'/{nom_sans_extension}_2304'], check=True, capture_output=False, text=True)
+                        return 1
+                    except subprocess.CalledProcessError as e:
+                        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+
+                    shutil.copy(bpm_tmp_folder + nom_sans_extension, f"{build_folder}/bin/" + nom_sans_extension)
+                    print("Built : " + f"{build_folder}/bin/" + nom_sans_extension)
+                    return 0
+
         return 0
         #print(f"Main file not found : {file_to_compile_c} or {file_to_compile_s}")
 
@@ -1391,11 +1399,13 @@ def build(args):
                     try:
                         build_without_cl65_c_files(arg_include, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, generate_bin_files_section, name)
                         # Perform reloc_bin
-                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + binname, '-2' ,bpm_tmp_folder + '2048', bpm_tmp_folder + '2304'], check=True, capture_output=False, text=True)
-                        shutil.copy(bpm_tmp_folder + binname, f"{build_folder}/bin/" + bin_entry["name"])
-                        print("Built : " + f"{build_folder}/bin/" + bin_entry["name"])
+                        resultat = subprocess.run(["python3" , reloc_bin_path, "-o", bpm_tmp_folder + binname, '-2', bpm_tmp_folder + f'/{name}_2048', bpm_tmp_folder + f'/{name}_2304'], check=True, capture_output=False, text=True)
+
                     except subprocess.CalledProcessError as e:
                         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+                        return 1
+                    shutil.copy(bpm_tmp_folder + binname, f"{build_folder}/bin/" + bin_entry["name"])
+                    print("Built : " + f"{build_folder}/bin/" + bin_entry["name"])
                     return 0
                 else:
                     print(f"{file_to_compile_c} not found, can not build {binname} binary")
@@ -2519,6 +2529,12 @@ def verify_tml():
     if not "enable_build" in conf["package"]:
         modify_local_toml_key('bpm.tml', 'True', 'package', 'enable_build')
 
+    if not "lib" in conf["package"]:
+        modify_local_toml_key('bpm.tml', 'True', 'package', 'enable_build')
+
+    if not "rom_compatible" in conf["package"]:
+        modify_local_toml_key('bpm.tml', 'False', 'package', 'rom_compatible')
+
     return conf
 
 def main():
@@ -2653,7 +2669,10 @@ def main():
         if enable_build == 'False':
             print("Build is disabled for this project (enable_build = False)")
         else:
-            build(sys.argv)
+            ret = build(sys.argv)
+            if ret != 0:
+                print("Error during build, cannot package")
+                return 1
         if data["package"]["codetype"] == "lib":
             package_name = data["package"]["name"] + "lib.tgz"
         else:
@@ -2673,7 +2692,10 @@ def main():
         if enable_build == 'False':
             print("Build is disabled for this project (enable_build = False)")
         else:
-            build(sys.argv)
+           ret = build(sys.argv)
+           if ret != 0:
+                print("Error during build")
+                return 1
     elif action == 'init':
         if not os.path.exists(toml_file):
             init_toml(sys.argv)
@@ -2698,7 +2720,10 @@ def main():
             if enable_build == 'False':
                 print("Build is disabled for this project (enable_build = False)")
             else:
-               build(sys.argv)
+               ret = build(sys.argv)
+               if ret != 0:
+                    print("Error during build, cannot publish")
+                    return 1
 
 
         package_name = data["package"]["name"] + ".tgz"
