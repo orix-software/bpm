@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.5"
+VERSION_BPM = "2025.4.6"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -168,18 +168,22 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
         arg_ld_libs_tab.append(valeur)
 
     arg_ld_libs_tab.append("telestrat.lib")
-    print(" Linking ...")
+    print("Linking ...")
 
     arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + f'{binname_to_build}_2048.o', "-o", bpm_tmp_folder + f'{binname_to_build}_2048', '--start-addr',  f'2048']
 
+    if not arg_ld_libs_tab:
+        ld65_command_line_list_lib = ld65_command_line
+    else:
+        ld65_command_line_list_lib = ld65_command_line + arg_ld_libs_tab
     try:
-        resultat = subprocess.run(arg_ld65 + arg_ld_libs_tab, check=True, capture_output=False, text=True)
+        resultat = subprocess.run(ld65_command_line_list_lib, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
         print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
         exit(1)
 
     arg_ld65 = ['ld65', '-ttelestrat', bpm_tmp_folder + f'{binname_to_build}_2304.o', "-o", bpm_tmp_folder + f'{binname_to_build}_2304', '--start-addr', f'2304']
-    resultat = subprocess.run(arg_ld65 + arg_ld_libs_tab, check=True, capture_output=False, text=True)
+    resultat = subprocess.run(ld65_command_line_list_lib, check=True, capture_output=False, text=True)
 
 def convert_binary_name_to_seven_chars(name) -> str:
     if len(name) > 7:
