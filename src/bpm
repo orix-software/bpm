@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.9"
+VERSION_BPM = "2025.4.10"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -210,25 +210,27 @@ def decompress_and_extract(filename, dependency_name):
         print(f"Decrunching error : {e}")
 
 def read_local_config_file() -> dict:
-    file_path = "bpm.tml"
-    if os.path.exists(file_path):
+
+    if not os.path.exists(toml_file):
+        print("This project is not initialized (Missing bpm.tml)")
         return None
+
     try:
         # Lire le fichier TOML
-        with open(file_path, 'r') as file:
+        with open(toml_file, 'r') as file:
             data = toml.load(file)
         # Vérifier si la section "srcfolders" existe
         if 'srcfolders' not in data:
             # Ajouter la section "srcfolders" avec une valeur par défaut (par exemple, une liste vide)
             data['srcfolders'] = {}
-            with open(file_path, 'w') as file:
+            with open(toml_file, 'w') as file:
                 toml.dump(data, file)
         return data
 
     except FileNotFoundError:
-        print(f"'{file_path}' not found")
+        print(f"'{toml_file}' not found")
     except toml.TomlDecodeError:
-        print(f"Impossible to read d'{file_path}'.")
+        print(f"Impossible to read d'{toml_file}'.")
 
 
 def add_dependency_to_toml(file_path, dependency_str):
@@ -972,7 +974,9 @@ def build(args):
         os.makedirs(f"{build_folder}", mode=0o755, exist_ok=True)
 
     data = read_local_config_file()
-
+    if data == None:
+        print("bpm.tml is missing")
+        return 1
     dynamic_lib_name_module = ""
     codetype = ""
     if "package" in data:
@@ -2563,7 +2567,6 @@ def main():
         if "enable_publish" in conf["package"]:
             enable_publish = conf["package"]["enable_publish"]
 
-
         if "enable_build" in conf["package"]:
             enable_build = conf["package"]["enable_build"]
 
@@ -2585,7 +2588,7 @@ def main():
             plugins_detect("update_and_force_new_version_for_next_project")
         else:
             plugins_detect("not_display")
-
+        return
     elif action == '--disable-check-update':
         sys.argv.remove("--disable-check-update")
         action = sys.argv[1]
