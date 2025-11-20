@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.10"
+VERSION_BPM = "2025.4.11"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -767,8 +767,6 @@ def build_package(source_dir, output_filename, name, version):
         print(e.stderr)
     except FileNotFoundError:
         print("error: zx02 tool not found. Please install it to build .opk packages: https://github.com/dmsc/zx02")
-
-
 
 
 def lister_fichiers_s(repertoire):
@@ -1934,6 +1932,7 @@ def publish(filename: str, args, mode):
 
     if mode == "publish":
         encoded_description = urllib.parse.quote(description)
+        print(f"Publishing {name} version {version} to {repo} repo...")
         url = f"http://api.orix.oric.org/v1/libtgz?cpu={cpu}&repo={repo}&version={version}&name={name}&codetype={codetype}&action={action}&description={encoded_description}&documentation={documentation}&key=" + publish_key
 
         with open(filename, 'rb') as fichier:
