@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.12"
+VERSION_BPM = "2025.4.13"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -2125,7 +2125,7 @@ def build_doc(toml_file):
         for fichier in os.listdir(f"{docs_folder}"):
             # Vérifier si le fichier a l'extension .md
             generate = False
-            if fichier.endswith(".md"):
+            if fichier.endswith(".md") and fichier != "index.md":
                 my_file = fichier.replace('.md', ".hlp")
                 generate = check_src_with_target_file(f"{docs_folder}/{fichier}", f"{build_folder}/usr/share/man/{my_file}")
                 if generate == True and os.path.getsize(f"{docs_folder}{fichier}") != 0:
