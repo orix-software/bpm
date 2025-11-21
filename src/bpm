@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.13"
+VERSION_BPM = "2025.4.14"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -257,7 +257,7 @@ def add_dependency_to_toml(file_path, dependency_str):
 
         # Ajouter ou mettre à jour la dépendance dans le fichier TOML
         data["dependencies"][dependency_name] = dependency_version
-        dependency_file = dependency_name + "lib"
+        dependency_file = dependency_name
         value = download_file("http://repo.orix.oric.org/dists/" + dependency_version + "/tgz/6502/" + dependency_file + ".tgz", "orixlibs/" + dependency_name + ".tgz", dependency_name)
 
         if value == 0:
