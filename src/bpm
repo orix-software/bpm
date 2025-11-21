@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.11"
+VERSION_BPM = "2025.4.12"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -2537,7 +2537,7 @@ def verify_tml() -> dict:
         modify_local_toml_key('bpm.tml', 'True', 'package', 'enable_build')
 
     if not "lib" in conf["package"]:
-        modify_local_toml_key('bpm.tml', 'True', 'package', 'enable_build')
+        modify_local_toml_key('bpm.tml', 'True', 'package', 'lib')
 
     if not "rom_compatible" in conf["package"]:
         modify_local_toml_key('bpm.tml', 'False', 'package', 'rom_compatible')
