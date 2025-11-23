@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.14"
+VERSION_BPM = "2025.4.15"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -94,6 +94,20 @@ def check_binary(binary_name):
         return 1
     return 0
 
+def get_dependency_lib():
+    data = read_local_config_file()
+    arg_ld_libs_str = ""
+    if "dependencies" in data and data["dependencies"]:
+        dependencies = data["dependencies"]
+        if len(dependencies) != 0:
+            print(f"{len(dependencies)} Dependencies detected ...")
+            for key, value in dependencies.items():
+                #arg_include_c = arg_include_c + f" orixlibs/{key}/usr/include/"
+                arg_ld_libs_str = arg_ld_libs_str +  f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib "
+
+    return arg_ld_libs_str
+
+
 def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build, binname_to_build) -> int:
     if force_build == False:
         generate = False
@@ -155,6 +169,7 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
     if os.path.exists(name + ".lib"):
         arg_ld_libs_tab.append(name + ".lib")
 
+    arg_ld_libs = arg_ld_libs + get_dependency_lib()
 
     arg_ld_libs_split = arg_ld_libs.strip().split(' ')
     for index, valeur in enumerate(arg_ld_libs_split):
