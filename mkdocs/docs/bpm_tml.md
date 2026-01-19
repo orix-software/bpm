@@ -124,3 +124,8 @@ default_generatedoc_version = "2025.4"
 
 orix_run_pre_script = "scripts/starting.sub"
 
+### web_doc_command
+
+command to generate html doc
+
+web_doc_command = mkdocs build

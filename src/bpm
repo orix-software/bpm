@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2025.4.15"
+VERSION_BPM = "2026.1"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -94,7 +94,56 @@ def check_binary(binary_name):
         return 1
     return 0
 
-def get_dependency_lib():
+def build_with_ca65(name: str, start_addr: int) -> int:
+
+    print("Assembling ...")
+    bpm_tmp_folder = "bpmtmp/"
+    try:
+        arg_ca65 = ["-I", "src/include", '-ttelestrat', f'src/{name}.s', "-o", f'{bpm_tmp_folder}/{name}.o' ]
+        resultat = subprocess.run(bin_ca65 + arg_ca65, check=True, capture_output=False, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+        return 1
+
+    # arg_ld_libs_tab = []
+
+    # if os.path.exists(name + ".lib"):
+    #     arg_ld_libs_tab.append(name + ".lib")
+
+    # arg_ld_libs = arg_ld_libs + get_dependency_lib()
+
+    # arg_ld_libs_split = arg_ld_libs.strip().split(' ')
+    # for index, valeur in enumerate(arg_ld_libs_split):
+    #     if valeur != '':
+    #         arg_ld_libs_tab.append(valeur)
+
+    # arg_ld_libs_tab.append("telestrat.lib")
+    print("Linking ...")
+    arg_ld_libs = get_dependency_lib()
+
+    arg_ld_libs_tab = []
+
+    arg_ld_libs_split = arg_ld_libs.strip().split(' ')
+    for index, valeur in enumerate(arg_ld_libs_split):
+        if valeur != '':
+            arg_ld_libs_tab.append(valeur)
+
+
+    cfg_file = os.path.expanduser(f'~/.bpm/plugins/kernel_module/cfg/rambank.cfg')
+    #
+    arg_ld65 = ['ld65', '-vm', '-mmymap', f'-C{cfg_file}', f'{bpm_tmp_folder}/{name}.o', "-o", f'build/lib/modules/{name}.ko', '--start-addr', f'{start_addr}',  f'{name}.lib' ] # 49152 == $C000
+    arg_ld65 = arg_ld65 + arg_ld_libs_tab
+    print(arg_ld65)
+    try:
+        resultat = subprocess.run(arg_ld65, check=True, capture_output=False, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Command {e.cmd} returned with error code {e.returncode}. Output: {e.output} Error: {e.stderr}")
+        return 1
+    return 0
+
+def get_dependency_lib() -> str:
+    """Retourne une chaîne de caractères contenant les bibliothèques de dépendance à inclure lors de la liaison."""
+
     data = read_local_config_file()
     arg_ld_libs_str = ""
     if "dependencies" in data and data["dependencies"]:
@@ -103,12 +152,13 @@ def get_dependency_lib():
             print(f"{len(dependencies)} Dependencies detected ...")
             for key, value in dependencies.items():
                 #arg_include_c = arg_include_c + f" orixlibs/{key}/usr/include/"
-                arg_ld_libs_str = arg_ld_libs_str +  f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib "
+                arg_ld_libs_str = arg_ld_libs_str + f"orixlibs/{key}/usr/share/{key}/{value}/{key}.lib "
 
     return arg_ld_libs_str
 
 
-def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build, binname_to_build) -> int:
+def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file_to_compile_c, bpm_tmp_folder, name, force_build: bool, binname_to_build: str) -> int:
+
     if force_build == False:
         generate = False
 
@@ -187,7 +237,7 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
     else:
         ld65_command_line_list_lib = arg_ld65 + arg_ld_libs_tab
 
-    print(arg_ld_libs_tab)
+
     try:
         resultat = subprocess.run(ld65_command_line_list_lib, check=True, capture_output=False, text=True)
     except subprocess.CalledProcessError as e:
@@ -202,9 +252,9 @@ def build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, file
     resultat = subprocess.run(ld65_command_line_list_lib, check=True, capture_output=False, text=True)
 
 def convert_binary_name_to_seven_chars(name) -> str:
-    if len(name) > 7:
-        print(f"Warn : name is greater than 7 chars. binary name is truncated for Orix. Binary name will be : {name[:7]}")
-    return name[:7]
+    if len(name) > 8:
+        print(f"Warn : name is greater than 8 chars. binary name is truncated for Orix. Binary name will be : {name[:8]}")
+    return name[:8]
 
 
 def decompress_and_extract(filename, dependency_name):
@@ -398,7 +448,7 @@ def init_toml(args):
         print("Already initialized")
         return 0
     codetype = 'bin'
-    answer = input(f"This project is :\n1) A binary program\n2) A library\n3) A rom\nanswer ?")
+    answer = input(f"This project is :\n1) A binary program\n2) A library\n3) A rom\n4) a bank kernel module\nanswer ?")
 
     if answer == '2':
         codetype = 'lib'
@@ -415,6 +465,9 @@ def init_toml(args):
                 return 1
             code_template = "asm_rom_tpl"
         codetype = 'rom'
+
+    if answer == '4':
+        codetype = 'bank_kernel_module'
 
     current_directory = os.getcwd()
     last_directory = os.path.basename(os.path.normpath(current_directory))
@@ -489,12 +542,12 @@ def init_toml(args):
             with open("src/" + last_directory + ".c", 'w') as file:
                 file.write(content)
 
-    if codetype == 'lib':
-        if not os.path.exists("src/dynamic_lib/"):
-            os.makedirs("src/dynamic_lib/", mode=0o755, exist_ok=True)
-            content = f"{last_directory}_mapping_dynlib:\n.asciiz \"dynlib_{last_directory}]\"\n; Include version\n.asciiz \"{version}\"\n.byt 0 ; Module version\n.byt 0 ; ROM RAM ?\n.addr {last_directory}_startup_dynlib ; {last_directory}_startup_dynlib Init will be always 0\n.proc {last_directory}_startup_dynlib\nrts\n.endproc"
-            with open("src/dynamic_lib/" + last_directory + ".s", 'w') as file:
-                file.write(content)
+    # if codetype == 'lib':
+    #     if not os.path.exists("src/dynamic_lib/"):
+    #         os.makedirs("src/dynamic_lib/", mode=0o755, exist_ok=True)
+    #         content = f"{last_directory}_mapping_dynlib:\n.asciiz \"dynlib_{last_directory}]\"\n; Include version\n.asciiz \"{version}\"\n.byt 0 ; Module version\n.byt 0 ; ROM RAM ?\n.addr {last_directory}_startup_dynlib ; {last_directory}_startup_dynlib Init will be always 0\n.proc {last_directory}_startup_dynlib\nrts\n.endproc"
+    #         with open("src/dynamic_lib/" + last_directory + ".s", 'w') as file:
+    #             file.write(content)
 
     if not os.path.exists("VERSION"):
         print("Init VERSION file")
@@ -846,7 +899,7 @@ def generate_lib_for_bin(name: str, arg_include, arg_include_asm: str):
     arg_include_asm_tab = arg_include_asm.strip().split(' ')
     arg_ca65_array = []
     for index, valeur in enumerate(arg_include_asm_tab):
-        arg_include_asm_for_ca65.append('-I ' + arg_include_asm_tab[index])
+        arg_include_asm_for_ca65.append('-I' + arg_include_asm_tab[index])
 
 
     for fichier in os.listdir("src/"):
@@ -1126,6 +1179,57 @@ def build(args):
             resultat = subprocess.run(cmd_ld65 + arg_ld65, check=True, capture_output=False, text=True)
 
         shutil.copy(bpm_tmp_folder + name + ".rom", rom_path + name + ".rom")
+
+    if codetype == "bank_kernel_module":
+        print("Building banked kernel module ...")
+        if not os.path.exists(f"{build_folder}/lib/modules/"):
+            os.makedirs(f"{build_folder}/lib/modules/", mode=0o755, exist_ok=True)
+        err = generate_lib_for_bin(name, arg_include, arg_include_asm)
+        # force_build = True
+        if err == -1:
+            print("Error during lib generation")
+            return 1
+        binname_to_build = f"{dynamic_lib_name_module}"
+        val = build_with_ca65(name, 49152)
+        if val != 0:
+            print("Error during banked kernel module build")
+            return 1
+        # Add header
+        with open(f"{build_folder}/lib/modules/{name}.ko", "rb") as f:
+            content = f.read()
+        length_low = len(content) & 0xFF          # Octet de poids faible
+        length_high = (len(content)  >> 8) & 0xFF   # Octet de poids fort
+        header = bytes([0x01, 0x00, 0x6F, 0x72, 0x69, 0x01 + 128, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0,
+                         length_low, length_high, 0x00, 0xc0])
+        with open(f"{build_folder}/lib/modules/{name}.ko", "wb") as f:
+            f.write(header + content)
+        print(f"Built : {build_folder}/lib/modules/{name}.ko")
+
+#         .byt $01,$00            ; non-C64 marker like o65 format
+#         .byt "o", "r", "i"      ; "ori" MAGIC number :$6f, $36, $35 like o65 format
+#         .byt $01                ; version of this header (can not be relocated)
+# cpu_mode:
+#         .byt $00                ; CPU see below for description
+#         .byt $00                ; reserved
+#         .byt $00                ; reserved
+#         .byt $00                ; reserved
+#         .byt $00                ; reserved
+#         .byt $00                ; reserved
+#         .byt $00                ; reserved
+#         .byt $00                ; reserved
+#         .byt <start_adress, >start_adress ; loading adress
+#         .byt <endofmemory, >EndOfMemory   ; end of loading adress
+#         .byt <start_adress, >start_adress ; starting adress    
+
+
+        # Adding header
+        # $0,
+        # M O D
+        return 0
+        # for C
+        #build_without_cl65_c_files(arg_include_c, arg_include_asm, arg_ld_libs, f"src/{name}.s", bpm_tmp_folder, name, force_build, binname_to_build)
+
+
 
     if codetype == "bin":
 
@@ -2067,6 +2171,7 @@ def install_md2hlp():
 def build_doc(toml_file):
     md2hlp_generate = False
     generatedoc_generate = False
+    web_doc_command = ""
     docs_folder = "docs/"
 
 
@@ -2099,6 +2204,7 @@ def build_doc(toml_file):
     if "package" in data:
         package = data["package"]
         version =  data["package"]["version"]
+        web_doc_command = data["package"]["web_doc_command"]
 
         if "md2hlp" in package:
             if package["md2hlp"] == 'no':
@@ -2177,6 +2283,18 @@ def build_doc(toml_file):
                     else:
                         resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"{docs_folder}/{version}/{my_file}"], check=True, capture_output=True, text=True)
 
+        # web_doc_command
+        if web_doc_command != "":
+            # docs_folder
+            docs_folder_1 = docs_folder.split('/')
+            folder_conf = docs_folder_1[0]
+
+            print(f"Executing {web_doc_command} (default is mkdocs), to change it, modify 'web_doc_command' property in bpm.tml, or let it empty to skip this step")
+            try:
+                resultat = subprocess.run('cd ' + folder_conf + ' && ' + web_doc_command, shell=True, check=True, capture_output=False, text=True)
+                print(resultat.stdout)
+            except subprocess.CalledProcessError as e:
+                print(f"Error during web doc command execution: {e.stderr}")
 
 def update_package(args):
     if not os.path.exists(toml_file):
@@ -2207,11 +2325,22 @@ def read_main_config_file():
     except FileNotFoundError:
         print(f"'{toml_file}' not found")
 
-def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_arg):
+def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_arg, code_type):
     # names : all binaries to name to build
 
     autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
     full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
+    full_autoboot_oricutron_folder_etc = path_oricutron + "/sdcard/ETC/"
+    if not os.path.exists(full_autoboot_oricutron_folder_etc):
+        # Créer le répertoire
+        os.makedirs(full_autoboot_oricutron_folder_etc)
+
+    full_autoboot_oricutron_folder_bin = path_oricutron + "/sdcard/BIN/"
+    if not os.path.exists(full_autoboot_oricutron_folder_bin):
+        # Créer le répertoire
+        os.makedirs(full_autoboot_oricutron_folder_bin)
+
+
     orix_run_pre_script_content = ""
 
     if orix_run_pre_script != "":
@@ -2227,22 +2356,32 @@ def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_auto
 
     extra_arg_param = ""
     if oricutron_replace_autoboot_run == "True":
-        if binary_to_launch == "":
-            all_names = ""
-            for name in names:
-                if extra_arg[name] != "":
-                    extra_arg_param = extra_arg[name]
+        if code_type == "bank_kernel_module":
+            print("Autoboot modification skipped for bank_kernel_module code type")
+            full_autoboot_oricutron_folder_lib_modules = path_oricutron + "/sdcard/LIB/MODULES/"
+            if not os.path.exists(full_autoboot_oricutron_folder_lib_modules):
+                # Créer le répertoire
+                os.makedirs(full_autoboot_oricutron_folder_lib_modules)
+            shutil.copy(f"build/lib/modules/{binary_to_launch}.ko", full_autoboot_oricutron_folder_lib_modules)
+            content = f"#!/bin/submit\n{orix_run_pre_script_content}\nmodprobe {binary_to_launch}\n"
 
-                name_7 = convert_binary_name_to_seven_chars(name)
-                all_names = all_names + name_7 + "\n"
-
-            content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{all_names}{extra_arg_param}\n"
         else:
-            for myargs in extra_arg:
-                extra_arg_param = extra_arg_param + ' ' + extra_arg[myargs]
+            if binary_to_launch == "":
+                all_names = ""
+                for name in names:
+                    if extra_arg[name] != "":
+                        extra_arg_param = extra_arg[name]
 
-            name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
-            content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7} {extra_arg_param}\n"
+                    name_7 = convert_binary_name_to_seven_chars(name)
+                    all_names = all_names + name_7 + "\n"
+
+                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{all_names}{extra_arg_param}\n"
+            else:
+                for myargs in extra_arg:
+                    extra_arg_param = extra_arg_param + ' ' + extra_arg[myargs]
+
+                name_7 = convert_binary_name_to_seven_chars(binary_to_launch)
+                content = f"#!/bin/submit\n{orix_run_pre_script_content}\n{name_7} {extra_arg_param}\n"
 
         if os.path.exists(full_autoboot_oricutron_folder):
             shutil.copy(full_autoboot_oricutron_folder, bpm_tmp_folder + "AUTOBOOT_OLD")
@@ -2265,6 +2404,7 @@ def execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_auto
 
 def run_bin(args):
     bpm_tmp_folder = "bpmtmp/"
+    verbose_option_found = False
     old_autoboot_exists = False
     current_pwd = os.getcwd()
     binary_to_launch = ""
@@ -2287,6 +2427,9 @@ def run_bin(args):
             for i in range(pos_extra_arg, len(sys.argv)):
                 if sys.argv[i] == "--bin":
                     bin_option_found = i
+                    break
+                if sys.argv[i] == "--verbose":
+                    verbose_option_found = True
                     break
 
                 extra_args[sys.argv[i]] = sys.argv[i]
@@ -2379,7 +2522,8 @@ def run_bin(args):
                 shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
             else:
                 shutil.copy2(source_path, destination_path)
-                print("Copy ...")
+                if verbose_option_found:
+                    print(f"Copy {source_path} to {destination_path}...")
 
     if codetype == "rom":
         path_to_oricutron_rom = f"sdcard/USR/SHARE/" + name.upper() + "/" + version.upper() + "/"
@@ -2427,12 +2571,15 @@ def run_bin(args):
     #     print(path_oricutron + '/sdcard/bin')
     #     shutil.copy(f"build/bin/{name}", path_oricutron + f'/sdcard/bin/{name}')
 
+    if codetype == "bank_kernel_module":
+        execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, name, bin_oricutron, current_pwd, bpm_tmp_folder, "", extra_args, "bank_kernel_module")
+
     # Generate submit file
     if codetype == "bin":
         names = { f"{name}" }
         extra_args[name] = ""
 
-        execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args)
+        execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args, "bin")
 
         # autoboot_oricutron_folder = "/sdcard/ETC/AUTOBOOT"
         # full_autoboot_oricutron_folder = path_oricutron + autoboot_oricutron_folder
@@ -2503,7 +2650,7 @@ def run_bin(args):
                         extra_args[binname] = bin_entry[key]
                     else:
                         extra_args[binname] = ""
-            execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args)
+            execute_binaries(path_oricutron, orix_run_pre_script, oricutron_replace_autoboot_run, binary_to_launch, bin_oricutron, current_pwd, bpm_tmp_folder, names, extra_args, "lib")
         else:
             print("lib is not managed yet with 'bpm run' command")
 
@@ -2557,6 +2704,10 @@ def verify_tml() -> dict:
     if not "rom_compatible" in conf["package"]:
         modify_local_toml_key('bpm.tml', 'False', 'package', 'rom_compatible')
 
+    if not "web_doc_command" in conf["package"]:
+        modify_local_toml_key('bpm.tml', 'mkdocs build', 'package', 'web_doc_command')
+
+
     return conf
 
 def main():
@@ -2583,6 +2734,7 @@ def main():
 
         if "enable_build" in conf["package"]:
             enable_build = conf["package"]["enable_build"]
+
 
 
     action = sys.argv[1]
