@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2026.1"
+VERSION_BPM = "2026.1.1"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -842,7 +842,16 @@ def lister_fichiers_s(repertoire):
     return fichiers_s
 
 
-def compile(name, arg_include, folder):
+def convert_str_to_array(arg_include_asm: str) -> list:
+
+    arg_include_asm_tab = arg_include_asm.strip().split(' ')
+    arg_include_asm_for_ca65 = []
+    for index, valeur in enumerate(arg_include_asm_tab):
+        arg_include_asm_for_ca65.append('-I' + arg_include_asm_tab[index])
+
+    return arg_include_asm_for_ca65
+
+def compile(name: str, arg_include: str, folder: str):
     print(f"Building additionnal folder : {folder}")
     bin_ca65 = ['ca65']
     fichier_o = ""
@@ -864,20 +873,20 @@ def compile(name, arg_include, folder):
 
             if generate == True:
                 arg_ca65 = ['-ttelestrat', folder + fichier, "-o", f"{absolute_path}/bpmtmp/" + fichier_o]
-
+                arg_include_tab = convert_str_to_array(arg_include)
                 if assembly == True and fichier != name + ".s":
                     print(f"File : {folder + fichier}")
-                    resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65, check=True, capture_output=False, text=True)
+                    resultat = subprocess.run(bin_ca65 + arg_include_tab + arg_ca65, check=True, capture_output=False, text=True)
                     resultat = subprocess.run(['ar65', 'r', name + ".lib", f"{absolute_path}/bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
 
                 if assembly == False and fichier != name + ".c":
-                    resultat = subprocess.run(bin_ca65 + arg_include + arg_ca65 , check=True, capture_output=False, text=True)
+                    resultat = subprocess.run(bin_ca65 + arg_include_tab + arg_ca65 , check=True, capture_output=False, text=True)
                     resultat = subprocess.run(['ar65', 'r', name + ".lib", f"{absolute_path}/bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
             else:
                 print(f"[INFO] {fichier} not built")
 
 
-def generate_lib_for_bin(name: str, arg_include, arg_include_asm: str):
+def generate_lib_for_bin(name: str, arg_include: str, arg_include_asm: str):
 
     # This code read bpm.tml and keep additionnal binary in order to exclude them from lib generation
     file_path = "bpm.tml"
@@ -1146,7 +1155,7 @@ def build(args):
             os.makedirs(rom_path, mode=0o755, exist_ok=True)
         if templatecode == "asm_rom_tpl":
 
-            if  os.path.exists(f"macros"):
+            if os.path.exists(f"macros"):
                 arg_include = arg_include + "-I"
                 arg_include = arg_include + f" ."
 
