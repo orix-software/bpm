@@ -16,7 +16,7 @@ import shutil
 import glob
 import urllib.parse
 
-VERSION_BPM = "2026.1.1"
+VERSION_BPM = "2026.3.0"
 
 build_folder = "build"
 docs_folder = "docs"
@@ -521,6 +521,8 @@ def init_toml(args):
         content = content + f"orix_minimal_kernel_version = \"{default_kernel_version}\"\n"
         content = content + f"orix_run_pre_script = \"\"\n"
         content = content + f"md2hlp = \"yes\"\n"
+        content = content + f"mike_management = \"False\"\n"
+
         content = content + "\n[dependencies]\n\n[dynamiclibs]\n"
 
         # Srcfolders section
@@ -959,16 +961,12 @@ def generate_lib_for_bin(name: str, arg_include: str, arg_include_asm: str):
                         resultat = subprocess.run(['ar65', 'r', name + ".lib", "bpmtmp/" + fichier_o] , check=True, capture_output=False, text=True)
                         nb_of_files = nb_of_files + 1
 
-
-
     return nb_of_files
 
 def check_src_with_target_file(filesrc: str, object_file:str) -> bool:
     generate = False
 
     if os.path.exists(object_file):
-
-
         time_filebuild = int(os.path.getmtime(object_file))
 
         time_filesrc = int(os.path.getmtime(filesrc))
@@ -1281,6 +1279,8 @@ def build(args):
 
                 list_src_file_to_build.append(bin_entry[key])
                 list_binary_file_to_build.append(binname)
+
+        print("Build binary")
 
         for src_file, binname_to_build in zip(list_src_file_to_build, list_binary_file_to_build):
 
@@ -2210,10 +2210,16 @@ def build_doc(toml_file):
     else:
         md2hlp_generate = True
 
+    mike_management = False
     if "package" in data:
         package = data["package"]
         version =  data["package"]["version"]
         web_doc_command = data["package"]["web_doc_command"]
+        if "mike_management" in package:
+            
+            if data["package"]["mike_management"] == 'True':
+                mike_management = True
+
 
         if "md2hlp" in package:
             if package["md2hlp"] == 'no':
@@ -2275,35 +2281,48 @@ def build_doc(toml_file):
         generatedoc_cmd_assembly = home_directory + f"/.bpm/plugins/generatedoc/{default_generatedoc_version}/generatedoc-main/src/ca65todoc.py"
         generatedoc_cmd_c = home_directory + f"/.bpm/plugins/generatedoc/{default_generatedoc_version}/generatedoc-main/src/ca65todoc_c_proto.py"
 
-        if not os.path.exists(f"{docs_folder}/{version}/"):
-            os.makedirs(f"{docs_folder}/{version}/")
+        path_version = ''
+        if mike_management == False:
+            if not os.path.exists(f"{docs_folder}/{version}/"):
+                os.makedirs(f"{docs_folder}/{version}/")
+                path_version = version
+
 
         for fichier in os.listdir("src"):
             # Vérifier si le fichier a l'extension .md
             generate = False
             if fichier.endswith(".s"):
                 my_file = fichier.replace('.s', ".md")
-                generate = check_src_with_target_file(f"src/{fichier}", f"{docs_folder}/{version}/{my_file}")
+                generate = check_src_with_target_file(f"src/{fichier}", f"{docs_folder}/{path_version}/{my_file}")
                 if generate == True and os.path.getsize(f"src/{fichier}") != 0:
-                    print(f"[ca65tomd] Generating doc for src/{fichier} to {docs_folder}/{version}/{my_file}")
+                    print(f"[ca65tomd] Generating doc for src/{fichier} to {docs_folder}/{path_version}/{my_file}")
                     #ca65todoc_c_proto.py
                     if fichier.startswith('_'):
-                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"{docs_folder}/{version}/{my_file}"], check=True, capture_output=True, text=True)
+                        resultat = subprocess.run(['python3', generatedoc_cmd_c, f"src/{fichier}", f"{docs_folder}/{path_version}/{my_file}"], check=True, capture_output=True, text=True)
                     else:
-                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"{docs_folder}/{version}/{my_file}"], check=True, capture_output=True, text=True)
+                        resultat = subprocess.run(['python3', generatedoc_cmd_assembly, f"src/{fichier}", f"{docs_folder}/{path_version}/{my_file}"], check=True, capture_output=True, text=True)
 
         # web_doc_command
         if web_doc_command != "":
             # docs_folder
             docs_folder_1 = docs_folder.split('/')
             folder_conf = docs_folder_1[0]
+            if mike_management == False:
+                print(f"Executing {web_doc_command} (default is mkdocs), to change it, modify 'web_doc_command' property in bpm.tml, or let it empty to skip this step")
+                try:
+                    resultat = subprocess.run('cd ' + folder_conf + ' && ' + web_doc_command, shell=True, check=True, capture_output=False, text=True)
+                    print(resultat.stdout)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error during web doc command execution: {e.stderr}")
+            else:
+                web_doc_command = f'mike deploy {version} --allow-empty'
+                print(f"Executing {web_doc_command}")
+                try:
+                    resultat = subprocess.run('cd ' + folder_conf + ' && ' + web_doc_command, shell=True, check=True, capture_output=False, text=True)
+                    print(resultat.stdout)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error during web doc command execution: {e.stderr}")
 
-            print(f"Executing {web_doc_command} (default is mkdocs), to change it, modify 'web_doc_command' property in bpm.tml, or let it empty to skip this step")
-            try:
-                resultat = subprocess.run('cd ' + folder_conf + ' && ' + web_doc_command, shell=True, check=True, capture_output=False, text=True)
-                print(resultat.stdout)
-            except subprocess.CalledProcessError as e:
-                print(f"Error during web doc command execution: {e.stderr}")
 
 def update_package(args):
     if not os.path.exists(toml_file):
@@ -2698,6 +2717,9 @@ def verify_tml() -> dict:
     if not "documentation" in conf["package"]:
         modify_local_toml_key('bpm.tml', '', 'package', 'documentation')
 
+    if not "mike_management" in conf["package"]:
+        modify_local_toml_key('bpm.tml', 'False', 'package', 'mike_management')
+
     if not "orix_minimal_kernel_version" in conf["package"]:
         modify_local_toml_key('bpm.tml', '', 'package', 'orix_minimal_kernel_version')
 
@@ -2875,7 +2897,7 @@ def main():
         else:
            ret = build(sys.argv)
            if ret != 0:
-                print("Error during build")
+                print(f"Error during build. Error code : {ret}")
                 return 1
     elif action == 'init':
         if not os.path.exists(toml_file):
